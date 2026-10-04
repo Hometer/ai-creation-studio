@@ -13,6 +13,7 @@ from pydantic import BaseModel
 from api.dependencies import get_workflow_engine
 from api.errors import ErrorResponse, HTTP_ERRORS, register_error_handlers
 from api.routers.assets import get_asset_library, get_media_archive, router
+from api.routers.generation_plans import router as plans_router
 from core.asset_library import AssetLibrary
 from core.media_archive import MediaArchive
 from core.orchestrator import WorkflowEngine
@@ -50,7 +51,8 @@ def create_demo(directory: Path):
                 "description": "ffmpeg 本地制作，非模型结果", "selected": str(video.relative_to(directory)),
                 "versions": [str(video.relative_to(directory))]}]},
             "storyboard": {"episodes": [{"episode_number": 1, "segments": [
-                {"segment_id": "seg-1", "shots": [{"shot_number": 1}]}]}]},
+                {"segment_id": "seg-1", "shots": [{"shot_number": 1, "duration": 5,
+                    "content": "人工黄色色块缓慢变成蓝色；只验证输入准备，不调用模型"}]}]}]},
         }
         engine.save_session_to_disk("media-demo")
     library = AssetLibrary(directory / "asset-library")
@@ -58,6 +60,7 @@ def create_demo(directory: Path):
     app = FastAPI(title="小云雀媒体归档 · 人工样例验收", responses={status: {"model": ErrorResponse} for status in HTTP_ERRORS})
     register_error_handlers(app)
     app.include_router(router)
+    app.include_router(plans_router)
     app.dependency_overrides[get_workflow_engine] = lambda: engine
     app.dependency_overrides[get_asset_library] = lambda: library
     app.dependency_overrides[get_media_archive] = lambda: archive

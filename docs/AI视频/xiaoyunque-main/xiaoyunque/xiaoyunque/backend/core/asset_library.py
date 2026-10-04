@@ -79,6 +79,10 @@ class AssetLibrary:
         with self._locked() as library:
             return library
 
+    def locked(self):
+        """Shared local transaction boundary for references and generation plans."""
+        return self._locked()
+
     def _change(self, operation):
         with self._locked() as library:
             before = library.model_dump(mode="json")
