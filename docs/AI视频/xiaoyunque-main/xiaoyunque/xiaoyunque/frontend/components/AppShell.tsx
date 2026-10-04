@@ -6,13 +6,13 @@ import { errorMessage, type SessionSummary } from '@/lib/workflowTypes';
 
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
-import { CheckCircle2, ChevronLeft, ChevronRight, Clapperboard, Clock, Hexagon, Home, Loader2, Repeat2, Settings, Trash2, UserRound } from 'lucide-react';
+import { CheckCircle2, ChevronLeft, ChevronRight, Clapperboard, Clock, Hexagon, Home, Loader2, Menu, Repeat2, Settings, Trash2, UserRound } from 'lucide-react';
 import clsx from 'clsx';
 import { useEffect, useState, useSyncExternalStore, type CSSProperties } from 'react';
 import { clearTempCache, fetchPipelineTasks, fetchSandboxTasks, fetchSessions, type PipelineTask, type SandboxTask } from '@/lib/workflowApi';
 
 const NAV_ITEMS = [
-  { href: '/', label: 'XiaoYunQue', icon: Home },
+  { href: '/', label: '创作首页', icon: Home },
   { href: '/sandbox', label: '临时工作台', icon: Hexagon },
   { href: '/pipelines/standard', label: '文艺短视频', icon: Clapperboard },
   { href: '/pipelines/action-transfer', label: '动作迁移', icon: Repeat2 },
@@ -333,7 +333,15 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
   };
   useEffect(() => {
     if (!open || isDesktop) return;
-    const onKey = (event: KeyboardEvent) => { if (event.key === 'Escape') setMobileOpen(false); };
+    const onKey = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') setMobileOpen(false);
+      if (event.key === 'Tab') {
+        const controls = [...document.querySelectorAll<HTMLElement>('.xyq-sidebar a, .xyq-sidebar button:not(:disabled), .xyq-sidebar-toggle')].filter(node => node.getClientRects().length > 0);
+        const first = controls[0], last = controls[controls.length - 1];
+        if (event.shiftKey && document.activeElement === first) { event.preventDefault(); last?.focus(); }
+        else if (!event.shiftKey && document.activeElement === last) { event.preventDefault(); first?.focus(); }
+      }
+    };
     document.addEventListener('keydown', onKey);
     document.querySelector<HTMLAnchorElement>('.xyq-sidebar-nav a')?.focus();
     const previousOverflow = document.body.style.overflow;
@@ -378,10 +386,11 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
           <div className="xyq-sidebar-brand flex h-16 items-center px-4 border-b border-gray-100">
             <div className="flex items-center gap-2 min-w-0">
               <MediaImage src="/logo.jpg" alt="XiaoYunQue" className="h-9 w-9 rounded-xl object-cover" />
-              <span className="text-base font-semibold text-gray-900 truncate">XiaoYunQue</span>
+              <div className="studio-brand-copy"><span className="text-base font-semibold text-gray-900 truncate">小云雀</span><small>CREATIVE STUDIO</small></div>
             </div>
           </div>
           <nav className="xyq-sidebar-nav min-h-0 flex-1 overflow-y-auto p-3 space-y-1">
+            <div className="studio-nav-label">创作空间</div>
             {NAV_ITEMS.map(item => {
               const Icon = item.icon;
               const active = item.href === '/' ? pathname === '/' : pathname.startsWith(item.href);
@@ -389,6 +398,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
                 <Link
                   key={item.href}
                   href={item.href}
+                  aria-current={active ? 'page' : undefined}
                   onClick={() => { if (!isDesktop) setMobileOpen(false); }}
                   className={clsx(
                     'xyq-sidebar-link flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-colors',
@@ -403,6 +413,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
               );
             })}
           </nav>
+          <div className="studio-local-badge"><span /> 本地工作室<span>专注你的下一部作品</span></div>
           <SidebarTaskPanels currentPath={pathname} />
           <div className="xyq-sidebar-footer relative border-t border-gray-100 p-3">
             {(() => {
@@ -469,11 +480,11 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
       {!open && (
         <button
           onClick={() => setSidebarOpen(true)}
-          className="fixed left-0 top-1/2 z-50 h-14 w-7 -translate-y-1/2 rounded-r-xl border border-l-0 border-gray-200 bg-white text-gray-400 shadow-sm hover:w-9 hover:text-blue-600 hover:border-blue-200 hover:bg-blue-50 flex items-center justify-center transition-all"
+          className="xyq-sidebar-toggle-open fixed left-0 top-1/2 z-50 h-14 w-7 -translate-y-1/2 rounded-r-xl border border-l-0 border-gray-200 bg-white text-gray-400 shadow-sm hover:w-9 hover:text-blue-600 hover:border-blue-200 hover:bg-blue-50 flex items-center justify-center transition-all"
           title="打开侧边栏"
           aria-label="打开侧边栏"
         >
-          <ChevronRight className="w-4 h-4" />
+          {isDesktop ? <ChevronRight className="w-4 h-4" /> : <Menu className="w-4 h-4" />}
         </button>
       )}
 

@@ -3,9 +3,11 @@
 import { errorMessage } from '@/lib/workflowTypes';
 
 import React, { useState, useRef, useEffect } from 'react';
-import { Settings2, Clock, ArrowRight, CheckCircle, Trash2, Globe, ListOrdered, Loader2 } from 'lucide-react';
+import { Settings2, Clock, CheckCircle, Trash2, Globe, ListOrdered, Loader2, Sparkles, Plus, Search, FolderOpen, Clapperboard, Repeat2, UserRound, Layers, Bookmark, ArrowUpRight, X } from 'lucide-react';
 import clsx from 'clsx';
-import { PROMPT_EXAMPLES } from '@/config/examples';
+import Link from 'next/link';
+import MediaImage from '@/components/MediaImage';
+import { INSPIRATION_CATEGORIES, filterPresets, matchesProject, projectSummary, type InspirationCategory } from '@/lib/studio';
 import {
   STYLES,
   VIDEO_RATIOS,
@@ -49,36 +51,28 @@ interface HistoryItem {
 
 interface HomePageProps {
   onStartProject: (params: ProjectParams, autoMode?: boolean) => void;
+  onSaveDraft: (params: ProjectParams) => Promise<void>;
+  historyLoading: boolean;
+  historyError: string;
+  onRefreshHistory: () => void;
   onResumeProject: (sessionId: string) => void;
   onDeleteSession: (sessionId: string) => Promise<void>;
   history: HistoryItem[];
 }
 
-const INSPIRATION_IMAGES = [
-  '/ui/inspiration-space.png',
-  '/ui/inspiration-ink.png',
-  '/ui/inspiration-detective.png',
-  '/ui/inspiration-cat.png',
-  '/ui/inspiration-mars.png',
-  '/ui/inspiration-wuxia.png',
-];
-
-/* 根据 status 映射生成进度文本 */
-function stageProgressLabel(statusMap?: Record<string, string>): { text: string; color: string } {
-  const map = statusMap || {};
-  const completed = Object.keys(map).filter(k => ["completed", "session_completed"].includes(map[k]));
-  if (completed.length === 0) return { text: '未开始', color: 'text-gray-400' };
-  if (completed.length >= STAGES.length) return { text: '已完成', color: 'text-green-600' };
-  
-  // 对比 STAGES 获取最后一个已完成的
-  const lastStageId = STAGES.filter(s => completed.includes(s.id)).pop()?.id || completed[completed.length - 1];
-  const stageDef = STAGES.find(s => s.id === lastStageId);
-  const name = stageDef?.shortName || lastStageId;
-  return { text: `已完成：${name} (${completed.length}/${STAGES.length})`, color: 'text-blue-600' };
-}
-
-export default function HomePage({ onStartProject, onResumeProject, onDeleteSession, history }: HomePageProps) {
+export default function HomePage({ onStartProject, onResumeProject, onDeleteSession, history, onSaveDraft, historyLoading, historyError, onRefreshHistory }: HomePageProps) {
   const [idea, setIdea] = useState('');
+  const [category, setCategory] = useState<InspirationCategory>('全部');
+  const [query, setQuery] = useState('');
+  const [savingDraft, setSavingDraft] = useState(false);
+  const [draftMessage, setDraftMessage] = useState('');
+  const [draftError, setDraftError] = useState('');
+  const promptRef = useRef<HTMLTextAreaElement>(null);
+  const draftBusyRef = useRef(false);
+  const deleteDialogRef = useRef<HTMLDivElement>(null);
+  const deleteTriggerRef = useRef<HTMLElement | null>(null);
+  const deletingRef = useRef(false);
+  const visibleProjects = history.filter(item => matchesProject(item.idea, query));
   const [showSettings, setShowSettings] = useState(false);
   const [selectedStyle, setSelectedStyle] = useState('realistic');
   const [selectedLLM, setSelectedLLM] = useState('');
@@ -122,7 +116,7 @@ export default function HomePage({ onStartProject, onResumeProject, onDeleteSess
         ? selectedReferenceVideo
         : selectedFirstFrameVideo;
   const modelConfigReady = Boolean(selectedLLM && selectedVLM && selectedT2I && selectedI2I && activeVideoModel && selectedRatio && selectedResolution);
-  const canStart = Boolean((idea.trim() || uploadedFile) && modelConfigReady && !configLoading);
+  const canStart = Boolean((idea.trim() || uploadedFile) && modelConfigReady && !configLoading && !savingDraft && !uploading);
 
   useEffect(() => {
     let cancelled = false;
@@ -225,9 +219,7 @@ export default function HomePage({ onStartProject, onResumeProject, onDeleteSess
 
   const selectedVideoModeLabel = VIDEO_GENERATION_MODES.find(item => item.id === selectedVideoMode)?.label || '首帧生视频';
 
-  const handleStart = (auto?: boolean) => {
-    if (!canStart) return;
-    onStartProject({
+  const projectPayload = (): ProjectParams => ({
       idea,
       file_path: uploadedFile?.path, // 如果上传了文件，传给后端
       style: selectedStyle,
@@ -245,11 +237,51 @@ export default function HomePage({ onStartProject, onResumeProject, onDeleteSess
       enable_concurrency: enableConcurrency,
       web_search: webSearch,
       episodes,
-    }, auto);
+    });
+
+  const handleStart = (auto?: boolean) => {
+    if (!canStart || draftBusyRef.current) return;
+    onStartProject(projectPayload(), auto);
   };
 
+  const handleSaveDraft = async () => {
+    if (!canStart || draftBusyRef.current) return;
+    draftBusyRef.current = true;
+    setSavingDraft(true); setDraftMessage(''); setDraftError('');
+    try {
+      await onSaveDraft(projectPayload());
+      setDraftMessage('创作草稿已保存，在「我的项目」中继续创作。');
+    } catch (error: unknown) {
+      setDraftError(`${errorMessage(error)}。输入已保留，请先刷新项目列表确认是否已保存，再决定重试。`);
+    } finally {
+      draftBusyRef.current = false; setSavingDraft(false);
+    }
+  };
+
+  useEffect(() => {
+    if (!deleteTarget) return;
+    deleteTriggerRef.current = document.activeElement as HTMLElement | null;
+    const dialog = deleteDialogRef.current;
+    dialog?.querySelector<HTMLButtonElement>('button')?.focus();
+    const keydown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape' && !deletingRef.current) { setDeleteTarget(null); setDeleteError(''); }
+      if (event.key === 'Tab' && dialog) {
+        const buttons = [...dialog.querySelectorAll<HTMLButtonElement>('button:not(:disabled)')];
+        const first = buttons[0], last = buttons[buttons.length - 1];
+        if (event.shiftKey && document.activeElement === first) { event.preventDefault(); last?.focus(); }
+        else if (!event.shiftKey && document.activeElement === last) { event.preventDefault(); first?.focus(); }
+      }
+    };
+    document.addEventListener('keydown', keydown);
+    return () => { document.removeEventListener('keydown', keydown); deleteTriggerRef.current?.focus(); };
+  }, [deleteTarget]);
+
+  useEffect(() => { deletingRef.current = deleting; }, [deleting]);
+
   const handleExampleClick = (text: string) => {
-    setIdea(text);
+    setIdea(text); setDraftMessage(''); setDraftError('');
+    promptRef.current?.focus();
+    promptRef.current?.scrollIntoView({ behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth', block: 'center' });
   };
 
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -298,29 +330,43 @@ export default function HomePage({ onStartProject, onResumeProject, onDeleteSess
 
   return (
     <div className="xyq-home h-full flex flex-col items-center overflow-y-auto bg-gray-50/50">
-      {/* 主区域 - 居中 */}
+      <header className="studio-header">
+        <div className="studio-breadcrumb"><Sparkles size={16} /><span>创作工作室</span><span className="studio-header-caption">让故事从这里开始</span></div>
+        <nav aria-label="工作室分区"><a href="#create">创作</a><a href="#inspiration">探索灵感</a><a href="#projects">我的项目</a></nav>
+      </header>
       <div className="xyq-home-main w-full max-w-6xl px-6 pt-16 pb-8 flex-shrink-0">
-        {/* 标题 */}
-        <div className="xyq-hero-title text-center mb-10">
-          <div className="inline-flex items-center gap-2 mb-3">
-            <h1 className="text-2xl font-medium text-white">Hi，和小云雀一起聊聊创作想法</h1>
+        <section className="studio-hero" aria-labelledby="studio-title">
+          <div className="xyq-hero-title">
+            <div className="studio-eyebrow"><span /> YOUR NEXT STORY</div>
+            <h1 id="studio-title">让想象，<br />成为<span>作品。</span></h1>
+            <p>从一句灵感到一部短片。<br />和小云雀一起，把脑海里的故事慢慢变成画面。</p>
+            <a className="studio-text-link" href="#create">开始我的故事 <ArrowUpRight size={16} /></a>
           </div>
-          <p className="text-sm text-white/75">
-            从一句灵感开始，让 AI 陪你完成整部短片
-          </p>
-        </div>
+          <button className="studio-feature" onClick={() => handleExampleClick('一位宇航员收到来自地球的最后一封信，在寂静的空间站里，决定踏上回家的旅程。制作一部充满希望的科幻短片。')} aria-label="使用太空来信灵感">
+            <MediaImage src="/ui/inspiration-space.png" alt="宇航员隔着空间站窗口眺望地球的灵感封面" className="studio-feature-image" />
+            <div className="studio-feature-shade" />
+            <span className="studio-feature-tag">故事的可能，不止一种</span>
+            <div className="studio-feature-copy"><span>FEATURED INSPIRATION / 01</span><strong>下一站，想象之外。</strong><span>用一句话，开启你的电影宇宙</span></div>
+            <span className="studio-feature-arrow"><ArrowUpRight size={22} /></span>
+            <span className="studio-feature-note">灵感封面</span>
+          </button>
+        </section>
 
         {/* 输入区域 */}
-        <div className="xyq-composer bg-white rounded-2xl shadow-sm border border-gray-200 p-5 mb-6">
+        <div id="create" className="xyq-composer bg-white rounded-2xl shadow-sm border border-gray-200 p-5 mb-6">
+          <div className="studio-composer-heading"><span><Sparkles size={16} /> 故事从这里开始</span><span>先留住灵感，再细雕每个镜头</span></div>
+          <label className="sr-only" htmlFor="studio-idea">创作想法</label>
           <textarea
+            id="studio-idea"
+            ref={promptRef}
             value={idea}
-            onChange={e => setIdea(e.target.value)}
+            onChange={e => { setIdea(e.target.value); setDraftMessage(''); setDraftError(''); }}
             placeholder="描述你的想法，输入一段故事、一个画面或一句灵感……"
             className="xyq-prompt-input w-full bg-transparent text-sm text-gray-800 placeholder-gray-400 resize-none outline-none min-h-[100px]"
             onKeyDown={e => {
-              if (e.key === 'Enter' && !e.shiftKey && (idea.trim() || uploadedFile)) {
+              if (e.key === 'Enter' && (e.ctrlKey || e.metaKey) && !e.nativeEvent.isComposing) {
                 e.preventDefault();
-                handleStart(false);
+                void handleSaveDraft();
               }
             }}
           />
@@ -453,6 +499,10 @@ export default function HomePage({ onStartProject, onResumeProject, onDeleteSess
                 ) : null}
                 {uploading ? '上传中……' : uploadedFile ? `已选：${uploadedFile.name.length > 8 ? `${uploadedFile.name.substring(0, 8)}…` : uploadedFile.name}` : '上传文件'}
               </button>
+              <button className="studio-save-button" onClick={() => void handleSaveDraft()} disabled={!canStart}>
+                {savingDraft ? <Loader2 size={16} className="animate-spin" /> : <Plus size={17} />}
+                {savingDraft ? '正在保存…' : '保存创作草稿'}
+              </button>
               <button
                 onClick={() => handleStart(false)}
                 disabled={!canStart}
@@ -480,6 +530,9 @@ export default function HomePage({ onStartProject, onResumeProject, onDeleteSess
               </button>
             </div>
           </div>
+          <div className="studio-composer-footnote"><span><Bookmark size={13} /> 草稿保存后，可随时回来继续</span><span>Ctrl / ⌘ + Enter 保存</span></div>
+          {draftMessage && <p className="studio-feedback success" role="status">{draftMessage}</p>}
+          {draftError && <p className="studio-feedback error" role="alert">{draftError}</p>}
           {(configLoading || configError) && (
             <div className={clsx('mt-3 text-xs', configError ? 'text-red-500' : 'text-gray-400')}>
               {configError || '正在读取默认模型……'}
@@ -668,108 +721,50 @@ export default function HomePage({ onStartProject, onResumeProject, onDeleteSess
           )}
         </div>
 
-        {/* 示例卡片 */}
-        <div className="xyq-inspiration mb-10">
-          <h3 className="text-sm font-semibold text-gray-900 mb-3">
-            灵感示例
-          </h3>
-          <div className="xyq-inspiration-grid grid grid-cols-2 md:grid-cols-3 gap-2.5">
-            {PROMPT_EXAMPLES.map((ex, idx) => (
-              <button
-                key={idx}
-                onClick={() => handleExampleClick(ex.text)}
-                className="xyq-inspiration-card text-left bg-white rounded-xl border border-gray-200 hover:shadow-sm transition-all group"
-              >
-                <div
-                  className="xyq-inspiration-media"
-                  style={{ backgroundImage: `url(${INSPIRATION_IMAGES[idx]})` }}
-                />
-                <div className="xyq-inspiration-copy">
-                  <div className="text-sm font-medium text-white transition-colors mb-1">
-                    {ex.title}
-                  </div>
-                  <div className="text-xs text-white/70 line-clamp-2">
-                    {ex.description}
-                  </div>
-                </div>
+        <section className="studio-tools" aria-label="创作工具">
+          {[
+            { href: '/sandbox', label: '临时工作台', note: '自由试验你的画面', icon: Layers },
+            { href: '/pipelines/standard', label: '文艺短视频', note: '给文字一段影像', icon: Clapperboard },
+            { href: '/pipelines/action-transfer', label: '动作迁移', note: '让角色动起来', icon: Repeat2 },
+            { href: '/pipelines/digital-human', label: '数字人口播', note: '让表达更生动', icon: UserRound },
+          ].map(tool => <Link href={tool.href} key={tool.href} className="studio-tool-card"><tool.icon size={21} /><div><strong>{tool.label}</strong><span>{tool.note}</span></div><ArrowUpRight size={15} /></Link>)}
+        </section>
+
+        <section id="inspiration" className="xyq-inspiration">
+          <div className="studio-section-heading"><div><span className="studio-eyebrow">A LITTLE INSPIRATION</span><h2>好故事，始于一个好画面</h2></div><span className="studio-section-note">选择灵感，写下你的版本</span></div>
+          <div className="studio-filters" aria-label="灵感分类">{INSPIRATION_CATEGORIES.map(value => <button key={value} aria-pressed={category === value} onClick={() => setCategory(value)}>{value}</button>)}<span>灵感封面 · 点击填入创意</span></div>
+          <div className="xyq-inspiration-grid grid">
+            {filterPresets(category).map(ex => (
+              <button key={ex.title} onClick={() => handleExampleClick(ex.text)} className="xyq-inspiration-card text-left group" aria-label={`使用灵感：${ex.title}`}>
+                <div className="xyq-inspiration-media"><MediaImage src={ex.image} alt={`${ex.title}灵感封面`} loading="lazy" /><span className="studio-genre">{ex.category}</span><span className="studio-use-prompt"><Plus size={15} />使用灵感</span></div>
+                <div className="xyq-inspiration-copy"><div>{ex.title}<ArrowUpRight size={16} /></div><div>{ex.description}</div></div>
               </button>
             ))}
           </div>
-        </div>
-      </div>
+        </section>
 
-      {/* 历史记录区域 */}
-      {history.length > 0 && (
-        <div className="xyq-history w-full max-w-6xl px-6 pb-12 flex-shrink-0">
-          <div className="flex items-center gap-2 mb-4">
-            <Clock className="w-4 h-4 text-gray-400" />
-            <h3 className="text-sm font-medium text-gray-600">历史记录</h3>
-            <button
-              onClick={() => setManageMode(m => !m)}
-              className={`ml-auto text-xs px-2 py-0.5 rounded transition-colors ${
-                manageMode ? 'bg-red-100 text-red-600' : 'bg-gray-100 text-gray-500 hover:bg-gray-200'
-              }`}
-            >
-              {manageMode ? '完成' : '管理'}
-            </button>
-          </div>
-          <div className="max-h-[60vh] overflow-y-auto pr-1">
-            <div className="grid grid-cols-2 gap-3">
-              {history.map(item => {
-                const progress = stageProgressLabel(item.stages);
-                return (
-                <div key={item.id} className="relative group">
-                  <div
-                    onClick={() => !manageMode && onResumeProject(item.id)}
-                    className={`xyq-history-card w-full text-left p-4 bg-white rounded-xl border border-gray-200 hover:shadow-sm transition-all ${!manageMode ? 'cursor-pointer' : ''}`}
-                  >
-                  <div className="flex items-start justify-between gap-2">
-                    <div className="flex-1 min-w-0">
-                      <div className="text-sm font-medium text-gray-700 group-hover:text-blue-600 transition-colors truncate">
-                        {item.idea}
-                      </div>
-                      <div className="flex items-center gap-2 mt-1.5 flex-wrap">
-                        {item.style && (
-                          <span className="text-[10px] bg-gray-100 text-gray-500 px-1.5 py-0.5 rounded">
-                            {item.style}
-                          </span>
-                        )}
-                        <span className="text-[10px] text-gray-400">{item.date}</span>
-                      </div>
-                      <div className={`flex items-center gap-1 mt-1.5 text-[10px] font-medium ${progress.color}`}>
-                        {item.stages && Object.keys(item.stages).filter(k => ["completed", "session_completed"].includes(item.stages![k])).length >= STAGES.length ? (
-                          <CheckCircle className="w-3 h-3" />
-                        ) : (
-                          <span className="w-1.5 h-1.5 rounded-full bg-current flex-shrink-0" />
-                        )}
-                        <span>{progress.text}</span>
-                      </div>
-                    </div>
-                    {manageMode ? (
-                      <button
-                        onClick={(e) => { e.stopPropagation(); setDeleteTarget(item.id); setDeleteError(''); }}
-                        className="w-6 h-6 rounded-full bg-red-500 text-white flex items-center justify-center hover:bg-red-600 transition-colors flex-shrink-0 mt-0.5"
-                        title="删除"
-                      >
-                        <Trash2 className="w-3 h-3" />
-                      </button>
-                    ) : (
-                      <ArrowRight className="w-4 h-4 text-gray-300 group-hover:text-blue-400 transition-colors flex-shrink-0 mt-0.5" />
-                    )}
-                  </div>
-                </div>
-                </div>
-                );
-              })}
-            </div>
-          </div>
-        </div>
-      )}
+        <section id="projects" className="xyq-history">
+          <div className="studio-section-heading"><div><span className="studio-eyebrow">YOUR CREATIVE SPACE</span><h2>我的项目 <span className="studio-project-count">{historyLoading ? '…' : historyError ? '—' : history.length}</span></h2></div><div className="studio-project-controls"><label className="studio-search"><Search size={15} /><input aria-label="搜索项目" placeholder="寻找你的故事" value={query} onChange={e => setQuery(e.target.value)} />{query && <button aria-label="清除项目搜索" onClick={() => setQuery('')}><X size={14} /></button>}</label><button className="studio-manage" onClick={() => setManageMode(m => !m)}>{manageMode ? '完成管理' : '管理'}</button></div></div>
+          {historyLoading ? <div className="studio-project-skeleton" role="status" aria-label="正在读取项目"><span /><span /><span /></div>
+            : historyError ? <div className="studio-empty" role="alert"><FolderOpen size={28} /><strong>暂时没有读到你的项目</strong><p>{historyError}</p><button onClick={onRefreshHistory}>重新读取项目</button></div>
+            : visibleProjects.length === 0 ? <div className="studio-empty"><FolderOpen size={28} /><strong>{query ? '没有找到这个故事' : '你的下一部作品，从这里开始'}</strong><p>{query ? '换个关键词，或清除搜索看看全部项目。' : '把灵感写在上方，保存草稿后就能在这里继续。'}</p><button onClick={() => query ? setQuery('') : promptRef.current?.focus()}>{query ? '查看全部项目' : '写下第一个故事'}</button></div>
+            : <div className="studio-project-grid">{visibleProjects.map(item => {
+              const progress = projectSummary(item.stages, STAGES.map(stage => stage.id));
+              return <article className="xyq-history-card studio-project-card" key={item.id}>
+                <div className="studio-project-top"><span className="studio-project-icon"><Clapperboard size={22} /></span><span className={`studio-status ${progress.state}`}>{progress.label}</span></div>
+                <button className="studio-project-open" onClick={() => onResumeProject(item.id)}><strong>{item.idea || '未命名故事'}</strong><span>{item.date || '日期待同步'}{item.style ? ` · ${STYLES.find(style => style.id === item.style)?.label || item.style}` : ''}</span></button>
+                <div className="studio-project-bottom"><span><Clock size={12} /> {progress.completed} / {progress.total} 阶段</span>{manageMode ? <button className="studio-delete-project" aria-label={`删除项目：${item.idea}`} onClick={() => { setDeleteTarget(item.id); setDeleteError(''); }}><Trash2 size={16} /></button> : <ArrowUpRight size={17} />}</div>
+                <div className="studio-project-progress" aria-label={`已完成 ${progress.completed} 个阶段`}><span style={{ width: `${progress.completed / progress.total * 100}%` }} /></div>
+              </article>;
+            })}</div>}
+        </section>
+        <footer className="studio-footer"><span>小云雀 · 给每个故事一个开始</span><span>本地创作工作室</span></footer>
+      </div>
 
       {/* 删除确认弹窗 */}
       {deleteTarget && (
         <div className="xyq-dialog-scrim fixed inset-0 z-50 flex items-center justify-center bg-black/40">
-          <div className="xyq-delete-dialog bg-white rounded-2xl shadow-xl w-80 p-6 relative" role="dialog" aria-modal="true" aria-labelledby="delete-dialog-title">
+          <div ref={deleteDialogRef} className="xyq-delete-dialog bg-white rounded-2xl shadow-xl w-80 p-6 relative" role="dialog" aria-modal="true" aria-labelledby="delete-dialog-title">
             <div className="flex items-center gap-2 mb-4">
               <Trash2 className="w-4 h-4 text-red-500" />
               <h4 id="delete-dialog-title" className="text-sm font-semibold text-gray-700">删除项目</h4>
@@ -779,6 +774,7 @@ export default function HomePage({ onStartProject, onResumeProject, onDeleteSess
             <div className="flex gap-2">
               <button
                 onClick={() => { setDeleteTarget(null); setDeleteError(''); }}
+                disabled={deleting}
                 className="flex-1 text-sm py-1.5 rounded-lg border border-gray-200 text-gray-600 hover:bg-gray-50"
               >
                 取消

@@ -22,6 +22,7 @@ import {
 import { getProjectStatus as computeProjectStatus } from '@/lib/projectStatus';
 import TopBar, { STAGES, type ModelConfig } from './TopBar';
 import HomePage, { type ProjectParams } from './HomePage';
+import { saveStudioDraft } from '@/lib/studio';
 import {
   ScriptStage,
   CharacterStage,
@@ -132,6 +133,10 @@ export default function WorkflowPanel() {
   const [stageStates, setStageStates] = useState<Record<string, StageState>>(initStageStates());
   const [isRunning, setIsRunning] = useState(false);
   const [history, setHistory] = useState<HistoryItem[]>([]);
+  const [historyLoading, setHistoryLoading] = useState(true);
+  const [historyError, setHistoryError] = useState('');
+  const historyRequestRef = useRef(0);
+  const savingDraftRef = useRef(false);
   const [projectParams, setProjectParams] = useState<ProjectParams | null>(null);
   const [autoMode, setAutoMode] = useState(false);
 
@@ -280,26 +285,41 @@ export default function WorkflowPanel() {
     pollRef.current.delete(key);
   }, [updateStageState]);
 
-  // 页面加载时从后端获取历史记录
-  useEffect(() => {
-    fetchSessions()
-      .then(sessions => {
-        setHistory(
-          sessions.map((s) => ({
-            id: s.id,
-            idea: (s.title || s.idea || 'Untitled').slice(0, 60),
-            style: s.style || '',
-            date: s.date
-              ? new Date(s.date * 1000).toLocaleDateString('zh-CN')
-              : '',
-            status: Object.keys(s.status || {}).length > 0 ? 'partial' : 'new',
-            stages: s.status || {},
-          }))
-        );
-      })
-      .catch(() => {});
+  const readHistory = useCallback(() => {
+    const request = ++historyRequestRef.current;
+    fetchSessions().then(sessions => {
+      if (request !== historyRequestRef.current) return;
+      setHistory(sessions.map(s => ({
+        id: s.id, idea: (s.title || s.idea || '未命名故事').slice(0, 60), style: s.style || '',
+        date: s.date ? new Date(s.date * 1000).toLocaleDateString('zh-CN') : '',
+        status: Object.keys(s.status || {}).length > 0 ? 'partial' : 'new', stages: s.status || {},
+      })));
+    }).catch((error: unknown) => {
+      if (request === historyRequestRef.current) setHistoryError(errorMessage(error) || '请检查本地服务后重新读取。');
+    }).finally(() => { if (request === historyRequestRef.current) setHistoryLoading(false); });
   }, []);
 
+  const refreshHistory = useCallback(() => {
+    setHistoryLoading(true); setHistoryError('');
+    readHistory();
+  }, [readHistory]);
+
+  useEffect(() => {
+    readHistory();
+    return () => { historyRequestRef.current += 1; };
+  }, [readHistory]);
+
+  const handleSaveDraft = async (params: ProjectParams) => {
+    if (savingDraftRef.current) return;
+    savingDraftRef.current = true;
+    try {
+      const result = await saveStudioDraft(params);
+      historyRequestRef.current += 1;
+      setHistoryLoading(false); setHistoryError('');
+      setHistory(previous => [{ id: result.session_id, idea: params.idea.slice(0, 60) || '上传的故事',
+        style: params.style, date: new Date().toLocaleDateString('zh-CN'), status: 'new', stages: result.status }, ...previous]);
+    } finally { savingDraftRef.current = false; }
+  };
 
   // ── 停止执行 ──
   const handleStop = async () => {
@@ -1342,7 +1362,7 @@ export default function WorkflowPanel() {
   const showHome = activeStage === null;
 
   return (
-    <div className="flex h-screen w-full min-w-0 flex-col bg-gray-50/50">
+    <div className="xyq-workflow flex h-screen w-full min-w-0 flex-col bg-gray-50/50">
       <TopBar
         activeStage={activeStage}
         stageStatuses={stageStatuses}
@@ -1365,6 +1385,10 @@ export default function WorkflowPanel() {
             onResumeProject={handleResumeProject}
             onDeleteSession={handleDeleteSession}
             history={history}
+            onSaveDraft={handleSaveDraft}
+            historyLoading={historyLoading}
+            historyError={historyError}
+            onRefreshHistory={refreshHistory}
           />
         ) : (
           activeStage && Component && state ? (

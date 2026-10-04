@@ -123,7 +123,7 @@ npm start -- --hostname 127.0.0.1 --port 3000
 
 打开 http://127.0.0.1:3000 ，应看到创意输入框和灵感示例。打开 http://127.0.0.1:8000/api/health ，应看到 `status` 为 `ok`。停止服务时，在对应终端按 Control+C。
 
-验证方法：在后端目录执行 `.venv/bin/python -m pytest -q`；在前端目录执行 `npm run lint` 和 `npm run build`。初次运行报告记录了旧问题；最新结果为后端 294/294、前端回归 33/33、类型检查、全量 Lint 与生产构建通过。手机侧栏与顶栏已修复，见 [前端整改证据](docs/evidence/阶段2/前端整改/验收报告.md)。媒体归档见 [媒体归档证据](docs/evidence/阶段2/媒体归档/验收报告.md)，生成计划验证见 [生成计划证据](docs/evidence/阶段2/生成计划/验收报告.md)，费用与任务见 [对应证据](docs/evidence/阶段2/费用与任务/验收报告.md)，最新预检见 [万相离线预检证据](docs/evidence/阶段2/万相预检/验收报告.md)。
+验证方法：在后端目录执行 `.venv/bin/python -m pytest -q`；在前端目录执行 `npm run lint` 和 `npm run build`。初次运行报告记录了旧问题；最新结果为后端 522/522、前端回归 49/49、类型检查、全量 Lint 与生产构建通过。手机侧栏与顶栏已修复，见 [前端整改证据](docs/evidence/阶段2/前端整改/验收报告.md)。媒体归档见 [媒体归档证据](docs/evidence/阶段2/媒体归档/验收报告.md)，生成计划验证见 [生成计划证据](docs/evidence/阶段2/生成计划/验收报告.md)，费用与任务见 [对应证据](docs/evidence/阶段2/费用与任务/验收报告.md)，最新预检见 [万相离线预检证据](docs/evidence/阶段2/万相预检/验收报告.md)。
 
 当前模型密钥全部未配置，真实生成待验。在“设置”页配置选定平台密钥后才能进行真实生成；不要将密钥发到聊天或写入仓库。后端本地配置文件已由其 `.gitignore` 排除。本次未调用付费模型。
 
@@ -299,3 +299,14 @@ python3.12 scripts/project.py wan-replay --scenario success --action status
 检查存于私有资产库 `execution-checks.json`（schema 1），与资产／计划／准备共用锁，原子写入并同步目录。备份保留整个资产库和会话目录；人工数据继续在被忽略的 `data/generation-task-demo/`。损坏、未知版本、重复字段、缺失字段或符号链接返回安全 503 并保留文件。记录没有完整 Prompt、Base64、Key、素材路径或签名链接；actual_charged_minor=null、real_money_reserved=false、submit_attempts=0、network_used=false、real_execution_allowed=false。
 
 模块验证在后端目录运行 `.venv/bin/python -m pytest tests/test_execution_checks.py tests/test_wan_http_transport.py -q`，新增 88 项。最终后端 522/522（原 434 保留），前端 33/33、类型／Lint／生产构建通过，实际隔离 HTTP 与人工服务重启恢复通过；原 SIM 账本、资产库和预检历史字节保持。完整检查仍使用 `python3.12 scripts/project.py check`。本轮不收费，整体阶段 2 与真实模型继续待验；下一步真实接线之前须确定账户报价、实际额度和逐次付费／素材发送授权。
+
+
+## 小云雀前端体验升级
+
+本轮按“公开设计调研 → 方案和文档 → 开发 → 验证 → 本地提交”实施。模型接入后置。首页改为深色创作工作室，包含画面灵感、创作输入、四个工具捷径和可检索的实际项目；原六阶段、工作台、三条流水线、上传和设置保留。
+
+设计参考和取舍见 [调研与方案](docs/阶段文档/前端体验升级-设计调研与方案.md)，实现边界见 [适配声明](docs/阶段文档/前端体验升级-技术适配声明.md) 与 [开发文档](docs/阶段文档/阶段3-第1子阶段-前端体验升级开发文档.md)。前后对照、桌面／手机截图、操作步骤和阶段闸门见 [前端体验证据](docs/evidence/阶段3/前端体验/验收报告.md)。
+
+从根目录分别启动 `python3.12 scripts/project.py backend`、`python3.12 scripts/project.py frontend`，打开 http://127.0.0.1:3000 。选一个灵感封面或输入故事，点击“保存创作草稿”，再到“我的项目”打开；刷新或重启后仍能恢复。普通 Enter 换行，Ctrl／Command+Enter 保存草稿。保存只持久化项目，不调用模型；生成入口属于原有功能，本轮未验证真实生成。未提交内容离开页面不会自动保存。
+
+自动检查运行 `python3.12 scripts/project.py check`。本轮后端 522/522、前端 49/49（原 33 项保留）、类型检查、Lint 0 错误／0 警告、生产构建通过；浏览器七个实际页面与首页配置面板在四种宽度下共 32 项检查通过，另已验证真实草稿保存、URL／刷新／服务重启恢复及读取失败后重试。手机检查为 Chromium 宽度模拟，真机反馈与模型效果仍待验。无新增依赖、收费资源或平台请求，不代表整体 PRD、正式前端或上线验收完成。

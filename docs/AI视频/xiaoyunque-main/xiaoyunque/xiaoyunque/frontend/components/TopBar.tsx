@@ -365,7 +365,7 @@ export default function TopBar({
           />
           <div className="xyq-topbar-brand-text flex flex-col leading-tight">
             <span className="font-bold text-sm text-gray-800 tracking-tight">
-              XiaoYunQue
+              小云雀
             </span>
           </div>
         </button>
@@ -395,6 +395,7 @@ export default function TopBar({
                 )}
                 <button
                   onClick={() => onStageClick(stage.id)}
+                  aria-current={isActive ? 'step' : undefined}
                   className={clsx(
                     'flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all whitespace-nowrap flex-shrink-0',
                     isActive
