@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useMemo } from 'react';
 import { Save, X, Code, LayoutList, Users, MapPin, Film, Sparkles, BookOpen, Lightbulb, Target, User, Crosshair, RefreshCw, Palette } from 'lucide-react';
 import type { StageViewProps } from './types';
 import StageActions from './StageActions';
@@ -52,6 +52,7 @@ interface ActCompleteData {
 }
 
 interface ScriptEpisode {
+  episode_number?: number;
   act_number: number;
   act_title: string;
   content: string;
@@ -68,7 +69,17 @@ interface ScriptData {
   overall_style?: string;
   mood?: string;
   session_id?: string;
-  [key: string]: any;
+  phase?: string;
+  beat_sheet?: string;
+  completed_acts?: ActCompleteData[];
+  logline_options?: LoglineData[];
+  selected_logline?: LoglineData;
+  logline_data?: LoglineData;
+  logline_summary?: LoglineData;
+  new_characters?: ScriptCharacter[];
+  new_settings?: ScriptSetting[];
+  new_episodes?: ScriptEpisode[];
+  [key: string]: unknown;
 }
 
 /* ─── 角色色彩 ─── */
@@ -112,8 +123,8 @@ function LoglineSummaryBar({ logline }: { logline: LoglineData }) {
   );
 }
 
-export default function ScriptStage({ state, onConfirm, onIntervene, onRegenerate, onSaveSelections, showConfirm, isRunning, hasPendingItems, hasNextStageStarted }: StageViewProps) {
-  const data: ScriptData = state.artifact || {};
+export default function ScriptStage({ state, onConfirm, onIntervene, onRegenerate, showConfirm, isRunning, hasPendingItems, hasNextStageStarted }: StageViewProps) {
+  const data = useMemo(() => (state.artifact || {}) as ScriptData, [state.artifact]);
 
   const isLoglinePhase = data.phase === 'logline_selection' || data.phase === 'logline_confirm' || data.phase === 'mode_selection';
 
@@ -169,7 +180,7 @@ export default function ScriptStage({ state, onConfirm, onIntervene, onRegenerat
   const cancelEdit = useCallback(() => setIsEditing(false), []);
 
   /* ─── 编辑辅助 ─── */
-  const updateField = (field: string, value: any) => setEditData(prev => ({ ...prev, [field]: value }));
+  const updateField = (field: string, value: unknown) => setEditData(prev => ({ ...prev, [field]: value }));
 
   const updateCharacter = (idx: number, patch: Partial<ScriptCharacter>) => {
     setEditData(prev => ({
@@ -258,7 +269,7 @@ export default function ScriptStage({ state, onConfirm, onIntervene, onRegenerat
                             <span className="flex items-center justify-center w-7 h-7 rounded-full bg-purple-100 text-purple-700 text-xs font-bold flex-shrink-0">{sc.scene_number}</span>
                             <span className="px-2 py-0.5 bg-green-50 text-green-600 text-xs rounded-full">{sc.location}</span>
                             <div className="flex flex-wrap gap-1">
-                              {(sc.characters || []).map((c: any, ci: number) => (
+                              {(sc.characters || []).map((c, ci) => (
                                 <span key={ci} className="px-2 py-0.5 bg-blue-50 text-blue-600 text-xs rounded-full">{c}</span>
                               ))}
                             </div>
@@ -526,7 +537,7 @@ export default function ScriptStage({ state, onConfirm, onIntervene, onRegenerat
                             <span className="flex items-center justify-center w-7 h-7 rounded-full bg-purple-100 text-purple-700 text-xs font-bold flex-shrink-0">{sc.scene_number}</span>
                             <span className="px-2 py-0.5 bg-green-50 text-green-600 text-xs rounded-full">{sc.location}</span>
                             <div className="flex flex-wrap gap-1">
-                              {(sc.characters || []).map((c: any, ci: number) => (
+                              {(sc.characters || []).map((c, ci) => (
                                 <span key={ci} className="px-2 py-0.5 bg-blue-50 text-blue-600 text-xs rounded-full">{c}</span>
                               ))}
                             </div>
@@ -567,7 +578,7 @@ export default function ScriptStage({ state, onConfirm, onIntervene, onRegenerat
                       <Users className="w-4 h-4" /> 新增角色
                     </h4>
                     <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
-                      {data.new_characters.map((c: any, i: number) => (
+                      {data.new_characters.map((c, i) => (
                         <div key={i} className="bg-white p-3 rounded-lg border border-amber-100 shadow-sm flex flex-col gap-1">
                           <div className="font-bold text-amber-900 text-sm">{c.name} <span className="text-[10px] text-amber-600 font-normal bg-amber-100 px-1.5 py-0.5 rounded ml-1">{c.role || '配角'}</span></div>
                           <p className="text-[11px] text-gray-600 line-clamp-2 md:line-clamp-none">{c.description}</p>
@@ -583,7 +594,7 @@ export default function ScriptStage({ state, onConfirm, onIntervene, onRegenerat
                       <MapPin className="w-4 h-4" /> 新增场景
                     </h4>
                     <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
-                      {data.new_settings.map((s: any, i: number) => (
+                      {data.new_settings.map((s, i) => (
                         <div key={i} className="bg-white p-3 rounded-lg border border-emerald-100 shadow-sm flex flex-col gap-1">
                           <div className="font-bold text-emerald-900 text-sm">{s.name}</div>
                           <p className="text-[11px] text-gray-600 line-clamp-2 md:line-clamp-none">{s.description}</p>
@@ -594,7 +605,7 @@ export default function ScriptStage({ state, onConfirm, onIntervene, onRegenerat
                 )}
 
                 <div className="space-y-6">
-                  {data.new_episodes.map((ep: any, i: number) => (
+                  {data.new_episodes.map((ep, i) => (
                     <div key={`new-${i}`} className="bg-purple-50 border-2 border-purple-300 rounded-xl overflow-hidden shadow-md">
                       <div className="bg-gradient-to-r from-purple-200 to-purple-100 px-4 py-3 flex items-center justify-between border-b border-purple-200/50">
                         <h4 className="font-bold text-purple-900">第 {ep.episode_number || (data.episodes ? data.episodes.length + i + 1 : i + 1)} 集：{ep.act_title}</h4>

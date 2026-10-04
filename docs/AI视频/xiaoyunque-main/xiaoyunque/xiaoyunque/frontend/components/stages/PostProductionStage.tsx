@@ -1,15 +1,15 @@
 'use client';
 
-import React from 'react';
+import React, { useMemo } from 'react';
 import { Download, Film } from 'lucide-react';
 import type { StageViewProps } from './types';
 import { assetUrl } from './utils';
 import StageProgress from './StageProgress';
 import StageActions from './StageActions';
 
-export default function PostProductionStage({ state, onConfirm, onRegenerate, showConfirm, isRunning, hasPendingItems, hasNextStageStarted, artifacts, scriptArtifact }: StageViewProps) {
+export default function PostProductionStage({ state, onConfirm, onRegenerate, isRunning, hasPendingItems, hasNextStageStarted, artifacts, scriptArtifact }: StageViewProps) {
   // 提取最终视频列表
-  const finalVideos: any[] = state.artifact?.final_videos || [];
+  const finalVideos = useMemo(() => state.artifact?.final_videos || [], [state.artifact?.final_videos]);
   
   // 兼容旧格式及其变形
   const legacyVideo = state.artifact?.final_video;
@@ -19,7 +19,7 @@ export default function PostProductionStage({ state, onConfirm, onRegenerate, sh
     // 优先从 scriptArtifact 获取
     const episodes = scriptArtifact?.episodes || artifacts?.storyboard?.episodes || artifacts?.script?.episodes || [];
     const map: Record<number, string> = {};
-    episodes.forEach((ep: any) => {
+    episodes.forEach((ep) => {
       const epNum = ep.episode_number || ep.episode;
       if (epNum) {
         map[Number(epNum)] = ep.act_title || ep.title || '';

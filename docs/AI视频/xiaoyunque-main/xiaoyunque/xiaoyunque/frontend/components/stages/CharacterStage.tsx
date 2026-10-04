@@ -1,6 +1,8 @@
 'use client';
 
-import React, { useState, useRef, useCallback, useEffect } from 'react';
+import MediaImage from '@/components/MediaImage';
+
+import React, { useState, useRef, useCallback, useEffect, useMemo } from 'react';
 import { Users, MapPin, RefreshCw, Save, X, ChevronLeft, ChevronRight, Loader, AlertCircle, ZoomIn, ImagePlus, Edit2, Upload } from 'lucide-react';
 import type { StageViewProps } from './types';
 import { assetUrl, assetVersionLabel } from './utils';
@@ -84,7 +86,7 @@ function ImageGallery({
               }`}
             >
               <div className="relative group/img">
-                <img
+                <MediaImage
                   src={assetUrl(path)}
                   alt={`v${i + 1}`}
                   className="h-32 w-auto object-cover"
@@ -331,8 +333,8 @@ function AssetRow({
 
 /* ─── 主组件 ─── */
 export default function CharacterStage({ state, sessionId, onConfirm, onIntervene, onRegenerate, onUpdateArtifact, onSaveSelections, showConfirm, isRunning, hasPendingItems, hasNextStageStarted }: StageViewProps) {
-  const characters: AssetVersion[] = state.artifact?.characters || [];
-  const settingsData: AssetVersion[] = state.artifact?.settings || [];
+  const characters = useMemo(() => state.artifact?.characters || [], [state.artifact?.characters]);
+  const settingsData = useMemo(() => state.artifact?.settings || [], [state.artifact?.settings]);
 
   const [editChars, setEditChars] = useState<Record<string, string>>({});
   const [editSets, setEditSets] = useState<Record<string, string>>({});
@@ -388,7 +390,7 @@ export default function CharacterStage({ state, sessionId, onConfirm, onInterven
   };
 
   const saveEdit = (id: string) => {
-    const selections: Record<string, any> = {};
+    const selections: Record<string, unknown> = {};
     characters.forEach(c => { selections[c.id] = selectedChars[c.id] || c.selected; });
     settingsData.forEach(s => { selections[s.id] = selectedSets[s.id] || s.selected; });
     selections._editDescs = {

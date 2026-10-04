@@ -1,7 +1,9 @@
 'use client';
 
+import MediaImage from '@/components/MediaImage';
+
 import React, { useState, useRef, useEffect } from 'react';
-import { Image as ImageIcon, RefreshCw, ChevronLeft, ChevronRight, Loader, AlertCircle, ZoomIn, ImagePlus, Edit2, Save, X, Upload } from 'lucide-react';
+import { RefreshCw, ChevronLeft, ChevronRight, Loader, AlertCircle, ZoomIn, ImagePlus, Edit2, Save, X, Upload } from 'lucide-react';
 import type { StageViewProps } from './types';
 import { assetUrl, assetVersionLabel } from './utils';
 import { uploadArtifactImage } from '@/lib/workflowApi';
@@ -13,6 +15,9 @@ import ImageLightbox from './ImageLightbox';
 interface SceneItem {
   id: string;             // shot_001_01, shot_001_02, ...
   name: string;           // 场景1-镜头1
+  episode?: number;
+  episode_title?: string;
+  title?: string;
   index?: number;         // 全局编号
   description: string;    // 视觉提示词
   selected: string;       // 当前选中的文件路径
@@ -84,7 +89,7 @@ function ImageGallery({
               }`}
             >
               <div className="relative group/img">
-                <img
+                <MediaImage
                   src={assetUrl(path)}
                   alt={`v${i + 1}`}
                   className="h-32 w-auto object-cover"
@@ -180,7 +185,7 @@ function SceneRow({
           <span className="flex items-center justify-center h-6 px-1.5 rounded-full bg-emerald-100 text-emerald-700 text-[10px] font-bold flex-shrink-0 whitespace-nowrap">
             {scene.index ?? scene.id.replace('Scene_', '')}
           </span>
-          <span className="text-sm font-semibold text-gray-800 truncate">{scene.name || (scene as any).title || `片段 ${scene.index}`}</span>
+          <span className="text-sm font-semibold text-gray-800 truncate">{scene.name || scene.title || `片段 ${scene.index}`}</span>
           {isPending && (
             <span className="text-[10px] bg-gray-50 text-gray-500 px-1.5 py-0.5 rounded">等待中</span>
           )}
@@ -350,14 +355,14 @@ export default function ReferenceStage({ state, sessionId, onConfirm, onInterven
   const [regeneratingIds, setRegeneratingIds] = useState<Set<string>>(new Set());
   const regenerationStartCounts = useRef<Record<string, number>>({});
   const [editingIds, setEditingIds] = useState<Set<string>>(new Set());
-  const [savingIds, setSavingIds] = useState<Set<string>>(new Set());
+  const [, setSavingIds] = useState<Set<string>>(new Set());
   const [uploadingIds, setUploadingIds] = useState<Set<string>>(new Set());
 
   // 提取剧集标题映射
   const episodeTitleMap = React.useMemo(() => {
     const map: Record<number, string> = {};
     if (scriptArtifact?.episodes) {
-      scriptArtifact.episodes.forEach((ep: any) => {
+      scriptArtifact.episodes.forEach((ep) => {
         // 关键修复：这里的字段名应该是 episode_number 和 act_title
         const epNum = ep.episode_number || ep.episode;
         const epTitle = ep.act_title || ep.title;
@@ -372,7 +377,7 @@ export default function ReferenceStage({ state, sessionId, onConfirm, onInterven
   const getSelected = (scene: SceneItem) => selectedVersions[scene.id] || scene.selected;
 
   // 兼容旧格式: scene_images: {Scene_1: "path"} → scenes: [{id, ...}]
-  const scenes: SceneItem[] = (() => {
+  const scenes: SceneItem[] = React.useMemo(() => {
     if (state.artifact?.scenes?.length) return state.artifact.scenes;
     if (state.artifact?.scene_images) {
       const si = state.artifact.scene_images as Record<string, string>;
@@ -392,20 +397,9 @@ export default function ReferenceStage({ state, sessionId, onConfirm, onInterven
         }));
     }
     return [];
-  })();
+  }, [state.artifact]);
 
   const canEdit = state.status === 'waiting' || state.status === 'completed';
-
-  // 当场景数据变化时，初始化编辑描述
-  useEffect(() => {
-    if (scenes.length > 0) {
-      setEditDescs(prev => {
-        const next: Record<string, string> = {};
-        scenes.forEach(s => { next[s.id] = prev[s.id] ?? s.description; });
-        return next;
-      });
-    }
-  }, [scenes]);
 
   // 当对应片段新增版本或失败时，仅清除该片段的重新生成状态，支持多个任务并行。
   useEffect(() => {
@@ -431,7 +425,7 @@ export default function ReferenceStage({ state, sessionId, onConfirm, onInterven
 
   // 保存单个提示词到后端 JSON
   const handleSavePrompt = async (sceneId: string) => {
-    const newPrompt = editDescs[sceneId];
+    const newPrompt = editDescs[sceneId] ?? scenes.find(item => item.id === sceneId)?.description;
     if (!newPrompt) return;
 
     setSavingIds(prev => new Set(prev).add(sceneId));
@@ -573,14 +567,14 @@ export default function ReferenceStage({ state, sessionId, onConfirm, onInterven
               // 按剧集分组
               const episodes: Record<number, SceneItem[]> = {};
               scenes.forEach(s => {
-                const ep = (s as any).episode || 1;
+                const ep = s.episode || 1;
                 if (!episodes[ep]) episodes[ep] = [];
                 episodes[ep].push(s);
               });
 
               return Object.keys(episodes).sort((a, b) => Number(a) - Number(b)).map(epNum => {
                 const epScenes = episodes[Number(epNum)];
-                const fallbackTitle = (epScenes[0] as any).episode_title || `第 ${epNum} 集`;
+                const fallbackTitle = epScenes[0].episode_title || `第 ${epNum} 集`;
                 const scriptTitle = episodeTitleMap[Number(epNum)];
                 const episodeTitle = scriptTitle ? `第 ${epNum} 集：${scriptTitle}` : fallbackTitle;
                 

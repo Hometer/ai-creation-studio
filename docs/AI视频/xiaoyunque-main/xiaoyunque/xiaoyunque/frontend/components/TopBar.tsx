@@ -1,4 +1,6 @@
-﻿'use client';
+'use client';
+
+import MediaImage from '@/components/MediaImage';
 
 import React, { useState, useRef, useEffect } from 'react';
 import { CheckCircle, Circle, Loader, Edit3, AlertCircle, Square, Zap, Settings2, ChevronDown } from 'lucide-react';
@@ -198,7 +200,7 @@ function ModelSelector({
       </button>
 
       {open && (
-        <div className="absolute right-0 top-full mt-1 w-72 bg-white rounded-xl shadow-lg border border-gray-200 p-3 z-50 space-y-2.5">
+        <div className="xyq-model-panel absolute right-0 top-full mt-1 w-72 bg-white rounded-xl shadow-lg border border-gray-200 p-3 z-50 space-y-2.5">
           <label className="flex flex-col gap-1">
             <span className="text-[10px] text-gray-400 font-medium">LLM 模型</span>
             <ProviderSelect value={config.llm_model} providers={llmProviders} onChange={v => update('llm_model', v)} />
@@ -327,9 +329,23 @@ export default function TopBar({
     }
   };
 
+  const headerRef = useRef<HTMLElement>(null);
+  const [headerHeight, setHeaderHeight] = useState(56);
+  useEffect(() => {
+    const header = headerRef.current;
+    if (!header) return;
+    const observer = new ResizeObserver(entries => {
+      const height = entries[0]?.borderBoxSize[0]?.blockSize;
+      if (height) setHeaderHeight(height);
+    });
+    observer.observe(header);
+    return () => observer.disconnect();
+  }, []);
+
   return (
     <>
     <header
+      ref={headerRef}
       className={clsx(
         'xyq-topbar fixed top-0 right-0 left-[var(--app-sidebar-width)] z-30 h-14 bg-white border-b border-gray-200 flex items-center px-4 min-w-0 transition-[left] duration-300',
         !hasSession && 'xyq-topbar-home'
@@ -339,14 +355,15 @@ export default function TopBar({
       {hasSession && (
         <button
           onClick={onHomeClick}
-          className="flex items-center gap-2 mr-6 hover:opacity-80 transition-opacity flex-shrink-0"
+          aria-label="返回首页"
+          className="xyq-topbar-brand flex items-center gap-2 mr-6 hover:opacity-80 transition-opacity flex-shrink-0"
         >
-          <img
+          <MediaImage
             src="/logo.jpg"
             alt="Logo"
             className="w-8 h-8 rounded-lg object-contain"
           />
-          <div className="flex flex-col leading-tight">
+          <div className="xyq-topbar-brand-text flex flex-col leading-tight">
             <span className="font-bold text-sm text-gray-800 tracking-tight">
               XiaoYunQue
             </span>
@@ -355,11 +372,11 @@ export default function TopBar({
       )}
 
       {/* 分隔线 */}
-      {hasSession && <div className="w-px h-6 bg-gray-200 mr-4 flex-shrink-0" />}
+      {hasSession && <div className="xyq-topbar-divider w-px h-6 bg-gray-200 mr-4 flex-shrink-0" />}
 
       {/* 阶段进度条 */}
       {hasSession && (
-        <nav className="flex items-center gap-1 overflow-x-auto flex-1 min-w-0">
+        <nav aria-label="创作阶段" className="xyq-stage-nav flex items-center gap-1 overflow-x-auto flex-1 min-w-0">
           {STAGES.map((stage, idx) => {
             const status = stageStatuses[stage.id] || 'pending';
             const isActive = activeStage === stage.id;
@@ -399,7 +416,7 @@ export default function TopBar({
       )}
 
       {/* 右侧控制区 */}
-      <div className="ml-auto flex min-w-0 items-center justify-end gap-2 flex-shrink-0">
+      <div className="xyq-topbar-controls ml-auto flex min-w-0 items-center justify-end gap-2 flex-shrink-0">
         {/* 模型选择 */}
         {hasSession && modelConfig && onModelConfigChange && (
           <ModelSelector config={modelConfig} onChange={onModelConfigChange} />
@@ -464,7 +481,7 @@ export default function TopBar({
 
       </div>
     </header>
-    <div className="h-14 flex-shrink-0" />
+    <div className="xyq-topbar-spacer flex-shrink-0" style={{ height: headerHeight }} />
     </>
   );
 }

@@ -1,9 +1,13 @@
 'use client';
 
-import { useState, useEffect, useRef, DragEvent } from 'react';
-import { Sparkles, Image, Video, MessageSquare, Zap, Loader2, Copy, Check, Trash2, X, FolderOpen, Upload, Globe, Hexagon } from 'lucide-react';
+import MediaImage from '@/components/MediaImage';
+
+import { errorMessage } from '@/lib/workflowTypes';
+
+import { useState, useEffect, useRef, useCallback, DragEvent } from 'react';
+import { Sparkles, Image as ImageIcon, Video, MessageSquare, Zap, Loader2, Copy, Check, Trash2, X, FolderOpen, Upload, Globe, Hexagon } from 'lucide-react';
 import { useSearchParams } from 'next/navigation';
-import type { ModelOption, ProviderGroup } from '@/config/models';
+import type { ProviderGroup } from '@/config/models';
 import BrandHeader from '@/components/BrandHeader';
 import { fetchSandboxTasks, uploadMedia } from '@/lib/workflowApi';
 import { fetchModelGroupsByType } from '@/lib/modelRegistry';
@@ -56,7 +60,7 @@ interface Tool {
 
 const tools: Tool[] = [
   { id: 'llm', name: 'LLM 对话', description: '文字生成', icon: <MessageSquare className="w-5 h-5" /> },
-  { id: 'vlm', name: '图片理解', description: '分析图片内容', icon: <Image className="w-5 h-5" /> },
+  { id: 'vlm', name: '图片理解', description: '分析图片内容', icon: <ImageIcon className="w-5 h-5" /> },
   { id: 't2i', name: '文生图', description: '文字生成图片', icon: <Sparkles className="w-5 h-5" /> },
   { id: 'i2i', name: '图生图', description: '图片风格转换', icon: <Zap className="w-5 h-5" /> },
   { id: 'video', name: '视频生成', description: '图生视频/文生视频', icon: <Video className="w-5 h-5" /> },
@@ -94,7 +98,7 @@ function SandboxOutput({ output }: { output?: HistoryRecord['output'] | null }) 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           {output.images.map((img, i) => (
             <a key={i} href={toMediaUrl(img)} target="_blank" rel="noopener noreferrer" className="group block rounded-xl border border-gray-200 bg-white overflow-hidden">
-              <img src={toMediaUrl(img)} alt={`output-${i}`} className="w-full h-56 object-contain bg-gray-50" />
+              <MediaImage src={toMediaUrl(img)} alt={`output-${i}`} className="w-full h-56 object-contain bg-gray-50" />
               <div className="px-3 py-2 text-xs text-gray-500 group-hover:text-indigo-600 border-t border-gray-100">查看图片</div>
             </a>
           ))}
@@ -180,7 +184,7 @@ function ImageUploader({
       });
       onChange(result.file_path);
     } catch (e) {
-      alert(e instanceof Error ? e.message : '上传失败');
+      alert(e instanceof Error ? errorMessage(e) : '上传失败');
     } finally {
       setUploading(false);
     }
@@ -235,7 +239,7 @@ function ImageUploader({
           />
           {value && isUrl && (
             <div className="relative group">
-              <img src={value} alt="预览" className="max-h-48 rounded-lg border border-gray-200" />
+              <MediaImage src={value} alt="预览" className="max-h-48 rounded-lg border border-gray-200" />
               <button
                 onClick={() => onChange('')}
                 className="absolute top-2 right-2 p-1.5 bg-red-500 text-white rounded-lg opacity-0 group-hover:opacity-100 transition-opacity"
@@ -253,7 +257,7 @@ function ImageUploader({
           {value && !isUrl ? (
             <div className="relative group">
               {previewUrl ? (
-                <img src={previewUrl} alt="上传的图片" className="max-h-48 rounded-lg border border-gray-200" />
+                <MediaImage src={previewUrl} alt="上传的图片" className="max-h-48 rounded-lg border border-gray-200" />
               ) : (
                 <div className="rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 text-xs text-gray-500 break-all">
                   已上传：{value}
@@ -324,34 +328,27 @@ export default function SandboxPage() {
   const [selectedRecord, setSelectedRecord] = useState<HistoryRecord | null>(null);
   const searchParams = useSearchParams();
 
-  const flattenModels = (groups: ProviderGroup[]): ModelOption[] => groups.flatMap(group => group.models);
-
-  const getModels = () => flattenModels(modelGroups[activeTool] || []);
-
+  const models = (modelGroups[activeTool] || []).flatMap(group => group.models);
+  const [modelChoice, setSelectedModel] = useState('');
+  const selectedModel = modelChoice || models.find(model => model.default)?.id || models[0]?.id || '';
+  const getModels = () => models;
   const firstModelId = (groups: ProviderGroup[]) => {
-    const models = flattenModels(groups);
-    return models.find(model => model.default)?.id || models[0]?.id || '';
+    const options = groups.flatMap(group => group.models);
+    return options.find(model => model.default)?.id || options[0]?.id || '';
   };
-
-  const [selectedModel, setSelectedModel] = useState('');
   const [webSearch, setWebSearch] = useState(false);
 
-  // 获取历史记录
-  const fetchHistory = async () => {
-    try {
-      const resp = await fetch('/api/sandbox/history');
-      const data = await readJsonResponse(resp);
-      if (data.success) {
-        setHistory(data.records);
-      }
-    } catch (e) {
-      console.error('Failed to fetch history:', e);
-    }
-  };
+  const fetchHistory = useCallback(async () => {
+    const resp = await fetch('/api/sandbox/history');
+    const data = await readJsonResponse(resp);
+    return data.success && Array.isArray(data.records) ? data.records as HistoryRecord[] : [];
+  }, []);
 
   useEffect(() => {
-    fetchHistory();
-  }, []);
+    let cancelled = false;
+    fetchHistory().then(records => { if (!cancelled) setHistory(records); }).catch(() => {});
+    return () => { cancelled = true; };
+  }, [fetchHistory]);
 
   useEffect(() => {
     let cancelled = false;
@@ -366,13 +363,12 @@ export default function SandboxPage() {
         if (cancelled) return;
         const groups = { llm, vlm, t2i, i2i, video };
         setModelGroups(groups);
-        setSelectedModel(current => current || firstModelId(groups[activeTool]));
       })
       .catch(() => {});
     return () => { cancelled = true; };
   }, []);
 
-  const applyRecord = (record: HistoryRecord) => {
+  const applyRecord = useCallback((record: HistoryRecord) => {
     setSelectedRecord(record);
     setActiveTool(record.tool as ToolType);
     setSelectedModel(record.model);
@@ -386,53 +382,39 @@ export default function SandboxPage() {
     setCurrentOutput(record.output || null);
     setLoading(false);
     setError(null);
-  };
+  }, []);
 
-  // 检查 URL 参数，自动加载历史记录
+  // URL navigation restores results after the history request, without resetting edits on every render.
   useEffect(() => {
     const recordId = searchParams.get('record');
-    if (recordId && history.length > 0) {
-      const record = history.find(r => r.id === recordId);
-      if (record) {
-        applyRecord(record);
-      }
-    }
-  }, [searchParams, history]);
-
-  useEffect(() => {
     const taskId = searchParams.get('task');
-    if (!taskId) return;
+    if (!recordId && !taskId) return;
     let cancelled = false;
-
-    const loadTask = async () => {
-      const historyRecord = history.find(r => r.id === taskId);
-      if (historyRecord) {
-        applyRecord(historyRecord);
-        return;
-      }
-
+    let timer: number | null = null;
+    const load = async () => {
+      const records = await fetchHistory();
+      if (cancelled) return;
+      setHistory(records);
+      const record = records.find(item => item.id === (recordId || taskId));
+      if (record) { applyRecord(record); if (timer !== null) window.clearInterval(timer); return; }
+      if (!taskId) return;
       const activeTasks = await fetchSandboxTasks();
+      if (cancelled) return;
       const activeTask = activeTasks.find(item => item.id === taskId);
-      if (!activeTask || cancelled) return;
+      if (!activeTask) { setLoading(false); return; }
       setActiveTool(activeTask.tool as ToolType);
       setSelectedModel(activeTask.model);
-      setPrompt(activeTask.input?.prompt || '');
-      setImageUrl(activeTask.input?.reference_image || activeTask.input?.images?.[0] || '');
+      setPrompt(typeof activeTask.input?.prompt === 'string' ? activeTask.input.prompt : '');
+      setImageUrl(typeof activeTask.input?.reference_image === 'string' ? activeTask.input.reference_image : Array.isArray(activeTask.input?.images) && typeof activeTask.input.images[0] === 'string' ? activeTask.input.images[0] : '');
       setCurrentOutput(null);
       setResult(null);
       setError(null);
       setLoading(true);
     };
-
-    loadTask().catch(() => {});
-    const timer = window.setInterval(() => {
-      fetchHistory().then(() => loadTask()).catch(() => {});
-    }, 3000);
-    return () => {
-      cancelled = true;
-      window.clearInterval(timer);
-    };
-  }, [searchParams, history]);
+    load().catch(() => {});
+    timer = taskId ? window.setInterval(() => load().catch(() => {}), 3000) : null;
+    return () => { cancelled = true; if (timer !== null) window.clearInterval(timer); };
+  }, [searchParams, fetchHistory, applyRecord]);
 
   // 删除历史记录
   const deleteRecord = async (id: string) => {
@@ -465,19 +447,9 @@ export default function SandboxPage() {
     setImageUrl('');
   };
 
-  // 监听工具变化，确保模型选择同步
-  useEffect(() => {
-    const models = getModels();
-    // 只有当前模型不在新工具的模型列表中时才更新
-    const currentInList = models.some(m => m.id === selectedModel);
-    if (!currentInList) {
-      setSelectedModel(models.find(m => m.default)?.id || models[0]?.id || '');
-    }
-  }, [activeTool, modelGroups, selectedModel]);
-
   // 检查是否可以提交
   const canSubmit = () => {
-    if (!selectedModel) return false;
+    if (!selectedModel || !models.some(model => model.id === selectedModel)) return false;
     if (!prompt.trim() && activeTool !== 't2i') return false;
     if ((activeTool === 'i2i') && !imageUrl) return false;
     return true;
@@ -493,7 +465,7 @@ export default function SandboxPage() {
 
     try {
       let apiUrl = '';
-      let body: Record<string, unknown> = {
+      const body: Record<string, unknown> = {
         model: selectedModel,
         prompt: prompt,
       };
@@ -543,12 +515,12 @@ export default function SandboxPage() {
           setCurrentOutput(output);
           setResult(data.result);
         }
-        fetchHistory();
+        fetchHistory().then(setHistory).catch(() => {});
       } else {
         setError(data.error || '未知错误');
       }
     } catch (e: unknown) {
-      setError(e instanceof Error ? e.message : '请求失败');
+      setError(e instanceof Error ? errorMessage(e) : '请求失败');
     } finally {
       setLoading(false);
     }
@@ -635,6 +607,7 @@ export default function SandboxPage() {
                       onChange={e => setSelectedModel(e.target.value)}
                       className="w-full px-4 py-2.5 border border-gray-200 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none"
                     >
+                      {modelChoice && !models.some(model => model.id === modelChoice) && <option value={modelChoice}>{modelChoice}（不可用）</option>}
                       {getModels().map(m => (
                         <option key={m.id} value={m.id}>{m.label}</option>
                       ))}

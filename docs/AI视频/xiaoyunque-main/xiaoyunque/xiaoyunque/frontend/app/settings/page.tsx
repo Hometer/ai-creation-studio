@@ -1,5 +1,7 @@
 'use client';
 
+import { errorMessage, isRecord } from '@/lib/workflowTypes';
+
 import { useEffect, useState } from 'react';
 import { CheckCircle, Loader2, Save, Settings, XCircle } from 'lucide-react';
 import BrandHeader from '@/components/BrandHeader';
@@ -12,7 +14,7 @@ import {
   type ProviderGroup,
 } from '@/config/models';
 
-type ConfigTree = Record<string, any>;
+type ConfigTree = Record<string, unknown>;
 
 type Field = {
   path: string;
@@ -141,16 +143,18 @@ const GROUPS: Array<{ title: string; description: string; fields: Field[] }> = [
 ];
 
 function getValue(config: ConfigTree, path: string) {
-  return path.split('.').reduce((current, key) => current?.[key], config);
+  return path.split('.').reduce<unknown>((current, key) => isRecord(current) ? current[key] : undefined, config);
 }
 
-function setValue(config: ConfigTree, path: string, value: any): ConfigTree {
+function setValue(config: ConfigTree, path: string, value: unknown): ConfigTree {
   const next = structuredClone(config || {});
   const parts = path.split('.');
   let current = next;
   for (const part of parts.slice(0, -1)) {
-    current[part] = current[part] || {};
-    current = current[part];
+    const child = current[part];
+    const branch = isRecord(child) ? child : {};
+    current[part] = branch;
+    current = branch;
   }
   current[parts[parts.length - 1]] = value;
   return next;
@@ -199,8 +203,8 @@ export default function SettingsPage() {
         setConfig(data.config || {});
         setPath(data.path || '');
         setSecretDrafts({});
-      } catch (e: any) {
-        setError(e.message || '读取配置失败');
+      } catch (e: unknown) {
+        setError(errorMessage(e) || '读取配置失败');
       } finally {
         setLoading(false);
       }
@@ -273,8 +277,8 @@ export default function SettingsPage() {
       setPath(data.path || '');
       setSecretDrafts({});
       setMessage('配置已保存');
-    } catch (e: any) {
-      setError(e.message || '保存配置失败');
+    } catch (e: unknown) {
+      setError(errorMessage(e) || '保存配置失败');
     } finally {
       setSaving(false);
     }

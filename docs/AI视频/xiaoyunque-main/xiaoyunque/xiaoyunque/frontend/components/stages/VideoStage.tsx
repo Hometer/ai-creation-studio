@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useRef, useCallback, useEffect } from 'react';
-import { Film, RefreshCw, ChevronLeft, ChevronRight, Loader, AlertCircle, AlertTriangle, Play, Edit2, Save, X } from 'lucide-react';
+import { RefreshCw, ChevronLeft, ChevronRight, Loader, AlertCircle, AlertTriangle, Play, Edit2, Save, X } from 'lucide-react';
 import type { StageViewProps } from './types';
 import { assetUrl } from './utils';
 import StageActions from './StageActions';
@@ -11,6 +11,9 @@ import StageProgress from './StageProgress';
 interface ClipItem {
   id: string;             // shot_001_01, shot_001_02, ...
   name: string;           // 场景1-镜头1
+  episode?: number;
+  episode_title?: string;
+  title?: string;
   index?: number;         // 全局编号
   description: string;    // 提示词
   duration?: number;      // 视频时长（秒）
@@ -336,7 +339,7 @@ export default function VideoStage({ state, sessionId, onConfirm, onIntervene, o
   const episodeTitleMap = React.useMemo(() => {
     const map: Record<number, string> = {};
     if (scriptArtifact?.episodes) {
-      scriptArtifact.episodes.forEach((ep: any) => {
+      scriptArtifact.episodes.forEach((ep) => {
         // 关键修复：兼容剧本阶段的字段名
         const epNum = ep.episode_number || ep.episode;
         const epTitle = ep.act_title || ep.title;
@@ -351,12 +354,12 @@ export default function VideoStage({ state, sessionId, onConfirm, onIntervene, o
   // 检查每个 clip 是否有对应的参考图
   const hasReferenceImage = useCallback((clipId: string): boolean => {
     if (!referenceArtifact?.scenes) return false;
-    const refScene = referenceArtifact.scenes.find((s: any) => s.id === clipId);
+    const refScene = referenceArtifact.scenes.find((s) => s.id === clipId);
     return !!(refScene?.selected || refScene?.versions?.length);
   }, [referenceArtifact]);
 
   // 兼容旧格式: video_clips: {Scene_1: "path"} → clips: [{id, ...}]
-  const clips: ClipItem[] = (() => {
+  const clips: ClipItem[] = React.useMemo(() => {
     if (state.artifact?.clips?.length) return state.artifact.clips;
     if (state.artifact?.video_clips) {
       const vc = state.artifact.video_clips as Record<string, string>;
@@ -376,7 +379,7 @@ export default function VideoStage({ state, sessionId, onConfirm, onIntervene, o
         }));
     }
     return [];
-  })();
+  }, [state.artifact]);
 
   const [selectedVersions, setSelectedVersions] = useState<Record<string, string>>({});
   const [editDescs, setEditDescs] = useState<Record<string, string>>({});
@@ -384,17 +387,6 @@ export default function VideoStage({ state, sessionId, onConfirm, onIntervene, o
   const regenerationStartCounts = useRef<Record<string, number>>({});
   const [editingIds, setEditingIds] = useState<Set<string>>(new Set());
   const [savingIds, setSavingIds] = useState<Set<string>>(new Set());
-
-  // 当分镜数据变化时，初始化编辑描述
-  useEffect(() => {
-    if (clips.length > 0) {
-      setEditDescs(prev => {
-        const next: Record<string, string> = {};
-        clips.forEach(c => { next[c.id] = prev[c.id] ?? c.description; });
-        return next;
-      });
-    }
-  }, [clips]);
 
   // 当对应片段新增版本或失败时，仅清除该片段的重新生成状态，支持多个任务并行。
   useEffect(() => {
@@ -414,15 +406,14 @@ export default function VideoStage({ state, sessionId, onConfirm, onIntervene, o
       });
       return changed ? next : prev;
     });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [clips]);
+  }, [clips, regeneratingIds.size]);
 
   const hasClips = clips.length > 0;
   const canEdit = state.status === 'waiting' || state.status === 'completed';
 
   // 保存单个提示词到后端 JSON
   const handleSavePrompt = async (clipId: string) => {
-    const newPrompt = editDescs[clipId];
+    const newPrompt = editDescs[clipId] ?? clips.find(item => item.id === clipId)?.description;
     if (!newPrompt) return;
 
     setSavingIds(prev => new Set(prev).add(clipId));
@@ -537,14 +528,14 @@ export default function VideoStage({ state, sessionId, onConfirm, onIntervene, o
               // 按剧集分组
               const episodes: Record<number, ClipItem[]> = {};
               clips.forEach(c => {
-                const ep = (c as any).episode || 1;
+                const ep = c.episode || 1;
                 if (!episodes[ep]) episodes[ep] = [];
                 episodes[ep].push(c);
               });
 
               return Object.keys(episodes).sort((a, b) => Number(a) - Number(b)).map(epNum => {
                 const epClips = episodes[Number(epNum)];
-                const fallbackTitle = (epClips[0] as any).episode_title || `第 ${epNum} 集`;
+                const fallbackTitle = epClips[0].episode_title || `第 ${epNum} 集`;
                 const scriptTitle = episodeTitleMap[Number(epNum)];
                 const episodeTitle = scriptTitle ? `第 ${epNum} 集：${scriptTitle}` : fallbackTitle;
                 
@@ -574,7 +565,7 @@ export default function VideoStage({ state, sessionId, onConfirm, onIntervene, o
                             )}
                             <ClipRow
                               clip={{ ...clip, selected: getSelected(clip) }}
-                              editDesc={editDescs[clip.id]}
+                              editDesc={editDescs[clip.id] ?? clip.description}
                               onDescChange={canEdit ? (val => setEditDescs(prev => ({ ...prev, [clip.id]: val }))) : undefined}
                               onSavePrompt={() => handleSavePrompt(clip.id)}
                               onRegenerate={() => handleRegenerate(clip.id)}

@@ -727,3 +727,20 @@ body {
         transition-duration: 0.01ms !important;
     }
 }
+
+/* The workflow header has two rows below the desktop sidebar breakpoint. */
+.xyq-model-panel {
+    max-width: calc(100vw - 32px);
+    max-height: calc(100dvh - 112px);
+    overflow-y: auto;
+    overscroll-behavior: contain;
+}
+@media (max-width: 1103px) {
+    .xyq-topbar { height: auto; min-height: 104px; flex-wrap: wrap; padding: 8px 12px; gap: 4px; }
+    .xyq-topbar-brand { margin-right: 4px; }
+    .xyq-topbar-brand-text, .xyq-topbar-divider { display: none; }
+    .xyq-topbar-controls { order: 2; gap: 4px; flex-wrap: wrap; max-width: calc(100% - 40px); }
+    .xyq-stage-nav { order: 3; flex-basis: 100%; min-height: 44px; }
+    .xyq-stage-nav button { min-height: 44px; }
+    .xyq-model-panel { position: fixed; top: 56px; right: 16px; margin-top: 0; }
+}

@@ -1,5 +1,7 @@
 'use client';
 
+import MediaImage from '@/components/MediaImage';
+
 import React, { useCallback, useEffect, useState } from 'react';
 import { X, ChevronLeft, ChevronRight, ZoomIn, ZoomOut, RotateCcw } from 'lucide-react';
 import { assetUrl } from './utils';
@@ -152,7 +154,7 @@ export default function ImageLightbox({ images, initialIndex, onClose }: ImageLi
         onPointerUp={handlePointerUp}
         style={{ cursor: scale > 1 ? (dragging ? 'grabbing' : 'grab') : 'zoom-in' }}
       >
-        <img
+        <MediaImage
           src={assetUrl(current)}
           alt={`image ${index + 1}`}
           className="max-w-[90vw] max-h-[85vh] object-contain rounded-lg shadow-2xl"
@@ -181,7 +183,7 @@ export default function ImageLightbox({ images, initialIndex, onClose }: ImageLi
                 i === index ? 'border-white shadow-lg scale-110' : 'border-transparent opacity-60 hover:opacity-100'
               }`}
             >
-              <img src={assetUrl(path)} alt={`thumb ${i + 1}`} className="w-full h-full object-cover" />
+              <MediaImage src={assetUrl(path)} alt={`thumb ${i + 1}`} className="w-full h-full object-cover" />
             </button>
           ))}
         </div>

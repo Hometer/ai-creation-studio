@@ -1,10 +1,9 @@
-﻿'use client';
+'use client';
 
 import React, { useState, useMemo, useCallback } from 'react';
-import { 
-  Plus, Trash2, Film, Clock, MapPin, Users, Edit3, Save, X, 
-  LayoutList, Camera, ChevronDown, ChevronRight,
-  AlertCircle, Clapperboard
+import {
+  Plus, Trash2, Film, Clock, MapPin, Users, Save, X,
+  Clapperboard
 } from 'lucide-react';
 import type { StageViewProps } from './types';
 import StageActions from './StageActions';
@@ -47,22 +46,22 @@ const SHOT_TYPE_DECOR = {
 
 // ─── 主组件 ───
 
-export default function StoryboardStage({ 
-  state, 
-  onConfirm, 
-  onIntervene, 
-  onRegenerate, 
-  showConfirm, 
-  isRunning, 
+export default function StoryboardStage({
+  state,
+  onConfirm,
+  onIntervene,
+  onRegenerate,
+  showConfirm,
+  isRunning,
   hasPendingItems,
   hasNextStageStarted
 }: StageViewProps) {
   const artifactData = state.artifact;
-  
+
   // 获取剧集数据 (新结构)
   const episodes: Episode[] = useMemo(() => {
-    if (Array.isArray(artifactData?.episodes)) return artifactData.episodes;
-    if (artifactData?.payload?.episodes) return artifactData.payload.episodes;
+    if (Array.isArray(artifactData?.episodes)) return artifactData.episodes.map(ep => ({ episode_number: ep.episode_number || 1, episode_title: ep.episode_title || ep.act_title || '', segments: ep.segments || [] }));
+    if (artifactData?.payload?.episodes) return artifactData.payload.episodes.map(ep => ({ episode_number: ep.episode_number || 1, episode_title: ep.episode_title || ep.act_title || '', segments: ep.segments || [] }));
     return [];
   }, [artifactData]);
 
@@ -97,7 +96,7 @@ export default function StoryboardStage({
     if (mode === 'raw') {
       setRawJson(JSON.stringify(editEpisodes, null, 2));
     } else {
-      try { 
+      try {
         const parsed = JSON.parse(rawJson);
         if (Array.isArray(parsed)) setEditEpisodes(parsed);
       } catch { /* ignore */ }
@@ -105,7 +104,7 @@ export default function StoryboardStage({
     setEditMode(mode);
   };
 
-  const updateSegmentField = (epIdx: number, segIdx: number, field: keyof Segment, value: any) => {
+  const updateSegmentField = (epIdx: number, segIdx: number, field: keyof Segment, value: Segment[keyof Segment]) => {
     setEditEpisodes(prev => prev.map((ep, i) => {
       if (i !== epIdx) return ep;
       const newSegments = ep.segments.map((s, j) => j === segIdx ? { ...s, [field]: value } : s);
@@ -113,7 +112,7 @@ export default function StoryboardStage({
     }));
   };
 
-  const updateShotField = (epIdx: number, segIdx: number, shotIdx: number, field: keyof Shot, value: any) => {
+  const updateShotField = (epIdx: number, segIdx: number, shotIdx: number, field: keyof Shot, value: Shot[keyof Shot]) => {
     setEditEpisodes(prev => prev.map((ep, i) => {
       if (i !== epIdx) return ep;
       const newSegments = ep.segments.map((seg, j) => {
@@ -206,7 +205,7 @@ export default function StoryboardStage({
                 </div>
               </div>
             )}
-            
+
             {isEditing && (
               <div className="flex items-center gap-2">
                 <div className="bg-gray-100 p-1 rounded-lg flex items-center mr-2">
@@ -273,10 +272,10 @@ export default function StoryboardStage({
                               <MapPin className="w-3.5 h-3.5 text-gray-400" />
                               <span className="text-sm font-bold text-gray-800">
                                 {isEditing ? (
-                                  <input 
-                                    value={segment.location || ''} 
-                                    onChange={e => updateSegmentField(epIdx, segIdx, 'location', e.target.value)} 
-                                    className="bg-transparent border-b border-gray-200 focus:border-violet-400 outline-none px-1" 
+                                  <input
+                                    value={segment.location || ''}
+                                    onChange={e => updateSegmentField(epIdx, segIdx, 'location', e.target.value)}
+                                    className="bg-transparent border-b border-gray-200 focus:border-violet-400 outline-none px-1"
                                   />
                                 ) : (segment.location || '未知地点')}
                               </span>
@@ -313,9 +312,9 @@ export default function StoryboardStage({
                                     <td className="px-4 py-3 text-center text-xs font-mono text-gray-400">{shot.shot_number}</td>
                                     <td className="px-4 py-3 text-center">
                                       {isEditing ? (
-                                        <select 
-                                          value={shot.shot_type} 
-                                          onChange={e => updateShotField(epIdx, segIdx, sIdx, 'shot_type', e.target.value)} 
+                                        <select
+                                          value={shot.shot_type}
+                                          onChange={e => updateShotField(epIdx, segIdx, sIdx, 'shot_type', e.target.value)}
                                           className="w-full bg-white border border-gray-200 rounded text-xs font-bold py-1 px-1 outline-none focus:ring-1 focus:ring-violet-300"
                                         >
                                           {Object.keys(SHOT_TYPE_DECOR).map(t => <option key={t} value={t}>{t}</option>)}
@@ -326,11 +325,11 @@ export default function StoryboardStage({
                                     </td>
                                     <td className="px-4 py-3 text-center">
                                       {isEditing ? (
-                                        <input 
-                                          type="number" 
-                                          value={shot.duration} 
-                                          onChange={e => updateShotField(epIdx, segIdx, sIdx, 'duration', Number(e.target.value))} 
-                                          className="w-12 bg-white border border-gray-200 rounded text-xs font-mono py-1 px-1 text-center focus:ring-1 focus:ring-violet-300 outline-none" 
+                                        <input
+                                          type="number"
+                                          value={shot.duration}
+                                          onChange={e => updateShotField(epIdx, segIdx, sIdx, 'duration', Number(e.target.value))}
+                                          className="w-12 bg-white border border-gray-200 rounded text-xs font-mono py-1 px-1 text-center focus:ring-1 focus:ring-violet-300 outline-none"
                                         />
                                       ) : (
                                         <span className="text-xs font-mono text-gray-500">{shot.duration}s</span>
@@ -338,11 +337,11 @@ export default function StoryboardStage({
                                     </td>
                                     <td className="px-4 py-3">
                                       {isEditing ? (
-                                        <textarea 
-                                          value={shot.content} 
-                                          onChange={e => updateShotField(epIdx, segIdx, sIdx, 'content', e.target.value)} 
-                                          rows={1} 
-                                          className="w-full bg-gray-50 border border-transparent rounded px-2 py-1 text-sm text-gray-700 focus:bg-white focus:border-violet-100 outline-none resize-none" 
+                                        <textarea
+                                          value={shot.content}
+                                          onChange={e => updateShotField(epIdx, segIdx, sIdx, 'content', e.target.value)}
+                                          rows={1}
+                                          className="w-full bg-gray-50 border border-transparent rounded px-2 py-1 text-sm text-gray-700 focus:bg-white focus:border-violet-100 outline-none resize-none"
                                         />
                                       ) : (
                                         <p className="text-sm text-gray-700 leading-relaxed font-semibold">{shot.content}</p>
@@ -381,15 +380,15 @@ export default function StoryboardStage({
       </div>
 
       {/* 底部确认操作 (参考第二阶段 StageActions 放在底部) */}
-      <StageActions 
+      <StageActions
         status={state.status}
-        onConfirm={onConfirm} 
+        onConfirm={onConfirm}
         onEdit={!isEditing ? startEdit : undefined}
         onSave={isEditing ? handleSave : undefined}
-        onRegenerate={onRegenerate} 
-        showConfirm={showConfirm} 
-        isRunning={isRunning} 
-        hasPendingItems={hasPendingItems} 
+        onRegenerate={onRegenerate}
+        showConfirm={showConfirm}
+        isRunning={isRunning}
+        hasPendingItems={hasPendingItems}
         hasNextStageStarted={hasNextStageStarted}
         stageId="storyboard"
       />

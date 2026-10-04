@@ -1,3 +1,5 @@
+import { apiErrorMessage, isRecord, parseProjectSnapshot, parseSessions } from './workflowTypes';
+import type { GenerationParams, MediaItem, ProjectSnapshot, SessionSummary, StageArtifact, WorkflowShot } from './workflowTypes';
 /**
  * 工作流 API 客户端
  */
@@ -16,12 +18,7 @@ export interface StageInfo {
   description: string;
 }
 
-export interface ProjectStatus {
-  session_id: string;
-  current_stage: string;
-  status: Record<string, string>;
-  error: string | null;
-}
+export type ProjectStatus = ProjectSnapshot;
 
 export interface StreamEvent {
   type: 'progress' | 'heartbeat' | 'stage_complete' | 'error' | 'content';
@@ -32,10 +29,16 @@ export interface StreamEvent {
   stage?: string;
   status?: string;
   requires_intervention?: boolean;
-  payload_summary?: any;
+  payload_summary?: unknown;
   content?: string;
   time?: number;
-  data?: any;
+  data?: {
+    assets_preview?: StageArtifact;
+    asset_complete?: Partial<MediaItem> & { type: string; id: string };
+    beat_sheet?: string;
+    act_complete?: unknown;
+    scene_shots_complete?: { shots: WorkflowShot[] };
+  };
 }
 
 export interface PipelineTask {
@@ -44,8 +47,8 @@ export interface PipelineTask {
   status: 'pending' | 'running' | 'completed' | 'failed' | string;
   progress?: number;
   message?: string;
-  input?: Record<string, any>;
-  output?: Record<string, any>;
+  input?: Record<string, unknown>;
+  output?: Record<string, unknown>;
   artifacts?: Array<{ kind: string; name?: string; path: string; exists?: boolean; created_at?: string }>;
   error?: string | null;
   created_at?: string;
@@ -57,7 +60,7 @@ export interface SandboxTask {
   id: string;
   tool: string;
   model: string;
-  input?: Record<string, any>;
+  input?: Record<string, unknown>;
   status: string;
   progress?: number;
   created_at?: string;
@@ -93,7 +96,7 @@ export interface ApiModelOption {
   input_modalities?: string[];
   adapter_input_modalities?: string[];
   api_contract_verified?: boolean;
-  capabilities?: Record<string, any>;
+  capabilities?: Record<string, unknown>;
 }
 
 export interface StandardTemplateOption {
@@ -116,8 +119,8 @@ export interface StandardTemplateOption {
 async function requireOkResponse(response: Response, fallbackMessage: string): Promise<Response> {
   if (response.ok) return response;
 
-  const payload = await response.json().catch(() => null);
-  const detail = typeof payload?.detail === 'string' ? payload.detail : fallbackMessage;
+  const payload: unknown = await response.json().catch(() => null);
+  const detail = apiErrorMessage(payload, fallbackMessage);
   throw new Error(`${detail} (HTTP ${response.status})`);
 }
 
@@ -128,35 +131,32 @@ export async function fetchStages(): Promise<StageInfo[]> {
   return data.stages;
 }
 
-export async function fetchSessions(): Promise<any[]> {
+export async function fetchSessions(): Promise<SessionSummary[]> {
   const resp = await fetch('/api/sessions');
   await requireOkResponse(resp, '获取会话列表失败');
-  const data = await resp.json();
-  return data.sessions || [];
+  const data: unknown = await resp.json();
+  return parseSessions(data);
 }
 
-async function postPipelineTask(path: string, params: Record<string, any>): Promise<PipelineStartResponse> {
+async function postPipelineTask(path: string, params: Record<string, unknown>): Promise<PipelineStartResponse> {
   const resp = await fetch(path, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(params),
   });
-  if (!resp.ok) {
-    const err = await resp.json().catch(() => ({ detail: '启动任务失败' }));
-    throw new Error(err.detail || '启动任务失败');
-  }
+  await requireOkResponse(resp, '启动任务失败');
   return resp.json();
 }
 
-export async function startStandardPipeline(params: Record<string, any>): Promise<PipelineStartResponse> {
+export async function startStandardPipeline(params: Record<string, unknown>): Promise<PipelineStartResponse> {
   return postPipelineTask('/api/pipelines/standard/tasks', params);
 }
 
-export async function startActionTransferPipeline(params: Record<string, any>): Promise<PipelineStartResponse> {
+export async function startActionTransferPipeline(params: Record<string, unknown>): Promise<PipelineStartResponse> {
   return postPipelineTask('/api/pipelines/action_transfer/tasks', params);
 }
 
-export async function startDigitalHumanPipeline(params: Record<string, any>): Promise<PipelineStartResponse> {
+export async function startDigitalHumanPipeline(params: Record<string, unknown>): Promise<PipelineStartResponse> {
   return postPipelineTask('/api/pipelines/digital_human/tasks', params);
 }
 
@@ -182,10 +182,7 @@ export async function fetchSandboxTasks(): Promise<SandboxTask[]> {
 
 export async function clearTempCache(): Promise<{ status: string; deleted: number; freed_bytes?: number; freed_mb?: number; errors?: Array<{ path: string; error: string }> }> {
   const resp = await fetch('/api/cache/temp', { method: 'DELETE' });
-  if (!resp.ok) {
-    const err = await resp.json().catch(() => ({ detail: '清空缓存失败' }));
-    throw new Error(err.detail || '清空缓存失败');
-  }
+  await requireOkResponse(resp, '清空缓存失败');
   return resp.json();
 }
 
@@ -225,10 +222,7 @@ export async function uploadMedia(file: File): Promise<{ filename: string; file_
     method: 'POST',
     body: formData,
   });
-  if (!resp.ok) {
-    const err = await resp.json().catch(() => ({ detail: '上传失败' }));
-    throw new Error(err.detail || '上传失败');
-  }
+  await requireOkResponse(resp, '上传失败');
   return resp.json();
 }
 
@@ -238,7 +232,7 @@ export async function uploadArtifactImage(
   itemType: string,
   itemId: string,
   file: File,
-): Promise<{ status: string; path: string; artifact: any; status_map: Record<string, string> }> {
+): Promise<{ status: string; path: string; artifact: StageArtifact; status_map: Record<string, string> }> {
   const formData = new FormData();
   formData.append('item_type', itemType);
   formData.append('item_id', itemId);
@@ -247,10 +241,7 @@ export async function uploadArtifactImage(
     method: 'POST',
     body: formData,
   });
-  if (!resp.ok) {
-    const err = await resp.json().catch(() => ({ detail: '上传图片失败' }));
-    throw new Error(err.detail || '上传图片失败');
-  }
+  await requireOkResponse(resp, '上传图片失败');
   return resp.json();
 }
 
@@ -294,33 +285,30 @@ export async function startProject(params: {
   web_search?: boolean;
   expand_idea?: boolean;
   episodes?: number;
-}): Promise<{ session_id: string; status: string; params: any }> {
+}): Promise<{ session_id: string; status: Record<string, string>; params: GenerationParams }> {
   const resp = await fetch('/api/project/start', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(params),
   });
-  if (!resp.ok) {
-    const err = await resp.json().catch(() => ({ detail: '项目创建失败' }));
-    throw new Error(err.detail || '项目创建失败');
-  }
+  await requireOkResponse(resp, '项目创建失败');
   return resp.json();
 }
 
 export async function getProjectStatus(sessionId: string): Promise<ProjectStatus> {
   const resp = await fetch(`/api/project/${sessionId}/status`);
-  if (!resp.ok) throw new Error('Failed to get project status');
-  return resp.json();
+  await requireOkResponse(resp, '读取项目状态失败');
+  return parseProjectSnapshot(await resp.json());
 }
 
 // 兼容旧路由名；后端实际会通过统一的 workflow state 入口返回状态。
-export async function getProjectStatusFromDisk(sessionId: string): Promise<any> {
+export async function getProjectStatusFromDisk(sessionId: string): Promise<ProjectSnapshot> {
   const resp = await fetch(`/api/project/${sessionId}/status/from_disk`);
-  if (!resp.ok) throw new Error('Failed to get project status snapshot');
-  return resp.json();
+  await requireOkResponse(resp, '读取项目快照失败');
+  return parseProjectSnapshot(await resp.json());
 }
 
-export async function getArtifact(sessionId: string, stage: string): Promise<any> {
+export async function getArtifact(sessionId: string, stage: string): Promise<{ stage: string; artifact: StageArtifact }> {
   const resp = await fetch(`/api/project/${sessionId}/artifact/${stage}`);
   if (!resp.ok) throw new Error(`Artifact for stage '${stage}' not found`);
   return resp.json();
@@ -340,7 +328,7 @@ export async function checkSceneAssets(sessionId: string, sceneNumber: number): 
 export async function executeStage(
   sessionId: string,
   stage: string,
-  inputData: Record<string, any> = {},
+  inputData: Record<string, unknown> = {},
   signal?: AbortSignal,
 ): Promise<Response> {
   const response = await fetch(`${STREAM_API_BASE}/api/project/${sessionId}/execute/${stage}`, {
@@ -355,7 +343,7 @@ export async function executeStage(
 export async function intervene(
   sessionId: string,
   stage: string,
-  modifications: Record<string, any>,
+  modifications: Record<string, unknown>,
 ): Promise<Response> {
   // Use STREAM_API_BASE to bypass Next.js proxy (SSE endpoint)
   const response = await fetch(`${STREAM_API_BASE}/api/project/${sessionId}/intervene`, {
@@ -394,17 +382,14 @@ export async function deleteSession(
     method: 'DELETE',
     headers: { 'Content-Type': 'application/json' },
   });
-  if (!resp.ok) {
-    const err = await resp.json().catch(() => ({ detail: '删除失败' }));
-    throw new Error(err.detail || '删除失败');
-  }
+  await requireOkResponse(resp, '删除失败');
   return resp.json();
 }
 
 export async function saveSelections(
   sessionId: string,
   stage: string,
-  selections: Record<string, any>,
+  selections: Record<string, unknown>,
 ): Promise<{ status: string }> {
   const resp = await fetch(`/api/project/${sessionId}/artifact/${stage}`, {
     method: 'PATCH',
@@ -415,12 +400,35 @@ export async function saveSelections(
   return resp.json();
 }
 
-export async function continueWorkflow(sessionId: string): Promise<{ status: string; next_stage?: string }> {
+export async function continueWorkflow(sessionId: string): Promise<{ status: string; next_stage?: string; status_map?: Record<string, string> }> {
   const resp = await fetch(`/api/project/${sessionId}/continue`, {
     method: 'POST',
   });
   await requireOkResponse(resp, '继续工作流失败');
   return resp.json();
+}
+
+function readStreamEvent(value: unknown): StreamEvent | null {
+  if (!isRecord(value) || !['progress', 'heartbeat', 'stage_complete', 'error', 'content'].includes(String(value.type))) return null;
+  for (const key of ['type', 'message', 'phase', 'step_desc', 'stage', 'status', 'content']) {
+    if (value[key] !== undefined && typeof value[key] !== 'string') return null;
+  }
+  if (value.percent !== undefined && typeof value.percent !== 'number') return null;
+  if (value.requires_intervention !== undefined && typeof value.requires_intervention !== 'boolean') return null;
+  if (value.data !== undefined && !isRecord(value.data)) return null;
+  if (isRecord(value.data)) {
+    if (value.data.assets_preview !== undefined && !isRecord(value.data.assets_preview)) return null;
+    if (value.data.beat_sheet !== undefined && typeof value.data.beat_sheet !== 'string') return null;
+    const asset = value.data.asset_complete;
+    if (asset !== undefined) {
+      if (!isRecord(asset) || typeof asset.type !== 'string' || typeof asset.id !== 'string') return null;
+      for (const key of ['name', 'description', 'selected', 'status']) {
+        if (asset[key] !== undefined && typeof asset[key] !== 'string') return null;
+      }
+      if (asset.versions !== undefined && (!Array.isArray(asset.versions) || !asset.versions.every(path => typeof path === 'string'))) return null;
+    }
+  }
+  return { ...value, type: value.type } as StreamEvent;
 }
 
 export async function* parseStreamEvents(response: Response): AsyncGenerator<StreamEvent> {
@@ -438,18 +446,19 @@ export async function* parseStreamEvents(response: Response): AsyncGenerator<Str
     for (const line of lines) {
       if (!line.trim()) continue;
       try {
-        const event: StreamEvent = JSON.parse(line);
+        const event = readStreamEvent(JSON.parse(line));
+        if (!event) continue;
         if (event.type === 'stage_complete' || event.type === 'error') terminalEventReceived = true;
-        if (event.type !== 'heartbeat') yield event;
+        if (event && event.type !== 'heartbeat') yield event;
       } catch { /* skip malformed */ }
     }
   }
   // Process any remaining data in buffer after stream ends
   if (buffer.trim()) {
     try {
-      const event: StreamEvent = JSON.parse(buffer);
-      if (event.type === 'stage_complete' || event.type === 'error') terminalEventReceived = true;
-      if (event.type !== 'heartbeat') yield event;
+      const event = readStreamEvent(JSON.parse(buffer));
+      if (event && (event.type === 'stage_complete' || event.type === 'error')) terminalEventReceived = true;
+      if (event && event.type !== 'heartbeat') yield event;
     } catch { /* skip malformed */ }
   }
   if (!terminalEventReceived) {

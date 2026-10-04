@@ -1,5 +1,9 @@
 'use client';
 
+import MediaImage from '@/components/MediaImage';
+
+import { errorMessage } from '@/lib/workflowTypes';
+
 import { useEffect, useMemo, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import {
@@ -246,8 +250,8 @@ function MediaUploadField({
       const result = await uploadMedia(file);
       setFilename(result.filename);
       onChange(result.file_path);
-    } catch (e: any) {
-      setError(e.message || '上传失败');
+    } catch (e: unknown) {
+      setError(errorMessage(e) || '上传失败');
     } finally {
       setUploading(false);
     }
@@ -482,7 +486,7 @@ function TaskResult({ task }: { task: PipelineTask | null }) {
                   <video src={assetHref(item.path)} controls className="w-full h-36 bg-black object-contain" />
                 )}
                 {item.kind === 'image' && (
-                  <img src={assetHref(item.path)} alt={item.name || 'image'} className="w-full h-36 object-contain" />
+                  <MediaImage src={assetHref(item.path)} alt={item.name || 'image'} className="w-full h-36 object-contain" />
                 )}
                 {item.kind === 'audio' && (
                   <div className="h-36 px-3 flex items-center">
@@ -569,17 +573,18 @@ function PipelineHistory({
   const [deleting, setDeleting] = useState<string | null>(null);
 
   const load = async () => {
-    setLoading(true);
-    try {
-      const records = await fetchPipelineTasks(100);
-      setTasks(records.filter(task => task.pipeline === pipeline));
-    } finally {
-      setLoading(false);
-    }
+    const records = await fetchPipelineTasks(100);
+    setTasks(records.filter(task => task.pipeline === pipeline));
+    setLoading(false);
   };
-
   useEffect(() => {
-    load().catch(() => {});
+    let cancelled = false;
+    fetchPipelineTasks(100).then(records => {
+      if (cancelled) return;
+      setTasks(records.filter(task => task.pipeline === pipeline));
+      setLoading(false);
+    }).catch(() => { if (!cancelled) setLoading(false); });
+    return () => { cancelled = true; };
   }, [pipeline]);
 
   if (!tasks.length) return null;
@@ -683,10 +688,10 @@ export default function PipelinePage({ pipeline, title, subtitle }: PipelinePage
   const [standardMode, setStandardMode] = useState<'inspiration' | 'copy'>('inspiration');
   const [standardVideoMode, setStandardVideoMode] = useState<'image_concat' | 'dynamic_video'>('image_concat');
   const [templateMode, setTemplateMode] = useState(false);
-  const [templateMediaKind, setTemplateMediaKind] = useState<'image' | 'video'>('image');
+  const [mediaKindChoice, setTemplateMediaKind] = useState<'image' | 'video'>('image');
   const [templates, setTemplates] = useState<StandardTemplateOption[]>([]);
   const [selectedTemplateId, setSelectedTemplateId] = useState('');
-  const [templateFieldValues, setTemplateFieldValues] = useState<Record<string, string>>({});
+  const [templateEdits, setTemplateEdits] = useState<{ id: string; values: Record<string, string> }>({ id: '', values: {} });
   const [titleValue, setTitleValue] = useState('');
   const [standardSegmentCount, setStandardSegmentCount] = useState(6);
   const [enableSubtitles, setEnableSubtitles] = useState(false);
@@ -709,7 +714,27 @@ export default function PipelinePage({ pipeline, title, subtitle }: PipelinePage
   const [ttsSpeed, setTtsSpeed] = useState(1);
   const [negativePrompt, setNegativePrompt] = useState(pipeline === 'standard' ? DEFAULT_STANDARD_STYLE_CONTROL : '');
 
+  const portraitTemplates = useMemo(
+    () => templates.filter(item => item.size === '1080x1920'),
+    [templates]
+  );
+  const ratioTemplates = useMemo(
+    () => templates.filter(item => item.ratio === ratio),
+    [templates, ratio]
+  );
+  const selectedTemplate = useMemo(
+    () => templates.find(item => item.id === selectedTemplateId && item.ratio === ratio) || templates.find(item => item.ratio === ratio) || null,
+    [templates, selectedTemplateId, ratio]
+  );
+  const templateMediaKind = selectedTemplate && !selectedTemplate.supports_video ? 'image' : mediaKindChoice;
+  const templateVideoEnabled = templateMode && templateMediaKind === 'video';
+  const selectedTemplateFields = selectedTemplate?.fields || [];
+  const templateFieldValues: Record<string, string> = Object.fromEntries(selectedTemplateFields.map(field => [
+    field.key, (templateEdits.id === selectedTemplate?.id ? templateEdits.values[field.key] : undefined) ?? field.default ?? '',
+  ]));
+
   useEffect(() => {
+    let cancelled = false;
     const imageAbility = pipeline === 'digital_human' ? 'reference_image' : 'text_to_image';
     const videoAbility = pipeline === 'standard'
       ? 'first_frame_i2v'
@@ -717,12 +742,9 @@ export default function PipelinePage({ pipeline, title, subtitle }: PipelinePage
         ? 'action_transfer'
         : 'digital_human';
 
-    if (pipeline === 'standard') {
-      setNegativePrompt(current => current || DEFAULT_STANDARD_STYLE_CONTROL);
-    }
-
     fetchApiModels({ mediaType: 'image', ability: imageAbility, verifiedOnly: true })
       .then(models => {
+        if (cancelled) return;
         const groups = groupApiModels(models);
         setImageModelGroups(groups);
         setImageModel(current => firstModelId(groups, current));
@@ -732,12 +754,14 @@ export default function PipelinePage({ pipeline, title, subtitle }: PipelinePage
     if (pipeline !== 'standard' || standardVideoMode === 'dynamic_video' || (templateMode && templateMediaKind === 'video')) {
       fetchApiModels({ mediaType: 'video', ability: videoAbility, verifiedOnly: true })
         .then(models => {
+          if (cancelled) return;
           const groups = groupApiModels(models);
           setVideoModelGroups(groups);
           setVideoModel(current => firstModelId(groups, current));
         })
         .catch(() => {});
     }
+    return () => { cancelled = true; };
   }, [pipeline, standardVideoMode, templateMode, templateMediaKind]);
 
   useEffect(() => {
@@ -754,64 +778,17 @@ export default function PipelinePage({ pipeline, title, subtitle }: PipelinePage
 
   useEffect(() => {
     if (pipeline !== 'standard') return;
+    let cancelled = false;
     fetchStandardTemplates()
       .then(items => {
+        if (cancelled) return;
         setTemplates(items);
         setSelectedTemplateId(current => current || items.find(item => item.ratio === ratio)?.id || items[0]?.id || '');
       })
       .catch(() => {});
+    return () => { cancelled = true; };
   }, [pipeline, ratio]);
 
-  useEffect(() => {
-    if (!templateMode) return;
-    setEnableSubtitles(true);
-    setStandardVideoMode('image_concat');
-    setText(current => current || TEMPLATE_TEXT_DEFAULTS.text);
-    setSelectedTemplateId(current => {
-      if (current && templates.some(item => item.id === current && item.ratio === ratio)) return current;
-      return templates.find(item => item.ratio === ratio)?.id || current;
-    });
-  }, [templateMode, ratio, templates]);
-
-  const portraitTemplates = useMemo(
-    () => templates.filter(item => item.size === '1080x1920'),
-    [templates]
-  );
-  const ratioTemplates = useMemo(
-    () => templates.filter(item => item.ratio === ratio),
-    [templates, ratio]
-  );
-  const selectedTemplate = useMemo(
-    () => templates.find(item => item.id === selectedTemplateId) || null,
-    [templates, selectedTemplateId]
-  );
-  const templateVideoEnabled = templateMode && templateMediaKind === 'video';
-  const selectedTemplateFields = useMemo(
-    () => selectedTemplate?.fields || [],
-    [selectedTemplate]
-  );
-
-  useEffect(() => {
-    if (!templateMode || templateMediaKind !== 'video') return;
-    if (selectedTemplate && !selectedTemplate.supports_video) {
-      setTemplateMediaKind('image');
-    }
-  }, [templateMode, templateMediaKind, selectedTemplate]);
-
-  useEffect(() => {
-    if (!templateMode) return;
-    if (!selectedTemplateFields.length) {
-      setTemplateFieldValues({});
-      return;
-    }
-    setTemplateFieldValues(current => {
-      const next: Record<string, string> = {};
-      for (const field of selectedTemplateFields) {
-        next[field.key] = current[field.key] ?? field.default ?? '';
-      }
-      return next;
-    });
-  }, [templateMode, selectedTemplateFields]);
 
   const enterTemplateMode = () => {
     setTemplateMode(true);
@@ -830,12 +807,16 @@ export default function PipelinePage({ pipeline, title, subtitle }: PipelinePage
     return characterImage.trim() && goodsText.trim();
   }, [pipeline, text, templateMode, selectedTemplate, templateVideoEnabled, promptText, imagePath, videoPath, characterImage, goodsText]);
 
+  const taskId = task?.task_id;
+  const taskStatus = task?.status;
   useEffect(() => {
-    if (!task || !['pending', 'running'].includes(task.status)) return;
+    if (!taskId || !taskStatus || !['pending', 'running'].includes(taskStatus)) return;
+    let cancelled = false;
 
     const refreshTask = async () => {
-      const fresh = await fetchPipelineTask(task.task_id);
-      setTask(fresh);
+      const fresh = await fetchPipelineTask(taskId);
+      if (cancelled) return;
+      setTask(prev => prev?.task_id === taskId ? fresh : prev);
       if (!['pending', 'running'].includes(fresh.status)) {
         setRunning(false);
       }
@@ -855,32 +836,36 @@ export default function PipelinePage({ pipeline, title, subtitle }: PipelinePage
       }
 
       if (event.type === 'artifact' || event.type === 'completed' || event.type === 'failed') {
-        refreshTask().catch(() => setRunning(false));
+        refreshTask().catch(() => { if (!cancelled) setRunning(false); });
       }
     };
 
-    return subscribePipelineTask(
-      task.task_id,
+    const unsubscribe = subscribePipelineTask(
+      taskId,
       handleEvent,
       () => {
-        if (task.status === 'pending' || task.status === 'running') {
+        if (!cancelled && (taskStatus === 'pending' || taskStatus === 'running')) {
           setRunning(false);
         }
       },
     );
-  }, [task?.task_id, task?.status]);
+    return () => { cancelled = true; unsubscribe(); };
+  }, [taskId, taskStatus]);
 
   useEffect(() => {
     const taskId = searchParams.get('task');
     if (!taskId || task?.task_id === taskId) return;
+    let cancelled = false;
     fetchPipelineTask(taskId)
       .then(fresh => {
+        if (cancelled) return;
         if (fresh.pipeline === pipeline) {
           setTask(fresh);
           setRunning(['pending', 'running'].includes(fresh.status));
         }
       })
       .catch(() => {});
+    return () => { cancelled = true; };
   }, [pipeline, searchParams, task?.task_id]);
 
   const submit = async () => {
@@ -942,8 +927,8 @@ export default function PipelinePage({ pipeline, title, subtitle }: PipelinePage
             });
       const fresh = await fetchPipelineTask(started.task_id);
       setTask(fresh);
-    } catch (e: any) {
-      setError(e.message || '启动失败');
+    } catch (e: unknown) {
+      setError(errorMessage(e) || '启动失败');
       setRunning(false);
     }
   };
@@ -986,7 +971,7 @@ export default function PipelinePage({ pipeline, title, subtitle }: PipelinePage
                       <TemplatePreviewCard
                         key={item.id}
                         template={item}
-                        selected={templateMode && selectedTemplateId === item.id}
+                        selected={templateMode && selectedTemplate?.id === item.id}
                         onClick={() => {
                           enterTemplateMode();
                           setRatio(item.ratio);
@@ -1031,7 +1016,7 @@ export default function PipelinePage({ pipeline, title, subtitle }: PipelinePage
                               <TemplatePreviewCard
                                 key={item.id}
                                 template={item}
-                                selected={selectedTemplateId === item.id}
+                                selected={selectedTemplate?.id === item.id}
                                 onClick={() => setSelectedTemplateId(item.id)}
                               />
                             ))
@@ -1133,7 +1118,7 @@ export default function PipelinePage({ pipeline, title, subtitle }: PipelinePage
                             value={templateFieldValues[field.key] ?? field.default ?? ''}
                             onChange={event => {
                               const value = event.target.value;
-                              setTemplateFieldValues(current => ({ ...current, [field.key]: value }));
+                              setTemplateEdits(current => ({ id: selectedTemplate?.id || '', values: { ...(current.id === selectedTemplate?.id ? current.values : {}), [field.key]: value } }));
                             }}
                             className="h-9 min-w-0 rounded-lg border border-gray-200 bg-white px-3 text-sm text-gray-700 outline-none focus:border-blue-300"
                           />

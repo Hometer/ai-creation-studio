@@ -67,7 +67,7 @@ def check() -> int:
     results = []
     for name, command, directory in [
         ("后端测试", [str(PYTHON), "-m", "pytest", "-q"], BACKEND),
-        ("前端状态测试", ["node", "--test", "tests/projectStatus.test.mjs"], FRONTEND),
+        ("前端回归测试", ["npm", "test"], FRONTEND),
         ("前端类型检查", ["npm", "run", "typecheck"], FRONTEND),
         ("前端 Lint", ["npm", "run", "lint"], FRONTEND),
         ("前端生产构建", ["npm", "run", "build"], FRONTEND),

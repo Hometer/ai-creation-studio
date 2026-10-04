@@ -1,10 +1,14 @@
 'use client';
 
+import MediaImage from '@/components/MediaImage';
+
+import { errorMessage, type SessionSummary } from '@/lib/workflowTypes';
+
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { CheckCircle2, ChevronLeft, ChevronRight, Clapperboard, Clock, Hexagon, Home, Loader2, Repeat2, Settings, Trash2, UserRound } from 'lucide-react';
 import clsx from 'clsx';
-import { useEffect, useState, type CSSProperties } from 'react';
+import { useEffect, useState, useSyncExternalStore, type CSSProperties } from 'react';
 import { clearTempCache, fetchPipelineTasks, fetchSandboxTasks, fetchSessions, type PipelineTask, type SandboxTask } from '@/lib/workflowApi';
 
 const NAV_ITEMS = [
@@ -59,7 +63,7 @@ const WORKFLOW_STAGE_COUNT = 7;
 const COMPLETED_TASK_DISMISS_KEY = 'xiaoyunque.dismissed-completed-tasks';
 const SIDEBAR_OPEN_KEY = 'xiaoyunque.sidebar-open';
 
-function projectTaskFromSession(session: any): RunningTaskItem | null {
+function projectTaskFromSession(session: SessionSummary): RunningTaskItem | null {
   const statusMap = session.status || {};
   const values = Object.values(statusMap);
   if (!values.includes('running')) return null;
@@ -75,7 +79,7 @@ function projectTaskFromSession(session: any): RunningTaskItem | null {
   };
 }
 
-function projectReviewTaskFromSession(session: any): RunningTaskItem | null {
+function projectReviewTaskFromSession(session: SessionSummary): RunningTaskItem | null {
   const statusMap = session.status || {};
   const waitingStage = Object.keys(statusMap).find(key => statusMap[key] === 'waiting');
   const completed = Object.values(statusMap).filter(value => ['completed', 'session_completed'].includes(String(value))).length;
@@ -131,7 +135,7 @@ function sandboxTaskItem(task: SandboxTask): RunningTaskItem {
   return {
     id: `sandbox-${task.id}`,
     href: `/sandbox?task=${encodeURIComponent(task.id)}`,
-    title: input.prompt || input.reference_image || task.id,
+    title: String(input.prompt || input.reference_image || task.id),
     scope: `临时工作台 · ${SANDBOX_TOOL_LABELS[task.tool] || task.tool}`,
     status: task.status || 'running',
     progress: task.progress || 1,
@@ -154,15 +158,29 @@ function saveDismissedCompletedTasks(ids: Set<string>) {
   window.localStorage.setItem(COMPLETED_TASK_DISMISS_KEY, JSON.stringify(Array.from(ids)));
 }
 
-function loadSidebarOpen(): boolean {
-  if (typeof window === 'undefined') return true;
-  const stored = window.localStorage.getItem(SIDEBAR_OPEN_KEY);
-  return stored === null ? window.innerWidth >= 1104 : stored === 'true';
+function subscribeDesktop(onChange: () => void) {
+  const query = window.matchMedia('(min-width: 1104px)');
+  query.addEventListener('change', onChange);
+  return () => query.removeEventListener('change', onChange);
 }
 
+function desktopSnapshot() { return window.matchMedia('(min-width: 1104px)').matches; }
+function serverSnapshot() { return false; }
+function sidebarSnapshot() {
+  try { return window.localStorage.getItem(SIDEBAR_OPEN_KEY) !== 'false'; }
+  catch { return true; }
+}
+function subscribeSidebar(onChange: () => void) {
+  window.addEventListener('storage', onChange);
+  window.addEventListener('xyq-sidebar-preference', onChange);
+  return () => {
+    window.removeEventListener('storage', onChange);
+    window.removeEventListener('xyq-sidebar-preference', onChange);
+  };
+}
 function saveSidebarOpen(open: boolean) {
-  if (typeof window === 'undefined') return;
-  window.localStorage.setItem(SIDEBAR_OPEN_KEY, open ? 'true' : 'false');
+  try { window.localStorage.setItem(SIDEBAR_OPEN_KEY, String(open)); } catch { /* private storage */ }
+  window.dispatchEvent(new Event('xyq-sidebar-preference'));
 }
 
 function TaskPanel({
@@ -237,16 +255,17 @@ function SidebarTaskPanels({ currentPath }: { currentPath: string }) {
   const [runningTasks, setRunningTasks] = useState<RunningTaskItem[]>([]);
   const [completedTasks, setCompletedTasks] = useState<RunningTaskItem[]>([]);
   const [dismissedCompleted, setDismissedCompleted] = useState<Set<string>>(() => loadDismissedCompletedTasks());
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
 
-  const load = async () => {
-    setLoading(true);
-    try {
+  useEffect(() => {
+    let cancelled = false;
+    const load = async () => {
       const [pipelineRecords, sessions, sandboxRecords] = await Promise.all([
         fetchPipelineTasks(100).catch(() => []),
         fetchSessions().catch(() => []),
         fetchSandboxTasks().catch(() => []),
       ]);
+      if (cancelled) return;
       setRunningTasks([
         ...sandboxRecords.map(sandboxTaskItem),
         ...pipelineRecords.map(pipelineTaskItem).filter((task): task is RunningTaskItem => Boolean(task)),
@@ -256,15 +275,11 @@ function SidebarTaskPanels({ currentPath }: { currentPath: string }) {
         ...pipelineRecords.map(pipelineCompletedTaskItem).filter((task): task is RunningTaskItem => Boolean(task)),
         ...sessions.map(projectReviewTaskFromSession).filter((task): task is RunningTaskItem => Boolean(task)),
       ].filter(task => !dismissedCompleted.has(task.id)));
-    } finally {
       setLoading(false);
-    }
-  };
-
-  useEffect(() => {
+    };
     load().catch(() => {});
     const timer = window.setInterval(() => load().catch(() => {}), 3000);
-    return () => window.clearInterval(timer);
+    return () => { cancelled = true; window.clearInterval(timer); };
   }, [dismissedCompleted]);
 
   const handleRunningClick = (task: RunningTaskItem) => {
@@ -306,18 +321,29 @@ function SidebarTaskPanels({ currentPath }: { currentPath: string }) {
 export default function AppShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const router = useRouter();
-  const [open, setOpen] = useState(true);
+  const isDesktop = useSyncExternalStore(subscribeDesktop, desktopSnapshot, serverSnapshot);
+  const desktopOpen = useSyncExternalStore(subscribeSidebar, sidebarSnapshot, serverSnapshot);
+  const [mobileOpen, setMobileOpen] = useState(false);
+  const open = isDesktop ? desktopOpen : mobileOpen;
   const [settingsMenuOpen, setSettingsMenuOpen] = useState(false);
   const [clearingCache, setClearingCache] = useState(false);
-
-  useEffect(() => {
-    setOpen(loadSidebarOpen());
-  }, []);
-
   const setSidebarOpen = (nextOpen: boolean) => {
-    setOpen(nextOpen);
-    saveSidebarOpen(nextOpen);
+    if (isDesktop) saveSidebarOpen(nextOpen);
+    else setMobileOpen(nextOpen);
   };
+  useEffect(() => {
+    if (!open || isDesktop) return;
+    const onKey = (event: KeyboardEvent) => { if (event.key === 'Escape') setMobileOpen(false); };
+    document.addEventListener('keydown', onKey);
+    document.querySelector<HTMLAnchorElement>('.xyq-sidebar-nav a')?.focus();
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    return () => {
+      document.removeEventListener('keydown', onKey);
+      document.body.style.overflow = previousOverflow;
+      document.querySelector<HTMLButtonElement>('button[aria-label="打开侧边栏"]')?.focus();
+    };
+  }, [open, isDesktop]);
 
   const handleClearCache = async () => {
     setClearingCache(true);
@@ -325,8 +351,8 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
       const result = await clearTempCache();
       window.alert(`缓存已清空，删除 ${result.deleted} 项，释放 ${Number(result.freed_mb || 0).toFixed(2)} MB。`);
       setSettingsMenuOpen(false);
-    } catch (error: any) {
-      window.alert(error?.message || '清空缓存失败');
+    } catch (error: unknown) {
+      window.alert(errorMessage(error) || '清空缓存失败');
     } finally {
       setClearingCache(false);
     }
@@ -335,19 +361,23 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
   return (
     <div
       className="xyq-shell min-h-screen bg-gray-50 text-gray-800"
-      style={{ '--app-sidebar-width': open ? '15.5rem' : '0px' } as CSSProperties}
+      style={{ '--app-sidebar-width': isDesktop && open ? '15.5rem' : '0px' } as CSSProperties}
     >
+      {!isDesktop && open && <button type="button" className="fixed inset-0 z-40 bg-black/30" aria-label="关闭导航" onClick={() => setMobileOpen(false)} />}
       <aside
+        aria-label="应用导航"
+        aria-hidden={!open}
+        inert={!open}
         className={clsx(
-          'xyq-sidebar fixed inset-y-0 left-0 z-40 border-r border-gray-200 bg-white shadow-sm transition-all duration-300',
+          'xyq-sidebar fixed inset-y-0 left-0 z-40 border-r border-gray-200 bg-white shadow-sm transition-transform duration-300',
           !open && 'border-r-0'
         )}
-        style={{ width: open ? 'var(--app-sidebar-width)' : '0px' }}
+        style={{ width: '15.5rem', transform: open ? 'translateX(0)' : 'translateX(-100%)', visibility: open ? 'visible' : 'hidden' }}
       >
         <div className={clsx('flex h-full flex-col overflow-hidden transition-opacity duration-200', open ? 'opacity-100' : 'opacity-0')}>
           <div className="xyq-sidebar-brand flex h-16 items-center px-4 border-b border-gray-100">
             <div className="flex items-center gap-2 min-w-0">
-              <img src="/logo.jpg" alt="XiaoYunQue" className="h-9 w-9 rounded-xl object-cover" />
+              <MediaImage src="/logo.jpg" alt="XiaoYunQue" className="h-9 w-9 rounded-xl object-cover" />
               <span className="text-base font-semibold text-gray-900 truncate">XiaoYunQue</span>
             </div>
           </div>
@@ -359,6 +389,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
                 <Link
                   key={item.href}
                   href={item.href}
+                  onClick={() => { if (!isDesktop) setMobileOpen(false); }}
                   className={clsx(
                     'xyq-sidebar-link flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-colors',
                     active
@@ -427,7 +458,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
         <button
           onClick={() => setSidebarOpen(false)}
           className="xyq-sidebar-toggle fixed top-1/2 z-50 h-14 w-7 -translate-y-1/2 rounded-r-xl border border-l-0 border-gray-200 bg-white text-gray-400 shadow-sm hover:w-9 hover:text-gray-900 hover:border-gray-300 hover:bg-white flex items-center justify-center transition-all"
-          style={{ left: 'calc(var(--app-sidebar-width) - 1px)' }}
+          style={{ left: 'calc(15.5rem - 1px)' }}
           title="收起侧边栏"
           aria-label="收起侧边栏"
         >
@@ -447,8 +478,9 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
       )}
 
       <main
+        inert={!isDesktop && open}
         className="xyq-main min-h-screen min-w-0 overflow-x-hidden transition-[margin] duration-300"
-        style={{ marginLeft: open ? 'var(--app-sidebar-width)' : '0px' }}
+        style={{ marginLeft: 'var(--app-sidebar-width)' }}
       >
         {children}
       </main>

@@ -1,4 +1,6 @@
-﻿'use client';
+'use client';
+
+import { errorMessage } from '@/lib/workflowTypes';
 
 import React, { useState, useRef, useEffect } from 'react';
 import { Settings2, Clock, ArrowRight, CheckCircle, Trash2, Globe, ListOrdered, Loader2 } from 'lucide-react';
@@ -180,8 +182,8 @@ export default function HomePage({ onStartProject, onResumeProject, onDeleteSess
         setSelectedReferenceVideo(referenceModel);
         setSelectedRatio(generation.video_ratio || '16:9');
         setSelectedResolution(generation.video_resolution || '720P');
-      } catch (e: any) {
-        if (!cancelled) setConfigError(e.message || '读取默认模型配置失败');
+      } catch (e: unknown) {
+        if (!cancelled) setConfigError(errorMessage(e) || '读取默认模型配置失败');
       } finally {
         if (!cancelled) setConfigLoading(false);
       }
@@ -197,8 +199,8 @@ export default function HomePage({ onStartProject, onResumeProject, onDeleteSess
     try {
       await onDeleteSession(deleteTarget);
       setDeleteTarget(null);
-    } catch (e: any) {
-      setDeleteError(e.message || '删除失败');
+    } catch (e: unknown) {
+      setDeleteError(errorMessage(e) || '删除失败');
     } finally {
       setDeleting(false);
     }
