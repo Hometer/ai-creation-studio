@@ -82,13 +82,18 @@ def check() -> int:
 
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("command", choices=["doctor", "backend", "frontend", "media-demo", "plan-demo", "task-demo", "check"])
+    parser.add_argument("command", choices=["doctor", "backend", "frontend", "media-demo", "plan-demo", "task-demo", "wan-replay", "check"])
     parser.add_argument("--port", type=int, help="服务端口；默认后端 8000、前端 3000、人工媒体验收 8001")
+    parser.add_argument("--scenario", choices=["success", "lost-submit", "query-timeout", "bad-video"], default="success")
+    parser.add_argument("--action", choices=["step", "status"], default="status", help="万相离线演练：只读状态或推进一步")
     arguments = parser.parse_args()
     if arguments.command == "doctor":
         return doctor()
     if arguments.command == "check":
         return check()
+    if arguments.command == "wan-replay":
+        return run([str(PYTHON), "-m", "core.wan_replay", "--directory", str(ROOT / "data/wan-protocol-replay"),
+                    "--scenario", arguments.scenario, "--action", arguments.action], BACKEND)
     port = arguments.port or {"backend": 8000, "frontend": 3000, "media-demo": 8001, "plan-demo": 8001, "task-demo": 8001}[arguments.command]
     if not 1 <= port <= 65535:
         parser.error("端口必须在 1—65535 之间")

@@ -252,3 +252,22 @@ python3.12 scripts/project.py task-demo
 只验证本模块，在后端目录运行 `.venv/bin/python -m pytest tests/test_model_preflight.py -q`。新增 59 项回归，包括真实 HTTP 重启、失效报告、损坏存储、读取中素材变化、透明图片、恶意 Endpoint 和客户端执行参数伪造；完整结果为后端 294/294、前端 33/33、类型／Lint／生产构建通过。原有配置／SDK 和渲染提示保留，真实模型仍待验。
 
 后续真实恢复必须使用平台 task_id；未保存编号的提交失联要人工核对，禁止自动重发，不沿用模拟平台按本地 request_id 查询的合同。公开原价只用于文档参考，不是账户实际账单或已批准预算。Key 不要发到聊天；本轮无需配置 Key，也不会因配置 Key 自动启用收费。
+
+## 万相任务协议与离线恢复
+
+按 [第 7 子阶段开发文档](docs/阶段文档/阶段2-第7子阶段-万相任务协议与离线恢复开发文档.md) 先文档再开发。新增 submit／query／download 协议适配及独立的持久化人工演练；默认适配器关闭，只能注入明确标记的离线 fixture。本轮没有联网 transport、真实认证或收费接线，不读取 Key、不调用模型。预检的 REAL_ADAPTER_NOT_IMPLEMENTED 仍表示真实可执行传输尚未接入。
+
+从项目目录的终端运行下列命令，每次 step 只推进一个有界步骤：
+
+```bash
+python3.12 scripts/project.py wan-replay --scenario success --action step
+python3.12 scripts/project.py wan-replay --scenario success --action status
+```
+
+首次 success 依次运行四次 step，结果为 submitted、running、result_ready、succeeded；当前电脑保留了已完成记录，重复运行不会重做。status 只读业务记录、不推进任务。场景可改成 lost-submit、query-timeout 或 bad-video，分别演练提交失联、查询超时和下载内容无效。详细照做步骤和四张浏览器截图见 [验收报告](docs/evidence/阶段2/万相协议恢复/验收报告.md)。没有新的常驻服务或 HTTP 生成接口。
+
+提交前保存 submitting，提交失联或该检查点重启后进入人工核对，不自动重发、不用本地 request_id 查平台。查询最多 20 次，连续错误最多 3 次；下载最多 3 次，重新查询同一 task_id 获取瞬时链接，24 小时后人工核对。下载采用境内域名保守白名单、100 MiB 上限、流式截止时间、真实 MP4／ffprobe 校验和独占发布；已发布结果重启时核对复用。原生网络行为尚待真实接线验证。
+
+数据在忽略的根 `data/wan-protocol-replay/{scenario}/`，独立 schema 1 replay.json、人工平台计数和 result.mp4；备份保留整个场景目录。不会导入生产资产、修改旧 SIM 账本或覆盖用户项目。响应／检查点不保存完整 Prompt、Base64、原始供应商消息或签名链接。人工 usage 为 5 秒，实际 ffmpeg 色块 MP4 为 1 秒，两者单独显示；费用与币种 null，不表示免费真实生成。
+
+新增 83 项后端测试；完整结果后端 377/377、前端 33/33、类型／Lint／生产构建通过。模块测试在后端目录运行 `.venv/bin/python -m pytest tests/test_wan_replay.py -q`；全项目继续用 `python3.12 scripts/project.py check`。真实报价／预算／样例审核、联网 transport 和真实冒烟仍待完成，整体阶段 2 未验收。
