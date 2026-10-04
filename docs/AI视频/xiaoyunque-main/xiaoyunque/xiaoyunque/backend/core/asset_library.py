@@ -10,7 +10,7 @@ from pathlib import Path
 from uuid import uuid4
 
 from api.schemas.assets import (
-    Asset, AssetInput, AssetVersion, Library, Reference, ReferenceInput,
+    ArtifactSource, Asset, AssetInput, AssetVersion, Library, MediaInfo, Reference, ReferenceInput,
     ReferenceUpdate, Selection, Source, VersionInput,
 )
 from core.persistence import atomic_write_session
@@ -117,9 +117,64 @@ class AssetLibrary:
     def add_version(self, asset_id: str, payload: VersionInput) -> Asset:
         def operation(library):
             asset = self.get_asset(library, asset_id)
+            if asset.kind in {"image", "video"}:
+                raise AssetLibraryError(409, "MEDIA_VERSION_REQUIRED", "媒体版本须通过项目素材归档添加")
             asset.versions.append(self._version(payload, len(asset.versions) + 1, Source()))
             return asset
         return self._change(operation)
+
+    def import_media(self, source: ArtifactSource, kind: str, payload: VersionInput,
+                     archive, temporary, details) -> Asset:
+        from core.media_archive import sync_directory
+
+        key = hashlib.sha256(json.dumps(["media", source.project_id, source.stage,
+                                        source.item_type, source.item_id]).encode()).hexdigest()
+        published, file_id = None, None
+
+        def operation(library):
+            nonlocal published, file_id
+            asset = next((a for a in library.assets.values() if a.import_key == key), None)
+            if asset is not None:
+                if asset.kind != kind:
+                    raise AssetLibraryError(409, "MEDIA_KIND_CONFLICT", "归档来源类型已变化，请核对原素材")
+                latest = asset.versions[-1]
+                if (latest.name == payload.name and latest.definition == payload.definition
+                        and latest.media is not None
+                        and latest.media.sha256 == details["sha256"]
+                        and latest.media.byte_size == details["byte_size"]):
+                    archive.verify_file(latest.media)
+                    return asset
+            version = self._version(payload, len(asset.versions) + 1 if asset else 1, source)
+            file_id = version.version_id
+            version.media = MediaInfo(file_id=file_id, **details)
+            if asset is None:
+                asset = Asset(asset_id=uuid4().hex, kind=kind, import_key=key, versions=[version])
+                library.assets[asset.asset_id] = asset
+            else:
+                asset.versions.append(version)
+            published = archive.publish(temporary, version.media)
+            return asset
+
+        try:
+            result = self._change(operation)
+            sync_directory(self.directory)
+            return result
+        except Exception as exc:
+            # A failed write may have raised after replacement. Never remove a
+            # committed file, and retain it when commit status cannot be read.
+            if published is not None:
+                try:
+                    data = self.read()
+                except AssetLibraryError:
+                    pass
+                else:
+                    committed = any(v.media and v.media.file_id == file_id
+                                    for a in data.assets.values() for v in a.versions)
+                    if not committed:
+                        published.unlink(missing_ok=True)
+            if isinstance(exc, OSError):
+                raise AssetLibraryError(503, "MEDIA_STORE_UNAVAILABLE", "媒体归档暂不可用，请保留数据并重试") from exc
+            raise
 
     def import_script(self, project_id: str, kind: str, item_id: str, payload: VersionInput) -> Asset:
         key = hashlib.sha256(json.dumps([project_id, kind, item_id]).encode()).hexdigest()

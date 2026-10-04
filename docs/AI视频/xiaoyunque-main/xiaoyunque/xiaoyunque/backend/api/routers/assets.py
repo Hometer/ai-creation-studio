@@ -5,14 +5,18 @@ from functools import lru_cache
 from pathlib import Path
 
 from fastapi import APIRouter, Depends
+from fastapi.responses import FileResponse
 
 from api.dependencies import get_workflow_engine
 from api.errors import ErrorResponse
 from api.schemas.assets import (
-    Asset, AssetInput, Id, ProjectId, ReferenceInput, ReferenceUpdate,
+    Asset, AssetInput, Id, MediaImport, ProjectId, ReferenceInput, ReferenceUpdate,
     ReferenceView, ScriptImport, Target, VersionInput,
 )
 from core.asset_library import AssetLibrary, AssetLibraryError, not_found
+from core.media_archive import EXTENSIONS, MediaArchive
+from api.services.asset_media import archive_artifact
+from config import settings
 
 router = APIRouter(tags=["资产与版本"], responses={503: {"model": ErrorResponse}})
 
@@ -20,6 +24,10 @@ router = APIRouter(tags=["资产与版本"], responses={503: {"model": ErrorResp
 @lru_cache
 def get_asset_library() -> AssetLibrary:
     return AssetLibrary(Path(__file__).resolve().parents[2] / "data" / "asset-library")
+
+
+def get_media_archive(library=Depends(get_asset_library)) -> MediaArchive:
+    return MediaArchive(library.directory, settings.RESULT_DIR, settings.BASE_DIR)
 
 
 def require_target(engine, target: Target):
@@ -96,6 +104,31 @@ def import_script(payload: ScriptImport, library=Depends(get_asset_library), eng
 @router.get("/api/assets/{asset_id}", response_model=Asset)
 def get_asset(asset_id: Id, library=Depends(get_asset_library)):
     return library.get_asset(library.read(), asset_id)
+
+
+@router.post("/api/assets/import-media", response_model=Asset)
+def import_media(payload: MediaImport, library=Depends(get_asset_library),
+                 archive=Depends(get_media_archive), engine=Depends(get_workflow_engine)):
+    snapshot = require_target(engine, Target(project_id=payload.project_id))
+    return archive_artifact(payload, snapshot, library, archive)
+
+
+@router.get("/api/assets/{asset_id}/versions/{version_id}/media", response_class=FileResponse,
+            responses={200: {"description": "已验证的归档媒体", "content": {
+                mime: {"schema": {"type": "string", "format": "binary"}} for mime in EXTENSIONS}}})
+def read_media(asset_id: Id, version_id: Id, library=Depends(get_asset_library), archive=Depends(get_media_archive)):
+    asset = library.get_asset(library.read(), asset_id)
+    version = next((v for v in asset.versions if v.version_id == version_id), None)
+    if version is None or version.media is None:
+        raise not_found()
+    media = version.media
+    path = archive.verify_file(media)
+    return FileResponse(path, media_type=media.mime_type,
+                        filename=asset_id + "-" + version_id + EXTENSIONS[media.mime_type],
+                        content_disposition_type="inline", headers={
+                            "ETag": '"' + media.sha256 + '"', "X-Content-Type-Options": "nosniff",
+                            "Cache-Control": "private, no-cache",
+                        })
 
 
 @router.post("/api/assets/{asset_id}/versions", response_model=Asset, status_code=201)

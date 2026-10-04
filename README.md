@@ -123,7 +123,7 @@ npm start -- --hostname 127.0.0.1 --port 3000
 
 打开 http://127.0.0.1:3000 ，应看到创意输入框和灵感示例。打开 http://127.0.0.1:8000/api/health ，应看到 `status` 为 `ok`。停止服务时，在对应终端按 Control+C。
 
-验证方法：在后端目录执行 `.venv/bin/python -m pytest -q`；在前端目录执行 `npm run lint` 和 `npm run build`。初次运行报告记录了旧问题；最新结果为后端 73/73、前端回归 33/33、类型检查、全量 Lint 与生产构建通过。手机侧栏与顶栏已修复，见 [前端整改证据](docs/evidence/阶段2/前端整改/验收报告.md)。资产版本验证见 [资产版本证据](docs/evidence/阶段2/资产版本/验收报告.md)。
+验证方法：在后端目录执行 `.venv/bin/python -m pytest -q`；在前端目录执行 `npm run lint` 和 `npm run build`。初次运行报告记录了旧问题；最新结果为后端 120/120、前端回归 33/33、类型检查、全量 Lint 与生产构建通过。手机侧栏与顶栏已修复，见 [前端整改证据](docs/evidence/阶段2/前端整改/验收报告.md)。最新媒体归档验证见 [媒体归档证据](docs/evidence/阶段2/媒体归档/验收报告.md)。
 
 当前模型密钥全部未配置，真实生成待验。在“设置”页配置选定平台密钥后才能进行真实生成；不要将密钥发到聊天或写入仓库。后端本地配置文件已由其 `.gitignore` 排除。本次未调用付费模型。
 
@@ -182,3 +182,19 @@ python3.12 scripts/project.py check
 文字库在主应用的 `backend/data/asset-library/library.json`，不在 `/code` 静态目录，也不进入 Git。保留整个目录即可保留资产、版本、来源和引用历史；不要手工改 JSON 或删除锁文件。当前文件锁支持 macOS/Linux 本地进程；Windows、分布式存储及多人权限须另行适配。已有项目文件不用迁移，损坏库会返回安全错误并保留原文件，不会自动清空。
 
 只验证此模块时，在后端目录运行 `.venv/bin/python -m pytest tests/test_assets.py tests/test_live_recovery.py -q`；完整验证继续从根目录执行 `python3.12 scripts/project.py check`。自动测试使用隔离人工数据，实际启动／结束／重启 HTTP 服务，不访问收费模型，不修改用户项目。本轮后端 73/73 中包含原有 42 项和新增 31 项；真实模型与完整业务验收仍待确认。
+
+## 小云雀图片与视频归档
+
+按 [媒体归档开发文档](docs/阶段文档/阶段2-第3子阶段-媒体归档开发文档.md) 先形成文档再开发。现有角色图、场景图、参考图和片段视频可通过 `POST /api/assets/import-media` 显式归档。默认保存当前选定素材，也可指定候选序号；同一来源的变化追加新版本，旧引用保持原版本。归档不会改变原项目选择，也不会调用模型。
+
+素材独立副本保存在 `backend/data/asset-library/media/`，元数据仍在同目录的 `library.json`。备份要保留整个资产库目录；原生成文件移除后，归档仍可读取。图片上限 10 MiB，支持 JPG/PNG/WebP/BMP；MP4 上限 100 MiB，校验使用已安装的 ffprobe。读取路由为 `/api/assets/{asset_id}/versions/{version_id}/media`，支持图片显示和视频 Range 读取，校验大小与 SHA-256，目录不公开挂载、不进入 Git。旧文字库不需迁移。
+
+没有模型 Key 或现成素材时，从根目录运行人工样例验收入口：
+
+```bash
+python3.12 scripts/project.py media-demo
+```
+
+打开 http://127.0.0.1:8001/docs ，标题应为“小云雀媒体归档 · 人工样例验收”。该入口使用本地程序制作的黄色／蓝色图片和短 MP4，项目编号 `media-demo`；不是模型效果展示。验收数据保存在忽略的根 `data/media-archive-demo/`，重启保留记录；服务只暴露资产相关接口，没有生成、配置或删除路由。原应用的后端 8000、前端 3000 启动方式不变。端口占用时入口拒绝启动，不停止其他服务。
+
+按照 [媒体归档验收报告](docs/evidence/阶段2/媒体归档/验收报告.md) 操作即可检查两个版本、镜头引用与重启恢复；停止人工服务时按 Control+C。只验证本轮后端可运行 `.venv/bin/python -m pytest tests/test_media_archive.py -q`。本轮新增 47 项后端测试，累计 120/120；前端 33/33、类型、Lint 与构建通过。真实模型冒烟仍待验，正式资产页面及生成输入接线继续后续切片。

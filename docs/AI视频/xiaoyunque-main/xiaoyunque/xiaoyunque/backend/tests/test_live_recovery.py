@@ -21,14 +21,16 @@ from api.app import app
 from api.routers import workflow, sessions
 from core.orchestrator import WorkflowEngine
 from api.dependencies import get_workflow_engine
-from api.routers.assets import get_asset_library
+from api.routers.assets import get_asset_library, get_media_archive
 from core.asset_library import AssetLibrary
+from core.media_archive import MediaArchive
 from pathlib import Path
 engine = WorkflowEngine(sys.argv[1])
 workflow.workflow_engine = engine
 sessions.workflow_engine = engine
 app.dependency_overrides[get_workflow_engine] = lambda: engine
 app.dependency_overrides[get_asset_library] = lambda: AssetLibrary(Path(sys.argv[1]) / 'asset-library')
+app.dependency_overrides[get_media_archive] = lambda: MediaArchive(Path(sys.argv[1]) / 'asset-library', Path(sys.argv[1]) / 'code' / 'result', sys.argv[1])
 uvicorn.run(app, host='127.0.0.1', port=int(sys.argv[2]), access_log=False, log_level='critical')
 """
     process = subprocess.Popen(

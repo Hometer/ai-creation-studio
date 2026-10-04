@@ -43,6 +43,7 @@ def doctor() -> int:
         ("npm", ["npm", "--version"]),
         ("Git", ["git", "--version"]),
         ("ffmpeg", ["ffmpeg", "-version"]),
+        ("ffprobe（媒体归档校验）", ["ffprobe", "-version"]),
     ]:
         executable = shutil.which(command[0])
         if not executable:
@@ -81,14 +82,14 @@ def check() -> int:
 
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("command", choices=["doctor", "backend", "frontend", "check"])
-    parser.add_argument("--port", type=int, help="服务端口；默认后端 8000、前端 3000")
+    parser.add_argument("command", choices=["doctor", "backend", "frontend", "media-demo", "check"])
+    parser.add_argument("--port", type=int, help="服务端口；默认后端 8000、前端 3000、人工媒体验收 8001")
     arguments = parser.parse_args()
     if arguments.command == "doctor":
         return doctor()
     if arguments.command == "check":
         return check()
-    port = arguments.port or (8000 if arguments.command == "backend" else 3000)
+    port = arguments.port or {"backend": 8000, "frontend": 3000, "media-demo": 8001}[arguments.command]
     if not 1 <= port <= 65535:
         parser.error("端口必须在 1—65535 之间")
     if not port_available(port):
@@ -99,6 +100,9 @@ def main() -> int:
             str(PYTHON), "-m", "uvicorn", "api.app:app", "--host", "127.0.0.1",
             "--port", str(port), "--no-access-log",
         ], BACKEND)
+    if arguments.command == "media-demo":
+        return run([str(PYTHON), "-m", "api.media_demo", "--directory", str(ROOT / "data/media-archive-demo"),
+                    "--port", str(port)], BACKEND)
     return run(["npm", "run", "dev", "--", "--hostname", "127.0.0.1", "--port", str(port)], FRONTEND)
 
 
