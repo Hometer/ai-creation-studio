@@ -41,6 +41,12 @@ def error_response(status: int, code: str, message: str, headers=None) -> JSONRe
 
 
 def register_error_handlers(app: FastAPI) -> None:
+    from core.asset_library import AssetLibraryError
+
+    @app.exception_handler(AssetLibraryError)
+    async def asset_error_handler(request, exc: AssetLibraryError):
+        return error_response(exc.status, exc.code, exc.message)
+
     @app.exception_handler(HTTPException)
     async def handle_http_error(_request: Request, exc: HTTPException):
         code, message = HTTP_ERRORS.get(exc.status_code, ("REQUEST_FAILED", "请求未能完成"))

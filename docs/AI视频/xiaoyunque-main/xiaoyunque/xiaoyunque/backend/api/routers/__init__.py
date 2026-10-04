@@ -8,8 +8,10 @@ from .stages import router as stages_router
 from .sandbox import router as sandbox_router
 from .pipelines import router as pipelines_router
 from .configuration import router as configuration_router
+from .assets import router as assets_router
 
 __all__ = [
+    "assets_router",
     "health_router",
     "files_router",
     "workflow_router",

@@ -20,9 +20,15 @@ import sys, uvicorn
 from api.app import app
 from api.routers import workflow, sessions
 from core.orchestrator import WorkflowEngine
+from api.dependencies import get_workflow_engine
+from api.routers.assets import get_asset_library
+from core.asset_library import AssetLibrary
+from pathlib import Path
 engine = WorkflowEngine(sys.argv[1])
 workflow.workflow_engine = engine
 sessions.workflow_engine = engine
+app.dependency_overrides[get_workflow_engine] = lambda: engine
+app.dependency_overrides[get_asset_library] = lambda: AssetLibrary(Path(sys.argv[1]) / 'asset-library')
 uvicorn.run(app, host='127.0.0.1', port=int(sys.argv[2]), access_log=False, log_level='critical')
 """
     process = subprocess.Popen(
@@ -78,3 +84,46 @@ def test_http_project_survives_actual_service_restart(tmp_path):
         invalid = client.post("/api/project/start", json={"idea": {"private": "artificial-text"}})
         assert invalid.status_code == 422
         assert "artificial-text" not in invalid.text
+
+
+def test_http_assets_versions_and_references_survive_actual_restart(tmp_path):
+    from core.orchestrator import WorkflowEngine
+
+    engine = WorkflowEngine(str(tmp_path))
+    engine.create_session("asset-proof", {"idea": "人工样例，不调用模型"})
+    state = engine.get_state("asset-proof")
+    state.artifacts = {
+        "script_generation": {"characters": [{"id": "role-1", "name": "小云雀", "description": "黄色信使"}]},
+        "storyboard": {"episodes": [{"segments": [{"segment_id": "seg-1", "shots": [{"shot_number": 1}]}]}]},
+    }
+    engine.save_session_to_disk("asset-proof")
+    project_before = engine.get_status_snapshot("asset-proof")
+    with server(tmp_path) as client:
+        asset = client.post("/api/assets/import-script", json={
+            "project_id": "asset-proof", "kind": "character", "item_id": "role-1",
+        }).json()
+        old = asset["versions"][0]["version_id"]
+        response = client.post("/api/asset-references", json={
+            "asset_id": asset["asset_id"], "version_id": old, "project_id": "asset-proof",
+            "segment_id": "seg-1", "shot_number": 1,
+        })
+        assert response.status_code == 201
+        ref = response.json()
+        asset = client.post(f'/api/assets/{asset["asset_id"]}/versions', json={
+            "name": "小云雀", "definition": "蓝色信使，人工第二版",
+        }).json()
+        route = f'/api/asset-references/{ref["reference_id"]}'
+        ref = client.patch(route, json={"version_id": asset["versions"][-1]["version_id"], "expected_revision": 1}).json()
+        assert ref["revision"] == 2 and len(ref["history"]) == 2
+        assert client.get("/api/project/asset-proof/status").json() == project_before
+        schema = client.get("/openapi.json").json()
+        assert schema["paths"]["/api/assets"]["post"]["responses"]["503"]["content"]["application/json"]["schema"]["$ref"].endswith("ErrorResponse")
+        assert client.get("/code/data/asset-library/library.json").status_code == 404
+        assert client.get("/data/asset-library/library.json").status_code == 404
+    with server(tmp_path) as client:
+        assert client.get(f'/api/assets/{asset["asset_id"]}').json() == asset
+        assert client.get("/api/project/asset-proof/asset-references").json() == [ref]
+        assert client.get("/api/project/asset-proof/status").json() == project_before
+        assert client.patch(route, json={"version_id": old, "expected_revision": 1}).status_code == 409
+        restored = client.patch(route, json={"version_id": old, "expected_revision": 2})
+        assert restored.json()["revision"] == 3 and restored.json()["has_newer_version"]
