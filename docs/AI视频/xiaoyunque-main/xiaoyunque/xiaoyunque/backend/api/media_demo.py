@@ -16,6 +16,7 @@ from api.routers.assets import get_asset_library, get_media_archive, router
 from api.routers.generation_plans import router as plans_router
 from api.routers.generation_tasks import get_task_provider, router as tasks_router
 from api.routers.model_preflight import router as preflight_router
+from api.routers.generation_readiness import router as readiness_router
 from core.asset_library import AssetLibrary
 from core.media_archive import MediaArchive
 from core.orchestrator import WorkflowEngine
@@ -67,6 +68,7 @@ def create_demo(directory: Path, task_simulation: bool = False):
     app.include_router(plans_router)
     app.include_router(tasks_router)
     app.include_router(preflight_router)
+    app.include_router(readiness_router)
     app.dependency_overrides[get_workflow_engine] = lambda: engine
     app.dependency_overrides[get_asset_library] = lambda: library
     app.dependency_overrides[get_media_archive] = lambda: archive

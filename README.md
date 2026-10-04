@@ -271,3 +271,19 @@ python3.12 scripts/project.py wan-replay --scenario success --action status
 数据在忽略的根 `data/wan-protocol-replay/{scenario}/`，独立 schema 1 replay.json、人工平台计数和 result.mp4；备份保留整个场景目录。不会导入生产资产、修改旧 SIM 账本或覆盖用户项目。响应／检查点不保存完整 Prompt、Base64、原始供应商消息或签名链接。人工 usage 为 5 秒，实际 ffmpeg 色块 MP4 为 1 秒，两者单独显示；费用与币种 null，不表示免费真实生成。
 
 新增 83 项后端测试；完整结果后端 377/377、前端 33/33、类型／Lint／生产构建通过。模块测试在后端目录运行 `.venv/bin/python -m pytest tests/test_wan_replay.py -q`；全项目继续用 `python3.12 scripts/project.py check`。真实报价／预算／样例审核、联网 transport 和真实冒烟仍待完成，整体阶段 2 未验收。
+
+## 万相报价、额度与样例审核准备
+
+按 [第 8 子阶段开发文档](docs/阶段文档/阶段2-第8子阶段-报价预算与样例审核接线开发文档.md) 先文档再代码。新增人工价格依据、单次／日／月上限、逐计划素材审核、估算、幂等准备和取消接口。主后端与现有 task-demo 的 /docs 中分类为“万相报价、额度与样例准备（不收费）”。继续运行 `python3.12 scripts/project.py task-demo`，打开 http://127.0.0.1:8001/docs 即可核对；没有新增常驻应用或正式前端。
+
+`POST /api/wan-prices` 保存明确模型、两档整数分／秒和有效期。manual_account 仅为操作者的账户价格声明，独立核验仍 false；offline_fixture 仅供人工演练。`POST /api/wan-budget-policies` 保存本机全项目共用上限；`GET /api/wan-budget` 查看当前日／月分配。无价格／预算时返回 unavailable 或 null，不给默认人民币额度；不能混用真实声明与演练来源。
+
+`POST /api/generation-plans/{id}/sample-reviews` 绑定计划摘要，逐项记录使用权、非敏感范围和境内处理确认；任一否认会阻断准备，最新审核使旧审核失效。`POST /api/wan-quotes` 固定整个计划的模型、分辨率、片段时长、价格版本和整数估算；有效期为 20 分钟与价格有效期的较早值。真实素材先通过既有计划与受控读取接口看过，再填写确认。
+
+`POST /api/wan-preparations` 绑定报价摘要、审核／预算版本与 request_id，并要求 preparation_only=true。共享锁内检查当前计划、图像字节、协议、时效与上限，保存本地准备和额度分配；同请求重试不重复分配，一个报价只用于一条准备。GET 只读并返回当前阻塞项。`POST /api/wan-preparations/{id}/cancel` 携带 expected_revision，释放本地分配、保留历史；原始 planning_held_minor 留存，取消后 active_planning_held_minor=0。
+
+本地分配按 Asia/Shanghai 的日／月统计，失效但未取消的准备仍保留原分配；换日／换月不代表可以继续执行，后续执行前须重新预留当前期间额度。本机统计不包含平台其他调用或真实账单。新接口始终 real_execution_allowed=false，real_money_reserved=false，actual_charged_minor=null；本轮没有真实资金预留、付费授权、模型请求或联网 transport，也不改变旧生成入口。
+
+记录为 `backend/data/asset-library/generation-readiness.json`（schema 1），严格校验、共享锁、原子替换和目录同步；损坏保留原文件并返回 503。备份随整个资产库及会话目录；人工验收在忽略的 `data/generation-task-demo/`，不改旧 SIM 账本、资产库或预检历史。照做地址和六张截图见 [验收报告](docs/evidence/阶段2/报价预算审核/验收报告.md)，当前保留了已取消的准备与一份否认审核。
+
+新增 57 项回归，后端累计 434/434、前端 33/33、类型／Lint／生产构建通过；模块检查在后端目录运行 `.venv/bin/python -m pytest tests/test_generation_readiness.py -q`。完整检查继续使用 `python3.12 scripts/project.py check`。实际账户报价与预算、认证、受控网络、真实计费及模型冒烟仍待验，整体开发未完成。
