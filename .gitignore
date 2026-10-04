@@ -1,0 +1,22 @@
+.env
+.env.*
+!.env.example
+.venv/
+__pycache__/
+.pytest_cache/
+node_modules/
+.next/
+data/
+.vefaas/
+.DS_Store
+*.pyc
+*.tsbuildinfo
+config.yaml
+logs/
+temp/
+code.bak/
+*.zip
+*.tar.gz
+
+# 历史 FilmAgent 研究材料保留在本地；当前整合仅包含小云雀主应用。
+docs/AI视频/xiaoyunque-main/FilmAgent/
