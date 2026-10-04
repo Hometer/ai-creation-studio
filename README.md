@@ -287,3 +287,15 @@ python3.12 scripts/project.py wan-replay --scenario success --action status
 记录为 `backend/data/asset-library/generation-readiness.json`（schema 1），严格校验、共享锁、原子替换和目录同步；损坏保留原文件并返回 503。备份随整个资产库及会话目录；人工验收在忽略的 `data/generation-task-demo/`，不改旧 SIM 账本、资产库或预检历史。照做地址和六张截图见 [验收报告](docs/evidence/阶段2/报价预算审核/验收报告.md)，当前保留了已取消的准备与一份否认审核。
 
 新增 57 项回归，后端累计 434/434、前端 33/33、类型／Lint／生产构建通过；模块检查在后端目录运行 `.venv/bin/python -m pytest tests/test_generation_readiness.py -q`。完整检查继续使用 `python3.12 scripts/project.py check`。实际账户报价与预算、认证、受控网络、真实计费及模型冒烟仍待验，整体开发未完成。
+
+## 万相执行前检查与关闭的 HTTP 传输
+
+按 [第 9 子阶段开发文档](docs/阶段文档/阶段2-第9子阶段-受控传输与执行前检查开发文档.md) 先文档再开发。新增执行前检查，在共享锁内重新核对准备修订、计划／引用、素材字节、当前价格／预算／审核、有效期和上海日月期间。符合条件时只在内存编译请求，报告仅保存 SHA256 摘要；检查不会创建任务、重复分配额度、上传素材或发送模型请求。
+
+启动原后端或 `python3.12 scripts/project.py task-demo`，在 /docs 找到“万相执行前检查（不联网、不收费）”。`POST /api/wan-preparations/{id}/execution-check` 的请求正文必须是空对象 `{}`；条件未通过也返回持久化报告，inputs_compiled=false。`GET /api/wan-execution-checks/{id}` 查看历史和 current，只读文件，重新核对当前本地条件；current 不是调用许可，历史报告不能代替未来逐次确认。查看 [四张截图与核对步骤](docs/evidence/阶段2/执行前检查/验收报告.md)，本机保留样例已取消，旧报告 current=false，新检查不编译，本地分配为 0。到期或跨日会增加对应阻断提示。
+
+独立 `core/wan_http_transport.py` 已实现受限路径、北京 API／上海结果域名白名单、DNS 公网校验与 TLS 地址固定、原生连接／读取及绝对超时、流式大小上限、拒绝重定向和单次请求。API Bearer 与结果下载隔离，无代理、Cookie 或自动重试。生产组件的初始化始终拒绝执行，没有 HTTP 参数、构造开关或配置 Key 自动启用路径；现有 offline-only 协议适配器不接收此组件。底层行为只在自动化测试的本机 HTTP／HTTPS 人工服务上运行，真实认证、DNS／TLS、平台账单和生成效果待验。
+
+检查存于私有资产库 `execution-checks.json`（schema 1），与资产／计划／准备共用锁，原子写入并同步目录。备份保留整个资产库和会话目录；人工数据继续在被忽略的 `data/generation-task-demo/`。损坏、未知版本、重复字段、缺失字段或符号链接返回安全 503 并保留文件。记录没有完整 Prompt、Base64、Key、素材路径或签名链接；actual_charged_minor=null、real_money_reserved=false、submit_attempts=0、network_used=false、real_execution_allowed=false。
+
+模块验证在后端目录运行 `.venv/bin/python -m pytest tests/test_execution_checks.py tests/test_wan_http_transport.py -q`，新增 88 项。最终后端 522/522（原 434 保留），前端 33/33、类型／Lint／生产构建通过，实际隔离 HTTP 与人工服务重启恢复通过；原 SIM 账本、资产库和预检历史字节保持。完整检查仍使用 `python3.12 scripts/project.py check`。本轮不收费，整体阶段 2 与真实模型继续待验；下一步真实接线之前须确定账户报价、实际额度和逐次付费／素材发送授权。
