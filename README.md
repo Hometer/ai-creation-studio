@@ -123,7 +123,7 @@ npm start -- --hostname 127.0.0.1 --port 3000
 
 打开 http://127.0.0.1:3000 ，应看到创意输入框和灵感示例。打开 http://127.0.0.1:8000/api/health ，应看到 `status` 为 `ok`。停止服务时，在对应终端按 Control+C。
 
-验证方法：在后端目录执行 `.venv/bin/python -m pytest -q`；在前端目录执行 `npm run lint` 和 `npm run build`。初次运行报告记录了旧问题；最新结果为后端 235/235、前端回归 33/33、类型检查、全量 Lint 与生产构建通过。手机侧栏与顶栏已修复，见 [前端整改证据](docs/evidence/阶段2/前端整改/验收报告.md)。媒体归档见 [媒体归档证据](docs/evidence/阶段2/媒体归档/验收报告.md)，生成计划验证见 [生成计划证据](docs/evidence/阶段2/生成计划/验收报告.md)，最新结果见 [费用与任务证据](docs/evidence/阶段2/费用与任务/验收报告.md)。
+验证方法：在后端目录执行 `.venv/bin/python -m pytest -q`；在前端目录执行 `npm run lint` 和 `npm run build`。初次运行报告记录了旧问题；最新结果为后端 294/294、前端回归 33/33、类型检查、全量 Lint 与生产构建通过。手机侧栏与顶栏已修复，见 [前端整改证据](docs/evidence/阶段2/前端整改/验收报告.md)。媒体归档见 [媒体归档证据](docs/evidence/阶段2/媒体归档/验收报告.md)，生成计划验证见 [生成计划证据](docs/evidence/阶段2/生成计划/验收报告.md)，费用与任务见 [对应证据](docs/evidence/阶段2/费用与任务/验收报告.md)，最新预检见 [万相离线预检证据](docs/evidence/阶段2/万相预检/验收报告.md)。
 
 当前模型密钥全部未配置，真实生成待验。在“设置”页配置选定平台密钥后才能进行真实生成；不要将密钥发到聊天或写入仓库。后端本地配置文件已由其 `.gitignore` 排除。本次未调用付费模型。
 
@@ -237,3 +237,18 @@ python3.12 scripts/project.py task-demo
 正式任务账本为 `backend/data/asset-library/generation-tasks.json`，与计划／资产共享锁并原子保存；输出暂存为同目录私有 `task-output/`，版本副本沿用 `media/`。备份要保留整个资产库与会话目录；演练还须保留其 `simulation-provider/` 平台记录。不要手改 JSON、锁文件或删除业务数据。当前仅本机单工作流写进程，真实平台原生超时、幂等查询、费用规则、后台 worker、正式任务页面及多人权限仍待后续适配。
 
 只验证新增模块，在后端目录运行 `.venv/bin/python -m pytest tests/test_generation_tasks.py -q`；57 项新增测试覆盖并发预留、未知报价、失联不重发、有限重试、存储异常、结果幂等和真实 HTTP 进程重启。完整检查仍为 `python3.12 scripts/project.py check`；本轮后端 235/235、前端 33/33、类型检查、全量 Lint（0 错误、0 警告）和生产构建通过。真实模型冒烟待验，整个阶段 2 尚未验收完成。
+
+
+## 小云雀万相离线预检
+
+按 [第 6 子阶段开发文档](docs/阶段文档/阶段2-第6子阶段-万相离线预检开发文档.md) 先文档再开发。本轮已确认针对阿里云通义万相准备接入，后续样例限定有权非敏感素材、境内处理；继续不收费调用。新增持久化预检报告，检查首帧／首尾帧模型协议、时长、分辨率、Prompt 长度、图片完整性／规格、后端 Key 存在性与 Endpoint 地域。
+
+启动原后端或 `python3.12 scripts/project.py task-demo`，在 /docs 找到“万相离线预检（不调用模型）”。`POST /api/generation-plans/{plan_id}/wan-preflight` 不需正文，返回报告编号；`GET /api/model-preflights/{report_id}` 查看历史与 current。人工计划、保留报告和截图见 [验收报告](docs/evidence/阶段2/万相预检/验收报告.md)。预检不会提交任务、推进 SIM 平台、上传素材或初始化模型 SDK；旧任务和预算保持。
+
+报告的 input_protocol_ready 仅表示本地固定输入通过协议检查。真实执行仍为 false，认证／真实适配／价格与额度／样例逐次审核仍待完成。sound=off 不能由当前协议保证，会明确阻断；镜头类型不透传，比例与图像不符时警告。参考生视频是另一种协议，本轮未适配。请求只在内存编译，报告不返回或存储完整 Prompt、Base64、Key、Endpoint 原值、工作空间域名或磁盘路径。
+
+预检历史在 `backend/data/asset-library/model-preflight.json`（schema 1），备份随整个资产库和会话目录。人工服务使用根 `data/generation-task-demo/asset-library/model-preflight.json`，由 Git 忽略。重启报告仍可读取；current 仅比较计划／引用与脱敏配置分类，不重新核对图片字节、不验证 Key 内容。真正执行前须重新预检和复核当前字节，非空 Key 不能当认证成功。
+
+只验证本模块，在后端目录运行 `.venv/bin/python -m pytest tests/test_model_preflight.py -q`。新增 59 项回归，包括真实 HTTP 重启、失效报告、损坏存储、读取中素材变化、透明图片、恶意 Endpoint 和客户端执行参数伪造；完整结果为后端 294/294、前端 33/33、类型／Lint／生产构建通过。原有配置／SDK 和渲染提示保留，真实模型仍待验。
+
+后续真实恢复必须使用平台 task_id；未保存编号的提交失联要人工核对，禁止自动重发，不沿用模拟平台按本地 request_id 查询的合同。公开原价只用于文档参考，不是账户实际账单或已批准预算。Key 不要发到聊天；本轮无需配置 Key，也不会因配置 Key 自动启用收费。
