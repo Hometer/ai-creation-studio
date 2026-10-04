@@ -14,6 +14,7 @@ if _backend_dir not in sys.path:
 
 from api.logging_config import setup_concurrent_logging
 from api.routers.generation_plans import router as generation_plans_router
+from api.routers.generation_tasks import router as generation_tasks_router
 from api.errors import ErrorResponse, HTTP_ERRORS, register_error_handlers
 from config import settings
 
@@ -90,6 +91,7 @@ app.include_router(pipelines_router)
 app.include_router(configuration_router)
 app.include_router(assets_router)
 app.include_router(generation_plans_router)
+app.include_router(generation_tasks_router)
 logger.info("API routers registered")
 
 

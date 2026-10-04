@@ -11,7 +11,7 @@ from uuid import uuid4
 
 from api.schemas.assets import (
     ArtifactSource, Asset, AssetInput, AssetVersion, Library, MediaInfo, Reference, ReferenceInput,
-    ReferenceUpdate, Selection, Source, VersionInput,
+    ReferenceUpdate, Selection, Source, TaskSource, VersionInput,
 )
 from core.persistence import atomic_write_session
 
@@ -94,7 +94,7 @@ class AssetLibrary:
             return result
 
     @staticmethod
-    def _version(payload: VersionInput, number: int, source: Source) -> AssetVersion:
+    def _version(payload: VersionInput, number: int, source: Source | ArtifactSource | TaskSource) -> AssetVersion:
         return AssetVersion(**payload.model_dump(include={"name", "definition"}),
                             version_id=uuid4().hex, number=number, created_at=now(), source=source)
 
@@ -127,7 +127,7 @@ class AssetLibrary:
             return asset
         return self._change(operation)
 
-    def import_media(self, source: ArtifactSource, kind: str, payload: VersionInput,
+    def import_media(self, source: ArtifactSource | TaskSource, kind: str, payload: VersionInput,
                      archive, temporary, details) -> Asset:
         from core.media_archive import sync_directory
 
@@ -142,7 +142,16 @@ class AssetLibrary:
                 if asset.kind != kind:
                     raise AssetLibraryError(409, "MEDIA_KIND_CONFLICT", "归档来源类型已变化，请核对原素材")
                 latest = asset.versions[-1]
+                if isinstance(source, TaskSource):
+                    prior = next((v for v in asset.versions if isinstance(v.source, TaskSource)
+                                  and v.source.task_id == source.task_id), None)
+                    if prior is not None:
+                        if prior.source != source or prior.media.sha256 != details["sha256"]:
+                            raise AssetLibraryError(409, "TASK_RESULT_CHANGED", "同一任务的结果已变化，请保留原版本并核对")
+                        archive.verify_file(prior.media)
+                        return asset
                 if (latest.name == payload.name and latest.definition == payload.definition
+                        and latest.source == source
                         and latest.media is not None
                         and latest.media.sha256 == details["sha256"]
                         and latest.media.byte_size == details["byte_size"]):

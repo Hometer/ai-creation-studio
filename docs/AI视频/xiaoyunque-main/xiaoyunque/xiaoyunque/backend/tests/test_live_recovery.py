@@ -11,7 +11,7 @@ import httpx
 
 
 @contextmanager
-def server(data_dir):
+def server(data_dir, task_simulation=False):
     with socket.socket() as connection:
         connection.bind(("127.0.0.1", 0))
         port = connection.getsockname()[1]
@@ -25,16 +25,21 @@ from api.routers.assets import get_asset_library, get_media_archive
 from core.asset_library import AssetLibrary
 from core.media_archive import MediaArchive
 from pathlib import Path
+from api.routers.generation_tasks import get_task_provider
+from core.task_provider import LocalSimulationProvider
 engine = WorkflowEngine(sys.argv[1])
 workflow.workflow_engine = engine
 sessions.workflow_engine = engine
 app.dependency_overrides[get_workflow_engine] = lambda: engine
 app.dependency_overrides[get_asset_library] = lambda: AssetLibrary(Path(sys.argv[1]) / 'asset-library')
 app.dependency_overrides[get_media_archive] = lambda: MediaArchive(Path(sys.argv[1]) / 'asset-library', Path(sys.argv[1]) / 'code' / 'result', sys.argv[1])
+if sys.argv[3] == 'simulation':
+    provider = LocalSimulationProvider(Path(sys.argv[1]) / 'simulation-provider', Path(sys.argv[1]) / 'code/result/video/media-demo/sample.mp4')
+    app.dependency_overrides[get_task_provider] = lambda: provider
 uvicorn.run(app, host='127.0.0.1', port=int(sys.argv[2]), access_log=False, log_level='critical')
 """
     process = subprocess.Popen(
-        [sys.executable, "-c", script, str(data_dir), str(port)],
+        [sys.executable, "-c", script, str(data_dir), str(port), "simulation" if task_simulation else "unavailable"],
         cwd=Path(__file__).resolve().parents[1], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
     )
     try:

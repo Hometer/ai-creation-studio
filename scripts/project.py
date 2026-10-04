@@ -82,14 +82,14 @@ def check() -> int:
 
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("command", choices=["doctor", "backend", "frontend", "media-demo", "plan-demo", "check"])
+    parser.add_argument("command", choices=["doctor", "backend", "frontend", "media-demo", "plan-demo", "task-demo", "check"])
     parser.add_argument("--port", type=int, help="服务端口；默认后端 8000、前端 3000、人工媒体验收 8001")
     arguments = parser.parse_args()
     if arguments.command == "doctor":
         return doctor()
     if arguments.command == "check":
         return check()
-    port = arguments.port or {"backend": 8000, "frontend": 3000, "media-demo": 8001, "plan-demo": 8001}[arguments.command]
+    port = arguments.port or {"backend": 8000, "frontend": 3000, "media-demo": 8001, "plan-demo": 8001, "task-demo": 8001}[arguments.command]
     if not 1 <= port <= 65535:
         parser.error("端口必须在 1—65535 之间")
     if not port_available(port):
@@ -100,10 +100,10 @@ def main() -> int:
             str(PYTHON), "-m", "uvicorn", "api.app:app", "--host", "127.0.0.1",
             "--port", str(port), "--no-access-log",
         ], BACKEND)
-    if arguments.command in {"media-demo", "plan-demo"}:
-        directory = "media-archive-demo" if arguments.command == "media-demo" else "generation-plan-demo"
+    if arguments.command in {"media-demo", "plan-demo", "task-demo"}:
+        directory = {"media-demo": "media-archive-demo", "plan-demo": "generation-plan-demo", "task-demo": "generation-task-demo"}[arguments.command]
         return run([str(PYTHON), "-m", "api.media_demo", "--directory", str(ROOT / "data" / directory),
-                    "--port", str(port)], BACKEND)
+                    "--port", str(port), *(["--task-simulation"] if arguments.command == "task-demo" else [])], BACKEND)
     return run(["npm", "run", "dev", "--", "--hostname", "127.0.0.1", "--port", str(port)], FRONTEND)
 
 

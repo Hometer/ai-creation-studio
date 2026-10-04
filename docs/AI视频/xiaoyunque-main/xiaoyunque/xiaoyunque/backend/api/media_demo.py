@@ -14,9 +14,11 @@ from api.dependencies import get_workflow_engine
 from api.errors import ErrorResponse, HTTP_ERRORS, register_error_handlers
 from api.routers.assets import get_asset_library, get_media_archive, router
 from api.routers.generation_plans import router as plans_router
+from api.routers.generation_tasks import get_task_provider, router as tasks_router
 from core.asset_library import AssetLibrary
 from core.media_archive import MediaArchive
 from core.orchestrator import WorkflowEngine
+from core.task_provider import LocalSimulationProvider
 
 
 class DemoInfo(BaseModel):
@@ -25,7 +27,7 @@ class DemoInfo(BaseModel):
     docs: str
 
 
-def create_demo(directory: Path):
+def create_demo(directory: Path, task_simulation: bool = False):
     image_dir = directory / "code/result/image/media-demo"
     video_dir = directory / "code/result/video/media-demo"
     image_dir.mkdir(parents=True, exist_ok=True)
@@ -57,13 +59,18 @@ def create_demo(directory: Path):
         engine.save_session_to_disk("media-demo")
     library = AssetLibrary(directory / "asset-library")
     archive = MediaArchive(library.directory, directory / "code/result", directory)
-    app = FastAPI(title="小云雀媒体归档 · 人工样例验收", responses={status: {"model": ErrorResponse} for status in HTTP_ERRORS})
+    title = "小云雀任务与费用 · 人工演练（SIM 点数，无模型调用）" if task_simulation else "小云雀媒体归档 · 人工样例验收"
+    app = FastAPI(title=title, responses={status: {"model": ErrorResponse} for status in HTTP_ERRORS})
     register_error_handlers(app)
     app.include_router(router)
     app.include_router(plans_router)
+    app.include_router(tasks_router)
     app.dependency_overrides[get_workflow_engine] = lambda: engine
     app.dependency_overrides[get_asset_library] = lambda: library
     app.dependency_overrides[get_media_archive] = lambda: archive
+    if task_simulation:
+        provider = LocalSimulationProvider(directory / "simulation-provider", video)
+        app.dependency_overrides[get_task_provider] = lambda: provider
 
     @app.get("/", response_model=DemoInfo)
     def info():
@@ -76,9 +83,10 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--directory", type=Path, required=True)
     parser.add_argument("--port", type=int, default=8001)
+    parser.add_argument("--task-simulation", action="store_true", help="仅启用本地人工平台与 SIM 点数，不调用模型")
     arguments = parser.parse_args()
     try:
-        app = create_demo(arguments.directory.resolve())
+        app = create_demo(arguments.directory.resolve(), task_simulation=arguments.task_simulation)
     except (OSError, ValueError, subprocess.SubprocessError):
         print("人工样例初始化失败，请保留数据并检查 ffmpeg 与目录权限。", file=sys.stderr)
         return 1

@@ -75,6 +75,24 @@ class ArtifactSource(Contract):
         return self
 
 
+class TaskSource(Contract):
+    type: Literal["generation_task"] = "generation_task"
+    project_id: ProjectId
+    stage: Literal["video_generation"] = "video_generation"
+    item_type: Literal["clips"] = "clips"
+    item_id: ProjectId
+    task_id: Id
+    plan_id: Id
+    content_hash: Annotated[str, StringConstraints(pattern=r"^[a-f0-9]{64}$")]
+    simulation_only: bool
+
+    @model_validator(mode="after")
+    def local_only(self):
+        if self.simulation_only is not True:
+            raise ValueError("Only artificial task output is implemented")
+        return self
+
+
 class MediaInfo(Contract):
     file_id: Id
     mime_type: Literal["image/jpeg", "image/png", "image/webp", "image/bmp", "video/mp4"]
@@ -98,7 +116,7 @@ class AssetVersion(VersionInput):
     version_id: Id
     number: int = Field(ge=1)
     created_at: str
-    source: Source | ArtifactSource
+    source: Source | ArtifactSource | TaskSource
     media: MediaInfo | None = None
 
 
@@ -154,7 +172,7 @@ class Library(Contract):
 
     @model_validator(mode="after")
     def valid_graph(self):
-        version_ids, import_keys, bindings, file_ids = set(), set(), set(), set()
+        version_ids, import_keys, bindings, file_ids, task_ids = set(), set(), set(), set(), set()
         for key, asset in self.assets.items():
             if key != asset.asset_id:
                 raise ValueError("Asset ID mismatch")
@@ -163,17 +181,22 @@ class Library(Contract):
                     raise ValueError("Duplicate import source")
                 import_keys.add(asset.import_key)
             for number, version in enumerate(asset.versions, 1):
+                if isinstance(version.source, TaskSource):
+                    if version.source.task_id in task_ids:
+                        raise ValueError("Duplicate task output")
+                    task_ids.add(version.source.task_id)
                 if version.number != number or version.version_id in version_ids:
                     raise ValueError("Invalid version sequence")
                 version_ids.add(version.version_id)
                 if asset.kind in {"image", "video"}:
                     media = version.media
-                    if (media is None or not isinstance(version.source, ArtifactSource)
+                    if (media is None or not isinstance(version.source, (ArtifactSource, TaskSource))
                             or media.file_id in file_ids
+                            or isinstance(version.source, TaskSource) and asset.kind != "video"
                             or (asset.kind == "video") != (media.mime_type == "video/mp4")):
                         raise ValueError("Invalid media version")
                     file_ids.add(media.file_id)
-                elif version.media is not None or isinstance(version.source, ArtifactSource):
+                elif version.media is not None or isinstance(version.source, (ArtifactSource, TaskSource)):
                     raise ValueError("Text assets cannot contain media")
         for key, ref in self.references.items():
             asset = self.assets.get(ref.asset_id)
