@@ -4,6 +4,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { ArrowLeft, History, RefreshCw, FilePenLine, ShieldCheck } from 'lucide-react';
 import BrandHeader from './BrandHeader';
+import RevisionComparison from './RevisionComparison';
 import { STAGES, RevisionError, editInput, pathKey, previewRevision, readRevisions, restoreInput, saveRevision, type Input, type Preview, type Stage, type Version, type Workspace, type Impact } from '@/lib/contentRevisions';
 
 const sources = { baseline: '首次归档', external: '原入口更新归档', edit: '手动修改', restore: '恢复旧版' };
@@ -43,11 +44,13 @@ export default function ProjectRevisions({ projectId }: { projectId: string }) {
   };
   const reload = useCallback(async () => {
     if (lock.current) return;
+    if (dirtyRef.current && !window.confirm('重新读取会放弃本页未保存的文字或预览。确认重新读取？')) return;
     lock.current = true; setReading(true); setError(''); setNotice('');
     try {
       const next = await readRevisions(projectId);
       if (!mounted.current) return;
       setData(next); setBlocked(false); setStatus(0);
+      setFieldKey(''); setValue('');
       setPreview(null); setInput(null); setAck(false);
       setSelectedId(new URL(location.href).searchParams.get('version') ?? '');
       setNotice('已读取持久化版本。请核对当前文字与历史后继续。');
@@ -55,7 +58,7 @@ export default function ProjectRevisions({ projectId }: { projectId: string }) {
       if (mounted.current) { setError(e instanceof Error ? e.message : '读取失败，请重试'); setStatus(e instanceof RevisionError ? e.status : 0); setBlocked(true); }
     } finally { lock.current = false; if (mounted.current) setReading(false); }
   }, [projectId]);
-  useEffect(() => { mounted.current = true; const initial = window.setTimeout(() => { void reload(); }, 0); const navigate = (e: MouseEvent) => { if (e.target instanceof Element && e.target.closest('a[href]') && (lock.current || (dirtyRef.current && !window.confirm('尚有未保存的文字或预览，离开会丢失本页草稿。确认离开？')))) { e.preventDefault(); e.stopImmediatePropagation(); } }; document.addEventListener('click', navigate, true); const pop = () => setSelectedId(new URL(location.href).searchParams.get('version') ?? ''); const leave = (e: BeforeUnloadEvent) => { if (dirtyRef.current || lock.current) e.preventDefault(); }; window.addEventListener('popstate',pop); window.addEventListener('beforeunload',leave); return () => { mounted.current = false; window.clearTimeout(initial); document.removeEventListener('click', navigate, true); window.removeEventListener('popstate',pop); window.removeEventListener('beforeunload',leave); }; }, [reload]);
+  useEffect(() => { mounted.current = true; const initial = window.setTimeout(() => { void reload(); }, 0); const navigate = (e: MouseEvent) => { if (e.target instanceof Element && e.target.closest('a[href]:not([href^="#"])') && (lock.current || (dirtyRef.current && !window.confirm('尚有未保存的文字或预览，离开会丢失本页草稿。确认离开？')))) { e.preventDefault(); e.stopImmediatePropagation(); } }; document.addEventListener('click', navigate, true); const pop = () => setSelectedId(new URL(location.href).searchParams.get('version') ?? ''); const leave = (e: BeforeUnloadEvent) => { if (dirtyRef.current || lock.current) e.preventDefault(); }; window.addEventListener('popstate',pop); window.addEventListener('beforeunload',leave); return () => { mounted.current = false; window.clearTimeout(initial); document.removeEventListener('click', navigate, true); window.removeEventListener('popstate',pop); window.removeEventListener('beforeunload',leave); }; }, [reload]);
   const disabled = reading || busy || blocked || !!data?.running;
   const canLeave = () => !lock.current && (!dirtyRef.current || window.confirm('尚有未保存的文字或预览，离开会丢失本页草稿。确认离开？'));
   const previewInput = async (next: Input) => {
@@ -82,7 +85,7 @@ export default function ProjectRevisions({ projectId }: { projectId: string }) {
     } finally { lock.current = false; setBusy(false); }
   };
   return <div><BrandHeader /><div className="revision-shell">
-    <nav className="revision-nav"><Link href={`/projects/${encodeURIComponent(projectId)}/assets`}><ArrowLeft size={16} />素材与版本</Link><Link href={`/projects/${encodeURIComponent(projectId)}/reviews`}>修改影响与人工核对</Link><Link href={`/?session=${encodeURIComponent(projectId)}`}>返回项目</Link><button onClick={reload} disabled={reading || busy}><RefreshCw size={16} />重新读取版本</button></nav>
+    <nav className="revision-nav"><Link href={`/projects/${encodeURIComponent(projectId)}/assets`}><ArrowLeft size={16} />素材与版本</Link><Link href={`/projects/${encodeURIComponent(projectId)}/reviews`}>修改影响与人工核对</Link><a href="#revision-comparison">两版对比</a><Link href={`/?session=${encodeURIComponent(projectId)}`}>返回项目</Link><button onClick={reload} disabled={reading || busy}><RefreshCw size={16} />重新读取版本</button></nav>
     <div className="revision-heading"><div><span className="revision-eyebrow">创作工作室 · 文字版本</span><h1>每次修改，都有来处</h1><p>选一处文字，核对影响再保存。需要时，恢复旧版继续创作。</p></div><span className="revision-local"><ShieldCheck size={18} />本地修改 · 不生成、不收费</span></div>
     <p className="revision-boundary">版本从首次接线保存开始记录。原剧本、分镜手动保存、旧补丁与工作流结果保存都会归档；接线前的中间修改无法补回。素材、视频和已有计划保留；修改后需重新核对相关内容。</p>
     {error && <div className="revision-alert" role="alert">{error}{data && <p>已显示的数据保留，暂停保存；重新读取后核对。</p>}</div>}
@@ -104,6 +107,7 @@ export default function ProjectRevisions({ projectId }: { projectId: string }) {
       {selectedId && !selection && <p className="revision-alert">所选历史版本不存在。<button onClick={() => selectUrl('')}>返回版本列表</button></p>}
       {selection && <section className="revision-version"><h3>v{selection.number} · {STAGES[selection.stage]} · {sources[selection.source]}</h3>{selection.restored_from && <p>恢复自 v{data.versions.find(v => v.version_id === selection.restored_from)?.number}</p>}{selection.fields.map(f => <details key={pathKey(f.path)}><summary>{f.label}</summary><pre className="revision-text">{f.value || '（空白）'}</pre></details>)}<button className="revision-primary" disabled={disabled || selection.current} onClick={() => restorePreview(selection)}>{selection.current ? '已经是当前文字' : '预览恢复这一版'}</button></section>}
       </aside></div>
+      <RevisionComparison workspace={data} disabled={reading || busy || blocked} />
       {!!data.impacts.length && <section className="revision-card revision-review"><h2>修改留下的待核对记录</h2><p className="revision-muted">汇总已归档修改的保守影响，回退后仍保留。此列表不表示后续内容已重做或已审核。</p><Impacts items={data.impacts} /></section>}
     </>}
   </div></div>;

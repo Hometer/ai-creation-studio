@@ -1,8 +1,9 @@
 """No-charge, local-only text revision workspace."""
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, Query
 from api.dependencies import get_workflow_engine
-from api.schemas.assets import ProjectId
+from api.schemas.assets import ProjectId, Id
 from api.schemas.content_revisions import RevisionInput, SaveRevision, Workspace, Preview, Saved, Editor, Stage
+from api.schemas.content_revisions import Comparison, ComparisonInput
 from core.content_revisions import ContentRevisions
 
 router = APIRouter(tags=['文字修改与版本（本地，不生成）'])
@@ -25,6 +26,12 @@ def save(project_id: ProjectId, payload: SaveRevision, revisions=Depends(service
 @router.get('/api/project/{project_id}/content-revisions/editor/{stage}', response_model=Editor)
 def editor(project_id: ProjectId, stage: Stage, revisions=Depends(service)):
     return revisions.editor(project_id, stage)
+
+@router.get('/api/project/{project_id}/content-revisions/compare', response_model=Comparison)
+def compare(project_id: ProjectId, before_version_id: Id, after_version_id: Id,
+            expected_token: str = Query(pattern=r'^[a-f0-9]{64}$'), revisions=Depends(service)):
+    return revisions.compare(project_id, ComparisonInput(expected_token=expected_token,
+        before_version_id=before_version_id, after_version_id=after_version_id))
 
 # Manual decisions are independent from workflow confirmation and generation.
 from api.routers.assets import get_asset_library

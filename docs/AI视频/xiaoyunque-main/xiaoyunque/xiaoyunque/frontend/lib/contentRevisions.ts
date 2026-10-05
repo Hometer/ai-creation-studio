@@ -23,8 +23,13 @@ function parseFields(x: unknown): TextField[] {
   if (!Array.isArray(x) || x.length > 500 || !x.every(f => isRecord(f) && path(f.path) && f.path.length > 0 && text(f.label) && text(f.value)) || new Set(x.map(f => pathKey(f.path))).size !== x.length) return invalid();
   return x as TextField[];
 }
+function renderedTypeMayDiffer(value: string): boolean {
+  // Legacy summaries render text and JSON values alike. Full snapshot comparison
+  // restores the types; identical ordinary text still cannot represent a change.
+  try { const parsed = JSON.parse(value); return parsed === null || (typeof parsed !== 'string' && (typeof parsed !== 'number' || Number.isFinite(parsed))); } catch { return false; }
+}
 function parseChanges(x: unknown): Change[] {
-  if (!Array.isArray(x) || !x.every(c => isRecord(c) && path(c.path) && text(c.before) && text(c.after) && (c.before_present === undefined || bool(c.before_present)) && (c.after_present === undefined || bool(c.after_present)) && (c.before !== c.after || (c.before_present ?? true) !== (c.after_present ?? true))) || new Set(x.map(c => pathKey(c.path))).size !== x.length) return invalid();
+  if (!Array.isArray(x) || !x.every(c => isRecord(c) && path(c.path) && text(c.before) && text(c.after) && (c.before_present === undefined || bool(c.before_present)) && (c.after_present === undefined || bool(c.after_present)) && (c.before !== c.after || (c.before_present ?? true) !== (c.after_present ?? true) || renderedTypeMayDiffer(c.before))) || new Set(x.map(c => pathKey(c.path))).size !== x.length) return invalid();
   return x as Change[];
 }
 function parseImpacts(x: unknown): Impact[] {

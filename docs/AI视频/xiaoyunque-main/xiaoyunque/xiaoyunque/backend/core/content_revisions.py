@@ -8,10 +8,13 @@ from pydantic import ValidationError
 from core.asset_library import AssetLibraryError
 from core.persistence import read_session, session_path
 from api.schemas.content_revisions import Editor, History, Revision, Preview, Workspace, Saved, RevisionInput
+from api.schemas.content_revisions import Comparison
 
 STAGES = ('script_generation', 'storyboard')
 MAX_CONTENT = 2 * 1024 * 1024
 MAX_HISTORY = 32 * 1024 * 1024
+MAX_COMPARISON_CHANGES = 2000
+MAX_COMPARISON_RESPONSE = 8 * 1024 * 1024
 
 
 def encoded(value):
@@ -115,6 +118,36 @@ def impact(stage, changes, storyboard):
 
 def unique(items):
     return list({(item['segment_id'], item['shot_number'], item['reason']): item for item in items}.values())
+
+
+def comparison_type(content, path, present):
+    if not present:
+        return 'missing'
+    value = content
+    for part in path:
+        value = value[part]
+    if value is None:
+        return 'null'
+    if isinstance(value, str):
+        return 'text'
+    if isinstance(value, bool):
+        return 'boolean'
+    if isinstance(value, (int, float)):
+        return 'number'
+    return 'array' if isinstance(value, list) else 'object'
+
+
+def comparison_label(path, labels):
+    key = encoded(path)
+    if key in labels:
+        return labels[key]
+    names = {'episodes': '章节', 'segments': '片段', 'shots': '镜头', 'scenes': '场次',
+             'characters': '角色', 'settings': '场景', 'payload': '旧版结构', 'title': '标题',
+             'logline': '梗概', 'content': '正文', 'plot': '剧情', 'dialogue': '台词',
+             'duration': '时长', 'total_duration': '总时长', 'shot_type': '景别',
+             'visual_prompt': '画面提示词', 'segment_id': '片段编号', 'episode_number': '章节编号',
+             'shot_number': '镜头编号', 'episode_title': '章节标题'}
+    return ' · '.join(str(p + 1) if type(p) is int else names.get(p, f'附加字段 {p}') for p in path) or '整体结构'
 
 
 def validate_history(raw):
@@ -261,6 +294,37 @@ class ContentRevisions:
             from core.manual_content import validate_replacement
             validate_replacement(stage, current[stage], current[stage])
             return Editor(workspace=self._workspace(project_id, state, history, current), artifact=current[stage])
+
+    def compare(self, project_id, payload):
+        with self.engine._state_lock:
+            state, history, current = self._read(project_id)
+            token = digest({'current': current, 'history': history.model_dump()})
+            if payload.expected_token != token:
+                fail(409, 'REVISION_CHANGED', '文字或历史已变化，请重新读取后再对比')
+            by_id = {v.version_id: v for v in history.versions}
+            before, after = by_id.get(payload.before_version_id), by_id.get(payload.after_version_id)
+            if before is None or after is None:
+                fail(404, 'VERSION_NOT_FOUND', '所选项目的历史版本不存在')
+            if before.stage != after.stage:
+                fail(422, 'COMPARISON_STAGE_MISMATCH', '请选择同一阶段的两个版本')
+            for version in (before, after):
+                if len(encoded(version.content)) > MAX_CONTENT:
+                    fail(422, 'CONTENT_LIMIT', '版本内容超过本轮对比上限，请保留原文')
+            labels = {encoded(f['path']): f['label'] for v in (before, after) for f in fields(v.stage, v.content)}
+            changes = differences(before.content, after.content)
+            if len(changes) > MAX_COMPARISON_CHANGES:
+                fail(422, 'COMPARISON_LIMIT', '差异超过 2000 条，请保留数据并拆分项目后对比')
+            boards = [before.content, after.content] if before.stage == 'storyboard' else [current['storyboard']]
+            impacts = unique([i for board in boards for i in impact(before.stage, changes, board)]) if changes else []
+            result = Comparison(project_id=project_id, token=token, stage=before.stage,
+                before_version_id=before.version_id, after_version_id=after.version_id,
+                changes=[{**c, 'label': comparison_label(c['path'], labels),
+                    'before_type': comparison_type(before.content, c['path'], c.get('before_present', True)),
+                    'after_type': comparison_type(after.content, c['path'], c.get('after_present', True))} for c in changes],
+                impacts=impacts)
+            if len(encoded(result.model_dump())) > MAX_COMPARISON_RESPONSE:
+                fail(422, 'COMPARISON_LIMIT', '差异内容超过 8 MiB，请保留数据并拆分项目后对比')
+            return result
 
     def _preview(self, project_id, payload, state, history, current):
         workspace = self._workspace(project_id, state, history, current)

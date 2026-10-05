@@ -106,3 +106,24 @@ class Saved(Contract):
     version_id: Id
     workspace: Workspace
     artifact: dict
+
+ValueType = Literal['text', 'number', 'boolean', 'object', 'array', 'null', 'missing']
+
+class ComparisonInput(Contract):
+    expected_token: str = Field(pattern=r'^[a-f0-9]{64}$')
+    before_version_id: Id
+    after_version_id: Id
+
+class ComparisonChange(Change):
+    label: str
+    before_type: ValueType
+    after_type: ValueType
+
+class Comparison(Contract):
+    project_id: str
+    token: str
+    stage: Stage
+    before_version_id: Id
+    after_version_id: Id
+    changes: list[ComparisonChange] = Field(max_length=2000)
+    impacts: list[Impact]

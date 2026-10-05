@@ -434,3 +434,15 @@ GET／POST `/api/project/{id}/content-revisions/reviews` 提供真实读取与�
 前端使用已准备的独立副本，停止后可另开终端运行 `BACKEND_API_URL=http://127.0.0.1:8006 npm --prefix /tmp/automatic-revision-frontend run dev -- --webpack --hostname 127.0.0.1 --port 3006`，与主前端分开构建目录。如果临时副本被清理，由开发者重新准备。后端 `/docs` 找 PATCH `/api/project/{session_id}/artifact/{stage}`，填 `automatic-revision-demo` 与 `script_generation`，正文 `{"title":"人工样例的新标题"}`，执行后版本页点“重新读取版本”，应新增“原入口更新归档”。重复相同标题不新增版本。只用独立样例演练，不调用模型。
 
 验证：backend 运行 `.venv/bin/python -m pytest tests/test_automatic_revisions.py -q` 或全量 `.venv/bin/python -m pytest -q`；frontend 运行 `npm test`、`npm run typecheck`、`npm run lint -- --max-warnings=0`、`npm run build`。本轮最终后端 811/811（新增 32），前端 250/250，类型／Lint／生产构建通过。四宽度和实际 HTTP 重启恢复通过；真实模型、真机与业务待验。见 [先行开发文档](docs/阶段文档/阶段3-第10子阶段-旧写入入口自动归档开发文档.md) 和 [证据与闸门](docs/evidence/阶段3/旧写入入口自动归档/验收报告.md)。
+
+## 任意两版文字对比（阶段 3 第 11 子阶段）
+
+项目 → 素材与版本 → 文字版本与恢复 → “两版对比”。选择剧本或分镜、左版起点与右版终点，点“查看两版差异”；“交换左右”直接重新读取倒序差异。选择保存在地址中，刷新或浏览器返回可恢复；同版和不同版本同内容分别提示无差异。字段／结构级展示区分文字与数字、缺失与空值，镜头增删可能展示完整列表，差异数不是修改字数。分镜影响取两版前后目标，剧本影响提示读取时当前分镜。
+
+对比只读、不创建版本、不修改当前正文或编辑草稿。失败保留选版并清掉旧结果，手动重读；过期依据先“重新读取版本”。有未保存文字或预览时，重读先明确提醒放弃草稿。旧历史中字符串 `1` 与数字 `1` 的摘要相同，现在可以正常读取，新对比从完整快照显示类型，无数据迁移。现有修改、预览、恢复和人工核对保留。仅同项目、同阶段归档快照；不含逐字高亮、草稿对比或导出。
+
+新增 GET `/api/project/{id}/content-revisions/compare`，带工作区 `expected_token` 与 `before_version_id`／`after_version_id`。跨阶段、失踪版本、过期依据、损坏或上限返回安全错误。单版最多 2 MiB、500 个可编辑字段，对比最多 2000 条差异／8 MiB；达到上限拒绝、不截断、不写数据。仍为本机单用户、单写服务，不替代正式账号隔离。
+
+本轮保留 [独立人工预览](http://127.0.0.1:3007/projects/comparison-demo/revisions#revision-comparison)。停止后从根运行 `python3.12 scripts/project.py comparison-demo` 启动后端 8007，数据在已忽略的 `data/comparison-demo/`；在独立副本运行 `BACKEND_API_URL=http://127.0.0.1:8007 npm --prefix /tmp/revision-comparison-frontend run dev -- --webpack --hostname 127.0.0.1 --port 3007`。临时副本被清理时由开发者重新准备；与主前端分开 `.next`。人工文字、数字类型与结构样例不是模型结果，服务只挂本地版本／资产／计划与只读导航，没有供应商执行入口。
+
+主应用仍用根目录 backend／frontend 启动入口；全量验证 `python3.12 scripts/project.py check`，定向后端 `.venv/bin/python -m pytest tests/test_revision_comparison.py -q`；前端 `npm test`、`npm run typecheck`、`npm run lint -- --max-warnings=0`、`npm run build`。最终后端 835/835（新增 24）、前端 281/281（新增 31），类型／Lint 零警告／生产构建通过。四宽度、实际断线／地址／迟到响应／草稿保护与服务重启已验；[先行开发文档](docs/阶段文档/阶段3-第11子阶段-两版文字对比开发文档.md) 和 [证据与闸门](docs/evidence/阶段3/两版文字对比/验收报告.md) 可核对。真实模型、真机、业务及整体阶段仍待验，本轮工程结果本地提交、不推送。
