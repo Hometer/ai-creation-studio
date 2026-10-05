@@ -15,6 +15,7 @@ export interface StageViewProps {
   onConfirm: () => void;
   onIntervene: (modifications: Record<string, unknown>) => void;
   onRegenerate: () => void;
+  onManualApplied?: (artifact: StageArtifact) => void;
   onUpdateArtifact?: (patch: Record<string, unknown>) => void;
   onSaveSelections?: (selections: Record<string, unknown>) => Promise<void>;
   /** 是否显示"确认并继续"按钮（后续阶段已执行过时为 false） */

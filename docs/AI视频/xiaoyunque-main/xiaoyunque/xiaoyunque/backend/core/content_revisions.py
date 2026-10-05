@@ -7,7 +7,7 @@ from datetime import datetime, timezone
 from pydantic import ValidationError
 from core.asset_library import AssetLibraryError
 from core.persistence import read_session, session_path
-from api.schemas.content_revisions import History, Revision, Preview, Workspace, Saved, RevisionInput
+from api.schemas.content_revisions import Editor, History, Revision, Preview, Workspace, Saved, RevisionInput
 
 STAGES = ('script_generation', 'storyboard')
 MAX_CONTENT = 2 * 1024 * 1024
@@ -66,10 +66,18 @@ def fields(stage, content):
 
 def differences(before, after, path=None):
     path = path or []
-    if before == after:
+    if encoded(before) == encoded(after):
         return []
     if isinstance(before, dict) and isinstance(after, dict):
-        return [change for key in sorted(before.keys() | after.keys()) for change in differences(before.get(key), after.get(key), [*path, key])]
+        changes = []
+        for key in sorted(before.keys() | after.keys()):
+            if key not in before or key not in after:
+                render = lambda value: value if isinstance(value,str) else encoded(value).decode()
+                changes.append({'path':[*path,key], 'before':render(before.get(key)), 'after':render(after.get(key)),
+                                'before_present':key in before, 'after_present':key in after})
+            else:
+                changes.extend(differences(before[key],after[key],[*path,key]))
+        return changes
     if isinstance(before, list) and isinstance(after, list) and len(before) == len(after):
         return [change for i, (a, b) in enumerate(zip(before, after)) for change in differences(a, b, [*path, i])]
     render = lambda value: value if isinstance(value, str) else encoded(value).decode()
@@ -160,6 +168,8 @@ class ContentRevisions:
             history = History.model_validate(raw) if raw is not None else History()
             validate_history(history.model_dump())
             current = {stage: copy.deepcopy(state.artifacts.get(stage, {})) for stage in STAGES}
+            if disk_data is not None and any(encoded(current[stage]) != encoded(disk_data.get('artifacts', {}).get(stage, {})) for stage in STAGES):
+                raise ValueError('Content changed outside current engine')
             if any(not isinstance(value, dict) for value in current.values()):
                 fail(422, 'UNSUPPORTED_CONTENT', '此项目文字结构暂不支持本轮编辑')
             return state, history, current
@@ -185,6 +195,15 @@ class ContentRevisions:
         with self.engine._state_lock:
             return self._workspace(project_id, *self._read(project_id))
 
+    def editor(self, project_id, stage):
+        with self.engine._state_lock:
+            state, history, current = self._read(project_id)
+            if len(encoded(current[stage])) > MAX_CONTENT:
+                fail(422, 'CONTENT_LIMIT', '文字内容超过本轮支持上限，请保留原文')
+            from core.manual_content import validate_replacement
+            validate_replacement(stage, current[stage], current[stage])
+            return Editor(workspace=self._workspace(project_id, state, history, current), artifact=current[stage])
+
     def _preview(self, project_id, payload, state, history, current):
         workspace = self._workspace(project_id, state, history, current)
         if workspace.running:
@@ -199,6 +218,10 @@ class ContentRevisions:
             if version is None:
                 fail(404, 'VERSION_NOT_FOUND', '所选阶段的版本不存在')
             target = copy.deepcopy(version.content)
+        elif payload.replacement is not None:
+            from core.manual_content import validate_replacement
+            validate_replacement(stage, current[stage], payload.replacement)
+            target = copy.deepcopy(payload.replacement)
         else:
             if not any(f['path'] == payload.path for f in fields(stage, current[stage])):
                 fail(422, 'FIELD_NOT_EDITABLE', '只能修改已列出的文字字段')
@@ -209,6 +232,7 @@ class ContentRevisions:
             obj[payload.path[-1]] = payload.value
         if len(encoded(target)) > MAX_CONTENT:
             fail(422, 'CONTENT_LIMIT', '文字内容超过本轮支持上限，请保留原文')
+        fields(stage, target)  # Validate projection limits before persisting an unreadable version.
         changes = differences(current[stage], target)
         if not changes:
             fail(422, 'NO_CHANGE', '内容没有变化，无需保存新版本')
@@ -230,7 +254,7 @@ class ContentRevisions:
             if previous:
                 if previous.request_digest != request_digest:
                     fail(409, 'REQUEST_ID_REUSED', '请求编号已用于其他修改，请重新预览')
-                return Saved(version_id=previous.version_id, workspace=self._workspace(project_id, state, history, current))
+                return Saved(version_id=previous.version_id, workspace=self._workspace(project_id, state, history, current), artifact=current[payload.stage])
             input_data = RevisionInput.model_validate(payload.model_dump(include=set(RevisionInput.model_fields)))
             preview, target = self._preview(project_id, input_data, state, history, current)
             if payload.preview_token != preview.preview_token:
@@ -262,4 +286,4 @@ class ContentRevisions:
                 state.artifacts, state.content_history, state.updated_at = old_artifacts, old_history, old_time
                 fail(503, 'REVISION_SAVE_FAILED', '保存未能完成，请重新读取后核对，原有版本已保留')
             updated = {**current, payload.stage: target}
-            return Saved(version_id=version.version_id, workspace=self._workspace(project_id, state, next_history, updated))
+            return Saved(version_id=version.version_id, workspace=self._workspace(project_id, state, next_history, updated), artifact=updated[payload.stage])

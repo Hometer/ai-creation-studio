@@ -1404,6 +1404,7 @@ export default function WorkflowPanel() {
               state={state}
               sessionId={sessionId || ''}
               onConfirm={() => handleConfirmStage(activeStage)}
+              onManualApplied={(artifact: StageArtifact) => updateStageState(activeStage, { artifact })}
               onIntervene={(mods: Record<string, unknown>) => handleIntervene(activeStage, mods)}
               onRegenerate={() => handleRegenerate(activeStage)}
               onUpdateArtifact={(patch: Record<string, unknown>) => handleUpdateArtifact(activeStage, patch)}

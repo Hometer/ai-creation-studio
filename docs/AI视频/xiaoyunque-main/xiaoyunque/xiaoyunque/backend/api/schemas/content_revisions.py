@@ -10,14 +10,15 @@ class RevisionInput(Contract):
     stage: Stage
     path: list[str | int] | None = Field(default=None, min_length=1, max_length=10)
     value: str | None = Field(default=None, max_length=10000)
+    replacement: dict | None = None
     restore_version_id: Id | None = None
 
     @model_validator(mode='after')
     def one_operation(self):
-        if self.restore_version_id is not None:
-            if self.path is not None or self.value is not None:
-                raise ValueError('Ambiguous operation')
-        elif self.path is None or self.value is None:
+        editing = self.path is not None or self.value is not None
+        if sum([editing, self.restore_version_id is not None, self.replacement is not None]) != 1:
+            raise ValueError('Exactly one operation required')
+        if editing and (self.path is None or self.value is None):
             raise ValueError('Missing edit')
         return self
 
@@ -42,6 +43,8 @@ class Change(Contract):
     path: list[str | int]
     before: str
     after: str
+    before_present: bool = True
+    after_present: bool = True
 
 class Impact(Contract):
     segment_id: str
@@ -95,6 +98,11 @@ class Preview(Contract):
     impacts: list[Impact]
     restore_version_id: Id | None
 
+class Editor(Contract):
+    workspace: Workspace
+    artifact: dict
+
 class Saved(Contract):
     version_id: Id
     workspace: Workspace
+    artifact: dict

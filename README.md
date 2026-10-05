@@ -400,3 +400,15 @@ GPT 文本默认 timeout=300 秒、视觉 60 秒，Gemini 显式 300 秒；可�
 独立人工服务从根运行 `python3.12 scripts/project.py revision-demo`（8003）。人工数据在忽略的 `data/revision-demo/`，只挂本地文字版本与只读导航接口，没有模型执行、配置、任务创建或收费接口。独立演练前端用 `BACKEND_API_URL=http://127.0.0.1:8003 npm run dev -- --webpack --hostname 127.0.0.1 --port 3003`，访问 `/projects/revision-demo/revisions`；与主前端并行时使用独立源码／构建目录，避免覆盖 `.next`。本轮已保留人工前后端供核对。
 
 [开发文档](docs/阶段文档/阶段3-第7子阶段-定向修改与版本回退开发文档.md) 与 [验收报告](docs/evidence/阶段3/定向修改与版本回退/验收报告.md) 包含九张截图、地址、照着点步骤与十项闸门。回复不确定或内容已变化时保留输入并暂停提交，先重新读取核对，禁止盲目重发。真实模型、完整对话、全链路影响处置、真机与整体阶段业务验收继续待验。
+
+## 原剧本／分镜编辑接入版本（阶段 3 第 8 子阶段）
+
+原项目页的“修改”继续支持结构与 JSON 编辑。开始编辑读取当前持久化正文；“保存”先预览差异与受影响镜头，勾选确认后才保存新版本。“文字版本与恢复”可查看和恢复旧版，结构增删也保留完整快照。分镜附加字段不再被展示映射丢弃，无效 JSON 不会静默保存另一份内容。保存失败、冲突或回复丢失保留草稿并冻结提交，不自动重发；重新载入前明确提醒放弃草稿。手机分镜改为镜头卡片，正文输入与删除按钮可直接操作。
+
+只更新当前阶段的正文与历史，不自动更新或生成角色、图片、视频、计划、预算和任务。旧介入 API、通用产物补丁与模型写入仍兼容，其逐次归档和上下游人工处置留待后续；根控制元数据不可通过本轮编辑改写。接口仅用于当前本地单用户、单服务实例，其他进程修改文件时拒绝覆盖，保留数据并重启服务读取。正式登录隔离及真实模型仍待验。
+
+从根目录运行 `python3.12 scripts/project.py manual-edit-demo` 启动 8004 独立人工服务，数据在已忽略的 `data/manual-edit-demo/`，重启保留；只挂文字版本和只读导航接口，没有模型执行、任务创建或收费接口。演练前端在独立源码／构建目录使用 `BACKEND_API_URL=http://127.0.0.1:8004 npm run dev -- --webpack --hostname 127.0.0.1 --port 3004`；不要与主前端共用 `.next`。本轮人工服务与前端已保留，直接打开 http://127.0.0.1:3004/?session=manual-edit-demo&stage=storyboard 或 http://127.0.0.1:3004/projects/manual-edit-demo/revisions 。人工文字不是模型结果。
+
+新增 GET `/api/project/{id}/content-revisions/editor/{stage}` 返回原编辑所需完整正文与同锁修订依据。已有预览／保存接口新增互斥 `replacement` 完整对象，兼容 path/value 与 restore；保存需明确确认、预览摘要、请求编号和修订依据。已知结构、2 MiB 正文、有限深度、500 个文字字段与 32 MiB 历史上限在写入前校验；不会截断、删除或迁移数据。差异以存在标记区分字段增删与 null。
+
+完整验证仍用 `python3.12 scripts/project.py check`；单模块在 backend 目录运行 `.venv/bin/python -m pytest tests/test_manual_revisions.py tests/test_content_revisions.py -q`。前端运行 `npm test`、`npm run typecheck`、`npm run lint -- --max-warnings=0`、`npm run build`。后端最终全量 751/751，前端 224/224；真实模型及真机继续待验。本轮工程说明和证据在 [原编辑入口版本接线验收报告](docs/evidence/阶段3/原编辑入口版本接线/验收报告.md)。

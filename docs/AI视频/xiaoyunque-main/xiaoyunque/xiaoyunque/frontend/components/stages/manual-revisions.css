@@ -1,0 +1,45 @@
+.manual-revision-panel{margin:0 0 20px;padding:14px 16px;border:1px solid var(--lp-border,#343442);border-radius:12px;font-size:13px;line-height:1.7;overflow-wrap:anywhere;background:var(--lp-surface,#20202b)}
+.manual-revision-panel a{color:var(--lp-accent,#beb2ff);text-decoration:underline}
+.manual-revision-panel [role=alert]{color:#fda4af}
+.manual-revision-panel button,.manual-revision-dialog button{min-height:44px;padding:10px 16px;border:1px solid var(--lp-border,#484857);border-radius:10px;cursor:pointer}
+.manual-revision-dialog{position:fixed;inset:0;margin:auto;width:min(760px,calc(100vw - 24px));max-height:calc(100dvh - 32px);overflow-y:auto;border:1px solid var(--lp-border,#484857);border-radius:16px;padding:24px;background:var(--lp-surface,#20202b);color:var(--lp-text,#efedf7);font-size:14px;line-height:1.7}
+.manual-revision-dialog::backdrop{background:rgba(0,0,0,.7)}
+.manual-revision-dialog h3{font-size:20px;font-weight:700;margin-bottom:12px}
+.manual-revision-dialog h4{font-weight:600;overflow-wrap:anywhere;margin-top:16px}
+.manual-revision-dialog section{border-bottom:1px solid var(--lp-border,#484857);padding-bottom:14px}
+.manual-revision-dialog span{display:block;font-size:12px;opacity:.7;margin-top:8px}
+.manual-revision-dialog pre{white-space:pre-wrap;overflow-wrap:anywhere;max-height:220px;overflow:auto;font:inherit;padding:10px;border-radius:8px;background:var(--lp-bg,#16161d)}
+.manual-revision-dialog label{display:flex;align-items:flex-start;gap:10px;padding:16px 0;cursor:pointer}
+.manual-revision-dialog input[type=checkbox]{width:20px;height:20px;flex-shrink:0;margin-top:3px}
+.manual-revision-buttons{display:flex;flex-wrap:wrap;justify-content:flex-end;gap:12px;margin-top:10px}
+.manual-revision-buttons button:last-child{background:#8062d6;color:#fff}
+.manual-revision-dialog button:disabled{opacity:.45;cursor:default}
+[data-manual-editor] input,[data-manual-editor] select,[data-manual-editor] button{min-height:44px}
+@media(max-width:600px){.manual-revision-dialog{padding:16px}.manual-revision-buttons{flex-direction:column}.manual-revision-buttons button{width:100%}}
+
+.manual-revision-dialog[open]{display:flex;flex-direction:column;overflow:hidden}
+.manual-review-content{min-height:0;overflow-y:auto;padding-right:6px;flex:1 1 auto}
+.manual-review-confirm{flex-shrink:0;border-top:1px solid var(--lp-border,#484857);background:var(--lp-surface,#20202b)}
+.manual-revision-dialog input[type=checkbox]{min-height:20px}
+.manual-review-confirm label{padding:12px 0}
+
+.manual-episode-heading,.manual-segment-header,.manual-segment-details{flex-wrap:wrap;gap:12px;min-width:0;overflow-wrap:anywhere}
+.manual-segment-details>div:last-child>div{flex-wrap:wrap}
+.manual-segment-details input{width:min(150px,40vw);max-width:100%}
+.manual-storyboard-table textarea{min-width:120px}
+@media(max-width:767px){
+ .manual-storyboard-table{margin-left:0;overflow:visible;border:0;background:transparent!important}
+ .manual-storyboard-table table,.manual-storyboard-table tbody{display:block;width:100%}
+ .manual-storyboard-table thead{display:none}
+ .manual-storyboard-table tr{display:grid;grid-template-columns:52px minmax(0,1fr) 80px;margin-bottom:12px;border:1px solid var(--lp-border,#343442);border-radius:12px;background:var(--lp-surface,#20202b)}
+ .manual-storyboard-table td{padding:10px;min-width:0;border:0!important}
+ .manual-storyboard-table td:first-child{align-self:center;padding:10px 4px;white-space:nowrap}
+ .manual-storyboard-table td:first-child::before{content:'镜头 ';font-size:11px}
+ .manual-storyboard-table td:nth-child(4){grid-column:1/-1}
+ .manual-storyboard-table td:nth-child(4)::before{content:'分镜内容';display:block;font-size:12px;opacity:.7;margin-bottom:8px}
+ .manual-storyboard-table td:nth-child(5){grid-column:1/-1;text-align:right;padding-top:0}
+ .manual-storyboard-table td:nth-child(5) button{opacity:1}
+ .manual-storyboard-table textarea{min-height:84px;min-width:0;width:100%;line-height:1.6}
+ .manual-storyboard-table .manual-add-shot-row td{grid-column:1/-1}
+ .manual-storyboard-table .manual-add-shot-row td::before{content:none}
+}

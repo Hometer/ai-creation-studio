@@ -2,7 +2,7 @@
 from fastapi import APIRouter, Depends
 from api.dependencies import get_workflow_engine
 from api.schemas.assets import ProjectId
-from api.schemas.content_revisions import RevisionInput, SaveRevision, Workspace, Preview, Saved
+from api.schemas.content_revisions import RevisionInput, SaveRevision, Workspace, Preview, Saved, Editor, Stage
 from core.content_revisions import ContentRevisions
 
 router = APIRouter(tags=['文字修改与版本（本地，不生成）'])
@@ -21,3 +21,7 @@ def preview(project_id: ProjectId, payload: RevisionInput, revisions=Depends(ser
 @router.post('/api/project/{project_id}/content-revisions', response_model=Saved, status_code=201)
 def save(project_id: ProjectId, payload: SaveRevision, revisions=Depends(service)):
     return revisions.save(project_id, payload)
+
+@router.get('/api/project/{project_id}/content-revisions/editor/{stage}', response_model=Editor)
+def editor(project_id: ProjectId, stage: Stage, revisions=Depends(service)):
+    return revisions.editor(project_id, stage)

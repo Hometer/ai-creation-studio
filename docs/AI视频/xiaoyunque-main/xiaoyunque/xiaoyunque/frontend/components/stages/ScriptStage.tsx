@@ -5,6 +5,8 @@ import { Save, X, Code, LayoutList, Users, MapPin, Film, Sparkles, BookOpen, Lig
 import type { StageViewProps } from './types';
 import StageActions from './StageActions';
 import StageProgress from './StageProgress';
+import {useManualRevision,ManualRevisionPanel} from './useManualRevision';
+import {editorStructure} from '@/lib/contentRevisions';
 
 /* ─── 类型 ─── */
 
@@ -123,7 +125,7 @@ function LoglineSummaryBar({ logline }: { logline: LoglineData }) {
   );
 }
 
-export default function ScriptStage({ state, onConfirm, onIntervene, onRegenerate, showConfirm, isRunning, hasPendingItems, hasNextStageStarted }: StageViewProps) {
+export default function ScriptStage({ state, sessionId, onManualApplied, onConfirm, onIntervene, onRegenerate, showConfirm, isRunning, hasPendingItems, hasNextStageStarted }: StageViewProps) {
   const data = useMemo(() => (state.artifact || {}) as ScriptData, [state.artifact]);
 
   const isLoglinePhase = data.phase === 'logline_selection' || data.phase === 'logline_confirm' || data.phase === 'mode_selection';
@@ -132,6 +134,7 @@ export default function ScriptStage({ state, onConfirm, onIntervene, onRegenerat
   const [editMode, setEditMode] = useState<'structured' | 'raw'>('structured');
   const [editData, setEditData] = useState<ScriptData>({});
   const [rawText, setRawText] = useState('');
+  const manual=useManualRevision(sessionId,'script_generation',onManualApplied);
 
   const [showSmartContinueDialog, setShowSmartContinueDialog] = useState(false);
   const [smartContinueEpisodes, setSmartContinueEpisodes] = useState<number>(1);
@@ -150,34 +153,25 @@ export default function ScriptStage({ state, onConfirm, onIntervene, onRegenerat
 
   const hasContent = Boolean(data.title || data.characters?.length || data.scenes?.length);
 
-  const startEdit = useCallback(() => {
-    setEditData(JSON.parse(JSON.stringify(data)));
-    setRawText(JSON.stringify(data, null, 2));
-    setIsEditing(true);
-    setEditMode('structured');
-  }, [data]);
+  const loadEdit = (content: Record<string,unknown>) => {
+    setEditData(JSON.parse(JSON.stringify(content)));setRawText(JSON.stringify(content,null,2));setIsEditing(true);setEditMode('structured');
+  };
+  const startEdit = () => void manual.start(loadEdit);
 
   const switchEditMode = useCallback((mode: 'structured' | 'raw') => {
     if (mode === 'raw') {
       setRawText(JSON.stringify(editData, null, 2));
     } else {
-      try { setEditData(JSON.parse(rawText)); } catch { /* keep current */ }
+      try { setEditData(editorStructure('script_generation',JSON.parse(rawText)) as ScriptData); } catch { manual.setError('JSON 格式无效，请修正后再切换');return; }
     }
     setEditMode(mode);
-  }, [editData, rawText]);
+  }, [editData, rawText, manual]);
 
-  const handleSave = useCallback(() => {
-    let finalData: ScriptData;
-    if (editMode === 'raw') {
-      try { finalData = JSON.parse(rawText); } catch { return; }
-    } else {
-      finalData = editData;
-    }
-    onIntervene({ modified_script: finalData });
-    setIsEditing(false);
-  }, [editMode, rawText, editData, onIntervene]);
-
-  const cancelEdit = useCallback(() => setIsEditing(false), []);
+  const handleSave = () => {
+    try {void manual.preview(editMode==='raw'?JSON.parse(rawText):editData);}
+    catch {manual.setError('JSON 格式无效，请修正后再预览');}
+  };
+  const cancelEdit = () => manual.cancel(()=>setIsEditing(false));
 
   /* ─── 编辑辅助 ─── */
   const updateField = (field: string, value: unknown) => setEditData(prev => ({ ...prev, [field]: value }));
@@ -204,7 +198,7 @@ export default function ScriptStage({ state, onConfirm, onIntervene, onRegenerat
   };
 
   return (
-    <div className="flex h-full min-w-0 flex-col">
+    <div data-manual-editor className="flex h-full min-w-0 flex-col">
       <div className="flex-1 min-w-0 overflow-y-auto p-4 sm:p-6">
 
         {/* 标题栏 */}
@@ -212,11 +206,11 @@ export default function ScriptStage({ state, onConfirm, onIntervene, onRegenerat
           <h2 className="text-lg font-semibold text-gray-800">剧本生成</h2>
           {isEditing && (
             <div className="flex gap-1 bg-gray-100 rounded-lg p-1 text-xs">
-              <button onClick={() => switchEditMode('structured')}
+              <button disabled={manual.busy} onClick={() => switchEditMode('structured')}
                 className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md transition-colors ${editMode === 'structured' ? 'bg-white text-blue-600 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}>
                 <LayoutList className="w-3.5 h-3.5" />结构编辑
               </button>
-              <button onClick={() => switchEditMode('raw')}
+              <button disabled={manual.busy} onClick={() => switchEditMode('raw')}
                 className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md transition-colors ${editMode === 'raw' ? 'bg-white text-blue-600 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}>
                 <Code className="w-3.5 h-3.5" />JSON编辑
               </button>
@@ -225,6 +219,7 @@ export default function ScriptStage({ state, onConfirm, onIntervene, onRegenerat
         </div>
         <p className="text-sm text-gray-500 mb-6">多轮 LLM 交互，生成结构化剧本数据</p>
 
+        <ManualRevisionPanel manual={manual} projectId={sessionId} onReload={()=>void manual.start(loadEdit,true)} onClose={()=>setIsEditing(false)}/>
         {/* 运行中 - 进度条 & 已选 Logline & 增量生成结果 */}
         {state.status === 'running' && (
           <>
@@ -648,18 +643,18 @@ export default function ScriptStage({ state, onConfirm, onIntervene, onRegenerat
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
                 <label className="flex flex-col gap-1 text-xs">
                   <span className="text-gray-500 font-medium">标题</span>
-                  <input type="text" value={editData.title || ''} onChange={e => updateField('title', e.target.value)}
+                  <input disabled={manual.busy} type="text" value={editData.title || ''} onChange={e => updateField('title', e.target.value)}
                     className="border border-gray-200 rounded-lg px-3 py-2 text-sm text-gray-700 focus:ring-2 focus:ring-blue-500/30 outline-none" />
                 </label>
                 <label className="flex flex-col gap-1 text-xs">
                   <span className="text-gray-500 font-medium">情绪基调</span>
-                  <input type="text" value={editData.mood || ''} onChange={e => updateField('mood', e.target.value)}
+                  <input disabled={manual.busy} type="text" value={editData.mood || ''} onChange={e => updateField('mood', e.target.value)}
                     className="border border-gray-200 rounded-lg px-3 py-2 text-sm text-gray-700 focus:ring-2 focus:ring-blue-500/30 outline-none" />
                 </label>
               </div>
               <label className="flex flex-col gap-1 text-xs">
                 <span className="text-gray-500 font-medium">Logline (故事大纲)</span>
-                <textarea value={editData.logline || ''} onChange={e => updateField('logline', e.target.value)} rows={4}
+                <textarea disabled={manual.busy} value={editData.logline || ''} onChange={e => updateField('logline', e.target.value)} rows={4}
                   className="border border-gray-200 rounded-lg px-3 py-2 text-sm text-gray-700 focus:ring-2 focus:ring-blue-500/30 outline-none resize-none" />
               </label>
             </section>
@@ -673,19 +668,19 @@ export default function ScriptStage({ state, onConfirm, onIntervene, onRegenerat
                     <div key={i} className="bg-white border border-gray-200 rounded-xl p-4 space-y-2">
                       <div className="flex gap-3">
                         <label className="flex flex-col gap-1 text-xs flex-1"><span className="text-gray-500 font-medium">名字</span>
-                          <input type="text" value={c.name} onChange={e => updateCharacter(i, { name: e.target.value })}
+                          <input disabled={manual.busy} type="text" value={c.name} onChange={e => updateCharacter(i, { name: e.target.value })}
                             className="border border-gray-200 rounded-lg px-3 py-2 text-sm text-gray-700 focus:ring-2 focus:ring-blue-500/30 outline-none" /></label>
                         <label className="flex flex-col gap-1 text-xs w-24"><span className="text-gray-500 font-medium">角色</span>
-                          <select value={c.role} onChange={e => updateCharacter(i, { role: e.target.value })}
+                          <select disabled={manual.busy} value={c.role} onChange={e => updateCharacter(i, { role: e.target.value })}
                             className="border border-gray-200 rounded-lg px-2 py-2 text-sm text-gray-700 outline-none">
                             <option value="主角">主角</option><option value="配角">配角</option><option value="背景">背景</option>
                           </select></label>
                       </div>
                       <label className="flex flex-col gap-1 text-xs"><span className="text-gray-500 font-medium">外貌描述</span>
-                        <textarea value={c.description} onChange={e => updateCharacter(i, { description: e.target.value })} rows={2}
+                        <textarea disabled={manual.busy} value={c.description} onChange={e => updateCharacter(i, { description: e.target.value })} rows={2}
                           className="border border-gray-200 rounded-lg px-3 py-2 text-sm text-gray-700 focus:ring-2 focus:ring-blue-500/30 outline-none resize-none" /></label>
                       <label className="flex flex-col gap-1 text-xs"><span className="text-gray-500 font-medium">动机</span>
-                        <input type="text" value={c.motivation || ''} onChange={e => updateCharacter(i, { motivation: e.target.value })}
+                        <input disabled={manual.busy} type="text" value={c.motivation || ''} onChange={e => updateCharacter(i, { motivation: e.target.value })}
                           className="border border-gray-200 rounded-lg px-3 py-2 text-sm text-gray-700 focus:ring-2 focus:ring-blue-500/30 outline-none" /></label>
                     </div>
                   ))}
@@ -701,7 +696,7 @@ export default function ScriptStage({ state, onConfirm, onIntervene, onRegenerat
                   {editData.settings.map((s, i) => (
                     <div key={i} className="bg-white border border-gray-200 rounded-xl p-4">
                       <label className="block text-xs text-gray-500 font-medium mb-1.5">{s.name}</label>
-                      <textarea value={s.description} onChange={e => updateSetting(i, { description: e.target.value })} rows={2}
+                      <textarea disabled={manual.busy} value={s.description} onChange={e => updateSetting(i, { description: e.target.value })} rows={2}
                         className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm text-gray-700 focus:ring-2 focus:ring-blue-500/30 outline-none resize-none" />
                     </div>
                   ))}
@@ -720,10 +715,10 @@ export default function ScriptStage({ state, onConfirm, onIntervene, onRegenerat
                         <span className="flex items-center justify-center w-7 h-7 rounded-full bg-purple-100 text-purple-700 text-xs font-bold flex-shrink-0">{sc.scene_number}</span>
                         <span className="text-xs text-green-600">{sc.location}</span>
                         <div className="flex flex-wrap gap-1">
-                          {sc.characters.map((c, ci) => <span key={ci} className="px-2 py-0.5 bg-blue-50 text-blue-600 text-[10px] rounded-full">{c}</span>)}
+                          {(sc.characters||[]).map((c, ci) => <span key={ci} className="px-2 py-0.5 bg-blue-50 text-blue-600 text-[10px] rounded-full">{c}</span>)}
                         </div>
                       </div>
-                      <textarea value={sc.plot} onChange={e => updateScene(i, { plot: e.target.value })} rows={3}
+                      <textarea disabled={manual.busy} value={sc.plot} onChange={e => updateScene(i, { plot: e.target.value })} rows={3}
                         className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm text-gray-700 focus:ring-2 focus:ring-blue-500/30 outline-none resize-none" />
                     </div>
                   ))}
@@ -732,9 +727,9 @@ export default function ScriptStage({ state, onConfirm, onIntervene, onRegenerat
             )}
 
             <div className="flex gap-2 pt-2">
-              <button onClick={handleSave} className="flex items-center gap-2 px-4 py-2 bg-blue-500 text-white rounded-lg text-sm font-medium hover:bg-blue-600 transition-colors">
+              <button onClick={handleSave} disabled={manual.busy||manual.frozen} className="flex items-center gap-2 px-4 py-2 bg-blue-500 text-white rounded-lg text-sm font-medium hover:bg-blue-600 transition-colors">
                 <Save className="w-4 h-4" />保存修改</button>
-              <button onClick={cancelEdit} className="flex items-center gap-2 px-4 py-2 bg-gray-100 text-gray-600 rounded-lg text-sm hover:bg-gray-200 transition-colors">
+              <button onClick={cancelEdit} disabled={manual.busy} className="flex items-center gap-2 px-4 py-2 bg-gray-100 text-gray-600 rounded-lg text-sm hover:bg-gray-200 transition-colors">
                 <X className="w-4 h-4" />取消</button>
             </div>
           </div>
@@ -743,12 +738,12 @@ export default function ScriptStage({ state, onConfirm, onIntervene, onRegenerat
         {/* ===== JSON编辑模式 ===== */}
         {isEditing && editMode === 'raw' && (
           <div className="space-y-3">
-            <textarea value={rawText} onChange={e => setRawText(e.target.value)}
+            <textarea disabled={manual.busy} aria-label="剧本 JSON" value={rawText} onChange={e => setRawText(e.target.value)}
               className="w-full bg-white border border-gray-200 rounded-xl p-4 text-sm text-gray-700 font-mono leading-relaxed resize-none outline-none min-h-[400px] focus:ring-2 focus:ring-blue-500/30" />
             <div className="flex gap-2">
-              <button onClick={handleSave} className="flex items-center gap-2 px-4 py-2 bg-blue-500 text-white rounded-lg text-sm font-medium hover:bg-blue-600 transition-colors">
+              <button onClick={handleSave} disabled={manual.busy||manual.frozen} className="flex items-center gap-2 px-4 py-2 bg-blue-500 text-white rounded-lg text-sm font-medium hover:bg-blue-600 transition-colors">
                 <Save className="w-4 h-4" />保存修改</button>
-              <button onClick={cancelEdit} className="flex items-center gap-2 px-4 py-2 bg-gray-100 text-gray-600 rounded-lg text-sm hover:bg-gray-200 transition-colors">
+              <button onClick={cancelEdit} disabled={manual.busy} className="flex items-center gap-2 px-4 py-2 bg-gray-100 text-gray-600 rounded-lg text-sm hover:bg-gray-200 transition-colors">
                 <X className="w-4 h-4" />取消</button>
             </div>
           </div>
@@ -764,26 +759,26 @@ export default function ScriptStage({ state, onConfirm, onIntervene, onRegenerat
         <StageActions
           status={state.status}
           onConfirm={onConfirm}
-          showConfirm={showConfirm}
+          showConfirm={!isEditing&&showConfirm}
           onEdit={startEdit}
-          onRegenerate={onRegenerate}
+          onRegenerate={isEditing?undefined:onRegenerate}
           stageId="script_generation"
           hasPendingItems={hasPendingItems}
           hasNextStageStarted={hasNextStageStarted}
-          isRunning={isRunning}
+          isRunning={isRunning||manual.busy}
         />
       )}
       {isEditing && (
         <StageActions
           status={state.status}
           onConfirm={onConfirm}
-          showConfirm={showConfirm}
-          onSave={handleSave}
-          onRegenerate={onRegenerate}
+          showConfirm={!isEditing&&showConfirm}
+          onSave={manual.frozen?undefined:handleSave}
+          onRegenerate={isEditing?undefined:onRegenerate}
           stageId="script_generation"
           hasPendingItems={hasPendingItems}
           hasNextStageStarted={hasNextStageStarted}
-          isRunning={isRunning}
+          isRunning={isRunning||manual.busy}
         />
       )}
 
@@ -820,7 +815,7 @@ export default function ScriptStage({ state, onConfirm, onIntervene, onRegenerat
                 <label className="block text-[13px] font-bold text-gray-600 mb-2 flex items-center gap-2">
                   后续剧情想法主线 <span className="text-[10px] font-medium text-gray-400 bg-gray-100 px-1.5 py-0.5 rounded">(可选)</span>
                 </label>
-                <textarea 
+                <textarea disabled={manual.busy}
                   value={smartContinueIdea}
                   onChange={(e) => setSmartContinueIdea(e.target.value)}
                   placeholder="如果留空，AI 将自动为您生成后续的续写灵感主线。"
