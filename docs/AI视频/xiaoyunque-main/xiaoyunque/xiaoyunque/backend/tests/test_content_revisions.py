@@ -62,7 +62,8 @@ def test_restart_external_update_archive(setup):
     c,e,d=setup;saved(c);before=workspace(c)
     fresh=WorkflowEngine(str(d/'sessions'));assert ContentRevisions(fresh).read(PROJECT).model_dump()==before
     fresh.update_artifact(PROJECT,'script_generation',{'title':'原页面修改'})
-    assert ContentRevisions(fresh).read(PROJECT).untracked_stages==['script_generation']
+    assert ContentRevisions(fresh).read(PROJECT).untracked_stages==[]
+    assert ContentRevisions(fresh).read(PROJECT).versions[-1].source=='external'
     c=TestClient(create_revision_demo(d));saved(c,edit(c,'script_generation',['title'],'再次修改'),'b'*32)
     assert [v['source'] for v in workspace(c)['versions']][-2:]==['external','edit']
     assert workspace(c)['untracked_stages']==[]

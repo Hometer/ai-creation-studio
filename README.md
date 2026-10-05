@@ -181,7 +181,7 @@ python3.12 scripts/project.py check
 
 文字库在主应用的 `backend/data/asset-library/library.json`，不在 `/code` 静态目录，也不进入 Git。保留整个目录即可保留资产、版本、来源和引用历史；不要手工改 JSON 或删除锁文件。当前文件锁支持 macOS/Linux 本地进程；Windows、分布式存储及多人权限须另行适配。已有项目文件不用迁移，损坏库会返回安全错误并保留原文件，不会自动清空。
 
-只验证此模块时，在后端目录运行 `.venv/bin/python -m pytest tests/test_assets.py tests/test_live_recovery.py -q`；完整验证继续从根目录执行 `python3.12 scripts/project.py check`。自动测试使用隔离人工数据，实际启动／结束／重启 HTTP 服务，不访问收费模型，不修改用户项目。本轮后端 73/73 中包含原有 42 项和新增 31 项；真实模型与完整业务验收仍待确认。
+只验证此模块时，在后端目录运行 `.venv/bin/python -m pytest tests/test_assets.py tests/test_live_recovery.py -q`；完整验证继续从根目录执行 `python3.12 scripts/project.py check`。自动测试使用隔离人工数据，实际启动／结束／重启 HTTP 服务，不访问收费模型，不修改用户项目。本轮后端 73/73 中包含原有 42 项和新增 32 项；真实模型与完整业务验收仍待确认。
 
 ## 小云雀图片与视频归档
 
@@ -393,7 +393,7 @@ GPT 文本默认 timeout=300 秒、视觉 60 秒，Gemini 显式 300 秒；可�
 
 项目 → 素材与版本 → “文字修改与版本”。选剧本或分镜的一处已有文字，填新内容，点击“预览修改与影响”，核对前后差异和关联镜头，勾选后保存。历史支持查看旧内容；恢复前先预览整阶段变化，确认后追加一个新版本。其余阶段、素材候选和视频选择保留，不自动生成、继续流程或收费。
 
-版本从本入口第一次保存前开始记录。原有编辑入口保留；其更新会被标为未归档，在下一次本入口保存时捕获该时点，不承诺追溯以前未留存的过程。影响列表是历次修改的保守核对记录，不表示下游已重做或已确认。草稿只在当前页面，离开链接或关闭页面会提示；正式保存的当前内容和历史在同一个会话文件内原子持久化。被编辑／恢复的单阶段最大 2 MiB、历史最大 32 MiB、可编辑字段最多 500 个；到上限阻止新写入，历史保留。仍限本机单写进程。
+版本从接线后的第一次实际保存开始记录。原手动编辑、通用产物补丁、工作流结果和含文字快照的持久化进度均自动归档；纯进度和重复内容不增加版本。接线前未留存的中间修改无法追溯；绕过这些入口的外部改写仍需重新读取和核对。影响列表是历次修改的保守核对记录，不表示下游已重做或已确认。草稿只在当前页面，离开链接或关闭页面会提示；正式保存的当前内容和历史在同一个会话文件内原子持久化。被编辑／恢复的单阶段最大 2 MiB、历史最大 32 MiB、可编辑字段最多 500 个；到上限阻止新写入，历史保留。仍限本机单写进程。
 
 主应用使用已有 backend／frontend 启动命令，完整检查 `python3.12 scripts/project.py check`。单模块在 backend 目录执行 `.venv/bin/python -m pytest tests/test_content_revisions.py -q`，前端执行 `npm test`、`npm run typecheck`、`npm run lint`、`npm run build`。本轮最终后端 724/724、前端 201/201，类型／Lint／生产构建通过。
 
@@ -405,7 +405,7 @@ GPT 文本默认 timeout=300 秒、视觉 60 秒，Gemini 显式 300 秒；可�
 
 原项目页的“修改”继续支持结构与 JSON 编辑。开始编辑读取当前持久化正文；“保存”先预览差异与受影响镜头，勾选确认后才保存新版本。“文字版本与恢复”可查看和恢复旧版，结构增删也保留完整快照。分镜附加字段不再被展示映射丢弃，无效 JSON 不会静默保存另一份内容。保存失败、冲突或回复丢失保留草稿并冻结提交，不自动重发；重新载入前明确提醒放弃草稿。手机分镜改为镜头卡片，正文输入与删除按钮可直接操作。
 
-只更新当前阶段的正文与历史，不自动更新或生成角色、图片、视频、计划、预算和任务。旧介入 API、通用产物补丁与模型写入仍兼容，其逐次归档和上下游人工处置留待后续；根控制元数据不可通过本轮编辑改写。接口仅用于当前本地单用户、单服务实例，其他进程修改文件时拒绝覆盖，保留数据并重启服务读取。正式登录隔离及真实模型仍待验。
+只更新当前阶段的正文与历史，不自动更新或生成角色、图片、视频、计划、预算和任务。旧介入 API、通用产物补丁与模型写入仍兼容，其文字结果与逐集持久快照已接入自动归档；实际重制作仍待后续；根控制元数据不可通过本轮编辑改写。接口仅用于当前本地单用户、单服务实例，其他进程修改文件时拒绝覆盖，保留数据并重启服务读取。正式登录隔离及真实模型仍待验。
 
 从根目录运行 `python3.12 scripts/project.py manual-edit-demo` 启动 8004 独立人工服务，数据在已忽略的 `data/manual-edit-demo/`，重启保留；只挂文字版本和只读导航接口，没有模型执行、任务创建或收费接口。演练前端在独立源码／构建目录使用 `BACKEND_API_URL=http://127.0.0.1:8004 npm run dev -- --webpack --hostname 127.0.0.1 --port 3004`；不要与主前端共用 `.next`。本轮人工服务与前端已保留，直接打开 http://127.0.0.1:3004/?session=manual-edit-demo&stage=storyboard 或 http://127.0.0.1:3004/projects/manual-edit-demo/revisions 。人工文字不是模型结果。
 
@@ -421,4 +421,16 @@ GPT 文本默认 timeout=300 秒、视觉 60 秒，Gemini 显式 300 秒；可�
 
 本轮保留独立人工预览 http://127.0.0.1:3005/projects/impact-review-demo/reviews 。停止后从根运行 `python3.12 scripts/project.py impact-review-demo` 启动 8005，数据在已忽略的 `data/impact-review-demo/`；独立前端目录运行 `BACKEND_API_URL=http://127.0.0.1:8005 npm run dev -- --webpack --hostname 127.0.0.1 --port 3005`，与主前端分开 `.next`。文字与引用是明确人工样例，服务只提供本地编辑／资产／计划与只读导航，没有模型执行或计费接口。
 
-GET／POST `/api/project/{id}/content-revisions/reviews` 提供真实读取与确认保存。检查命令仍为根 `python3.12 scripts/project.py check`；单模块在 backend 目录运行 `.venv/bin/python -m pytest tests/test_impact_reviews.py -q`；前端运行 `npm test`、`npm run typecheck`、`npm run lint -- --max-warnings=0`、`npm run build`。后端 779/779、前端 250/250；实际 HTTP 重启与浏览器异常恢复、四宽度检查已通过。详见 [开发文档](docs/阶段文档/阶段3-第9子阶段-修改影响人工核对开发文档.md) 和 [验收报告](docs/evidence/阶段3/修改影响人工核对/验收报告.md)。旧其他写入入口逐次归档、完整对话、真实模型、真机与业务阶段继续开放或待验。
+GET／POST `/api/project/{id}/content-revisions/reviews` 提供真实读取与确认保存。检查命令仍为根 `python3.12 scripts/project.py check`；单模块在 backend 目录运行 `.venv/bin/python -m pytest tests/test_impact_reviews.py -q`；前端运行 `npm test`、`npm run typecheck`、`npm run lint -- --max-warnings=0`、`npm run build`。该切片后端 779/779、前端 250/250；实际 HTTP 重启与浏览器异常恢复、四宽度检查已通过。详见 [开发文档](docs/阶段文档/阶段3-第9子阶段-修改影响人工核对开发文档.md) 和 [验收报告](docs/evidence/阶段3/修改影响人工核对/验收报告.md)。旧写入入口自动归档见下节；完整对话、真实模型、真机与业务阶段继续开放或待验。
+
+## 旧写入入口自动归档
+
+旧通用 PATCH、工作流生成／介入结果及分镜逐集持久化文字快照，现与剧本／分镜版本一并原子保存。版本页显示“原入口更新归档”，可以沿用预览确认恢复；修改影响进入人工核对，旧“继续使用”依据变化后失效。首次旧写入先保留已有文字基线，同时改变两个阶段时同一次保存归档。相同内容与纯进度不增加版本。媒体选择、候选和人工历史保留，原入口已有的描述／时长同步继续生效。
+
+沿用 2 MiB 内容、500 字段、32 MiB 历史上限；超限阻止整次写入。非字典旧结构按原接口兼容，暂不支持文字版本。拒绝缓存与磁盘不一致、损坏或未来结构文件；失败恢复原文字与历史。仍为本机单写服务，接线前中间历史无法补回；没有新增模型、费用、外发或自动重制作。
+
+独立人工预览：根目录运行 `python3.12 scripts/project.py automatic-revision-demo`，默认 8006；数据在忽略的 `data/automatic-revision-demo/`。本轮前端地址为 [文字版本](http://127.0.0.1:3006/projects/automatic-revision-demo/revisions) 与 [人工核对](http://127.0.0.1:3006/projects/automatic-revision-demo/reviews)，保留七条文字版本与一条已失效人工记录。服务仅开放本地文字补丁，无模型执行接口。端口占用时不停止其他服务。
+
+前端使用已准备的独立副本，停止后可另开终端运行 `BACKEND_API_URL=http://127.0.0.1:8006 npm --prefix /tmp/automatic-revision-frontend run dev -- --webpack --hostname 127.0.0.1 --port 3006`，与主前端分开构建目录。如果临时副本被清理，由开发者重新准备。后端 `/docs` 找 PATCH `/api/project/{session_id}/artifact/{stage}`，填 `automatic-revision-demo` 与 `script_generation`，正文 `{"title":"人工样例的新标题"}`，执行后版本页点“重新读取版本”，应新增“原入口更新归档”。重复相同标题不新增版本。只用独立样例演练，不调用模型。
+
+验证：backend 运行 `.venv/bin/python -m pytest tests/test_automatic_revisions.py -q` 或全量 `.venv/bin/python -m pytest -q`；frontend 运行 `npm test`、`npm run typecheck`、`npm run lint -- --max-warnings=0`、`npm run build`。本轮最终后端 811/811（新增 32），前端 250/250，类型／Lint／生产构建通过。四宽度和实际 HTTP 重启恢复通过；真实模型、真机与业务待验。见 [先行开发文档](docs/阶段文档/阶段3-第10子阶段-旧写入入口自动归档开发文档.md) 和 [证据与闸门](docs/evidence/阶段3/旧写入入口自动归档/验收报告.md)。

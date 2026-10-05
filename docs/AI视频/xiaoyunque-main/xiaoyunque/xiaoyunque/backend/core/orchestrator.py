@@ -121,6 +121,8 @@ class WorkflowState:
             stage.value: "pending" for stage in WorkflowStage if stage != WorkflowStage.INIT and stage != WorkflowStage.COMPLETED
         }
         self.artifacts: Dict[str, Any] = {}
+        self.content_history: Optional[Dict[str, Any]] = None
+        self.content_reviews: Optional[Dict[str, Any]] = None
         self.error: Optional[str] = None
         self.started_at: Optional[datetime] = None
         self.updated_at: datetime = datetime.now()
@@ -777,8 +779,10 @@ class WorkflowEngine:
             input_data = copy.deepcopy(input_data)
 
         with self._state_lock:
+            self._assert_cached_text(state)
             input_data["_session_meta"] = copy.deepcopy(state.meta)
-            input_data["_session_artifacts"] = copy.deepcopy(state.artifacts)
+            expected_text = copy.deepcopy(state.artifacts)
+            input_data["_session_artifacts"] = copy.deepcopy(expected_text)
 
         active_registered = False
         background_item_regeneration = self._is_background_item_regeneration(stage, intervention)
@@ -863,6 +867,7 @@ class WorkflowEngine:
             })
 
         def wrapped_progress_callback(phase: str, step: str, percent: float, data: dict = None):
+            nonlocal expected_text
             with self._state_lock:
                 persist_stage_progress(phase, step, percent)
                 if data:
@@ -880,7 +885,9 @@ class WorkflowEngine:
                     and asset_update.get("status") in {"done", "failed"}
                 )
             if should_persist:
-                self.save_session_to_disk(state.session_id)
+                with self._state_lock:
+                    self.save_session_to_disk(state.session_id, archive_text=True, expected_text=expected_text)
+                    expected_text = copy.deepcopy(state.artifacts)
 
         if progress_callback:
             agent.set_progress_callback(wrapped_progress_callback)
@@ -972,7 +979,7 @@ class WorkflowEngine:
                     "updated_at": time.time(),
                 }
                 # 立即保存状态到磁盘，确保前端能获取到最新状态
-                self.save_session_to_disk(state.session_id)
+                self.save_session_to_disk(state.session_id, archive_text=True, expected_text=expected_text)
             return result
 
         except asyncio.CancelledError:
@@ -1080,12 +1087,13 @@ class WorkflowEngine:
             if not state:
                 raise KeyError(f"Session not found: {session_id}")
 
+            self._assert_cached_text(state)
             previous_artifacts = copy.deepcopy(state.artifacts)
             previous_status = copy.deepcopy(state.status)
             try:
                 self._apply_artifact_update(state, stage, body if isinstance(body, dict) else {})
                 self._recalculate_all_statuses(state)
-                self.save_session_to_disk(session_id)
+                self.save_session_to_disk(session_id, archive_text=True, expected_text=previous_artifacts)
             except Exception:
                 state.artifacts = previous_artifacts
                 state.status = previous_status
@@ -1374,7 +1382,7 @@ class WorkflowEngine:
 
     # ──────────── 会话持久化 ────────────
 
-    def save_session_to_disk(self, session_id: str, meta: Dict = None):
+    def save_session_to_disk(self, session_id: str, meta: Dict = None, *, archive_text: bool = False, expected_text: Dict = None):
         """保存 / 更新会话到磁盘（原子写入）"""
         with self._state_lock:
             path = session_path(self._session_dir, session_id)
@@ -1383,7 +1391,23 @@ class WorkflowEngine:
             
             # Refuse to overwrite damaged or newer-schema data, even if a state is cached.
             if path.exists():
-                data = read_session(path, session_id)
+                try:
+                    data = read_session(path, session_id)
+                except Exception:
+                    # The file is untrusted: undo new artifacts using our last accepted
+                    # snapshot, rather than trying to restore from damaged disk data.
+                    if archive_text and state and expected_text is not None:
+                        state.artifacts = copy.deepcopy(expected_text)
+                    raise
+            durable = copy.deepcopy(data)
+            next_history = None
+            if archive_text and state:
+                try:
+                    from core.content_revisions import archive_external_change
+                    next_history = archive_external_change(durable, state, expected_text)
+                except Exception:
+                    self._restore_failed_text_write(state, durable, expected_text)
+                    raise
             data["schema_version"] = SESSION_SCHEMA_VERSION
 
             data["session_id"] = session_id
@@ -1420,8 +1444,34 @@ class WorkflowEngine:
             else:
                 data["updated_at"] = time.time()
 
-            atomic_write_session(path, data)
+            if archive_text and state and next_history is not None:
+                data["content_history"] = next_history
+            try:
+                atomic_write_session(path, data)
+            except Exception:
+                if archive_text and state:
+                    self._restore_failed_text_write(state, durable, expected_text)
+                raise
+            if archive_text and state:
+                state.content_history = copy.deepcopy(next_history)
             logger.info("Session %s saved", session_id)
+
+    def _assert_cached_text(self, state):
+        from core.content_revisions import ensure_text_current
+        path = session_path(self._session_dir, state.session_id)
+        if path.exists():
+            ensure_text_current(read_session(path, state.session_id), state, state.artifacts)
+
+    def _restore_failed_text_write(self, state, durable, fallback_artifacts=None):
+        """Keep the existing state object, but undo a rejected legacy text commit."""
+        if not durable:
+            if fallback_artifacts is not None:
+                state.artifacts = copy.deepcopy(fallback_artifacts)
+            return
+        restored = self._restore_state(durable)
+        for key in ('artifacts', 'status', 'content_history', 'content_reviews', 'meta',
+                    'current_stage', 'stage_progress', 'error', 'updated_at'):
+            setattr(state, key, copy.deepcopy(getattr(restored, key)))
 
     def _restore_state(self, data: Dict[str, Any]) -> WorkflowState:
         """Use the same legacy conversion for startup and lazy disk loading."""

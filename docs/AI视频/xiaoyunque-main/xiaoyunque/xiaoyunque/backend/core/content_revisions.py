@@ -145,6 +145,64 @@ def validate_history(raw):
     return history
 
 
+def ensure_text_current(disk, state, expected_artifacts):
+    if getattr(state, 'content_history', None) != disk.get('content_history') or any(
+            encoded(disk.get('artifacts', {}).get(stage, {})) != encoded(expected_artifacts.get(stage, {}))
+            for stage in STAGES):
+        fail(409, 'REVISION_CHANGED', '文字或历史已变化，请重新读取后再保存')
+
+
+def archive_external_change(disk, state, expected_artifacts=None):
+    """Build history for one legacy write; caller commits it with artifacts atomically."""
+    raw = disk.get('content_history')
+    if expected_artifacts is not None:
+        ensure_text_current(disk, state, expected_artifacts)
+    if getattr(state, 'content_history', None) != raw:
+        fail(409, 'REVISION_CHANGED', '文字历史已变化，请重新读取后再保存')
+    history = validate_history(raw) if raw is not None else History()
+    before = disk.get('artifacts', {})
+    changed = [stage for stage in STAGES
+               if isinstance(before.get(stage, {}), dict) and isinstance(state.artifacts.get(stage, {}), dict)
+               and encoded(before.get(stage, {})) != encoded(state.artifacts.get(stage, {}))]
+    if not changed:
+        return raw
+
+    def append(stage, source, content, changes=None, impacts=None):
+        if len(encoded(content)) > MAX_CONTENT:
+            fail(422, 'CONTENT_LIMIT', '文字内容超过版本归档上限，请保留原文并拆分项目')
+        fields(stage, content)
+        history.versions.append(Revision(version_id=uuid.uuid4().hex, number=len(history.versions)+1,
+            stage=stage, source=source, content=copy.deepcopy(content), digest=digest(content),
+            created_at=datetime.now(timezone.utc).isoformat(), changes=changes or [], impacts=impacts or []))
+
+    # Archive the old durable state, including old untracked writes, before the new result.
+    for stage in STAGES:
+        content = before.get(stage, {})
+        if not isinstance(content, dict) or not content:
+            continue
+        latest = next((v for v in reversed(history.versions) if v.stage == stage), None)
+        if latest is None or latest.digest != digest(content):
+            changes = differences(latest.content, content) if latest else []
+            board = before.get('storyboard', {})
+            board = board if isinstance(board, dict) else {}
+            append(stage, 'external' if latest else 'baseline', content, changes,
+                   impact(stage, changes, board) if changes else [])
+    for stage in changed:
+        content = state.artifacts.get(stage, {})
+        latest = next((v for v in reversed(history.versions) if v.stage == stage), None)
+        if latest is not None and latest.digest == digest(content):
+            continue
+        changes = differences(before.get(stage, {}), content)
+        boards = [before.get('storyboard', {}), state.artifacts.get('storyboard', {})]
+        impacts = unique([i for board in boards if isinstance(board, dict) for i in impact(stage, changes, board)])
+        append(stage, 'external', content, changes, impacts)
+    result = history.model_dump()
+    if len(encoded(result)) > MAX_HISTORY:
+        fail(422, 'HISTORY_LIMIT', '版本历史超过归档上限，请保留数据并备份后处理')
+    validate_history(result)
+    return result
+
+
 class ContentRevisions:
     def __init__(self, engine):
         self.engine = engine
