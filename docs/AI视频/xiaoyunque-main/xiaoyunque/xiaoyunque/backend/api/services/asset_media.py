@@ -6,7 +6,8 @@ from core.asset_library import AssetLibraryError
 
 def archive_artifact(payload, snapshot, library, archive):
     artifacts = snapshot.get("artifacts", {})
-    artifact = artifacts.get(payload.stage)
+    alias = {"reference_generation": "reference", "video_generation": "video"}.get(payload.stage)
+    artifact = artifacts.get(payload.stage) or artifacts.get(alias)
     items = artifact.get(payload.item_type, []) if isinstance(artifact, dict) else []
     if isinstance(artifact, dict) and not items:
         legacy_keys = {"reference_generation": ("scene_images", "scene_map"),

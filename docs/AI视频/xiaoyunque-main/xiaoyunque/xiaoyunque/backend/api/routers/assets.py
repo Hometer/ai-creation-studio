@@ -3,19 +3,21 @@
 import json
 from functools import lru_cache
 from pathlib import Path
+from pydantic import ValidationError
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, File, Form, UploadFile
 from fastapi.responses import FileResponse
 
 from api.dependencies import get_workflow_engine
 from api.errors import ErrorResponse
 from api.schemas.assets import (
     Asset, AssetInput, Id, MediaImport, ProjectId, ReferenceInput, ReferenceUpdate,
-    ReferenceView, ScriptImport, Target, VersionInput,
+    ReferenceView, ScriptImport, Target, UploadInput, UploadSource, VersionInput,
 )
 from core.asset_library import AssetLibrary, AssetLibraryError, not_found
 from core.media_archive import EXTENSIONS, MediaArchive
 from api.services.asset_media import archive_artifact
+from api.services.asset_upload import archive_upload
 from config import settings
 
 router = APIRouter(tags=["资产与版本"], responses={503: {"model": ErrorResponse}})
@@ -111,6 +113,22 @@ def import_media(payload: MediaImport, library=Depends(get_asset_library),
                  archive=Depends(get_media_archive), engine=Depends(get_workflow_engine)):
     snapshot = require_target(engine, Target(project_id=payload.project_id))
     return archive_artifact(payload, snapshot, library, archive)
+
+
+@router.post("/api/project/{project_id}/assets/upload", response_model=Asset, status_code=201,
+             responses={status: {"model": ErrorResponse} for status in (404, 409, 413, 415, 422, 503)})
+def upload_project_asset(project_id: ProjectId, upload_id: str = Form(..., pattern=r"^[a-f0-9]{32}$"),
+                         name: str = Form(..., min_length=1, max_length=100), definition: str = Form(..., min_length=1, max_length=10000),
+                         file: UploadFile = File(...), asset_id: Id | None = Form(default=None),
+                         library=Depends(get_asset_library), archive=Depends(get_media_archive),
+                         engine=Depends(get_workflow_engine)):
+    require_target(engine, Target(project_id=project_id))
+    try:
+        payload = UploadInput(name=name, definition=definition, upload_id=upload_id, asset_id=asset_id)
+    except ValidationError as exc:
+        raise AssetLibraryError(422, "VALIDATION_ERROR", "上传参数不符合要求") from exc
+    return archive_upload(file, UploadSource(project_id=project_id, upload_id=payload.upload_id),
+                          payload, library, archive, payload.asset_id)
 
 
 @router.get("/api/assets/{asset_id}/versions/{version_id}/media", response_class=FileResponse,

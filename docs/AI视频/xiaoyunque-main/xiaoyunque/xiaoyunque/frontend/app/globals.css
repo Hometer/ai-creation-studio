@@ -882,6 +882,10 @@ body {
 .studio-project-open span { font-size: 9px; color: var(--lp-text-subtle); }
 .studio-project-bottom { display: flex; align-items: center; justify-content: space-between; padding-top: 10px; font-size: 9px; color: var(--lp-text-subtle); }
 .studio-project-bottom > span { display: flex; align-items: center; gap: 5px; }
+.studio-assets-link { display: flex; align-items: center; gap: 5px; min-height: 44px; color: var(--lp-accent); font-size: 11px; }
+.asset-workflow-link { display: flex; align-items: center; gap: 6px; min-height: 44px; flex-shrink: 0; padding: 0 10px; color: var(--lp-accent); font-size: 11px; border-radius: 9px; }
+.asset-workflow-link:hover { background: var(--lp-accent-soft); }
+@media (max-width: 767px) { .asset-workflow-link span { display: none; } }
 .studio-delete-project { color: #ffa0a5; display: grid; place-items: center; min-width: 44px; min-height: 44px; border-radius: 8px; }
 .studio-delete-project:hover { background: #392127; }
 .studio-project-progress { height: 2px; background: var(--lp-border-subtle); margin-top: 14px; border-radius: 4px; }

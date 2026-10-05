@@ -11,7 +11,7 @@ from uuid import uuid4
 
 from api.schemas.assets import (
     ArtifactSource, Asset, AssetInput, AssetVersion, Library, MediaInfo, Reference, ReferenceInput,
-    ReferenceUpdate, Selection, Source, TaskSource, VersionInput,
+    ReferenceUpdate, Selection, Source, TaskSource, UploadSource, VersionInput,
 )
 from core.persistence import atomic_write_session
 
@@ -94,7 +94,7 @@ class AssetLibrary:
             return result
 
     @staticmethod
-    def _version(payload: VersionInput, number: int, source: Source | ArtifactSource | TaskSource) -> AssetVersion:
+    def _version(payload: VersionInput, number: int, source: Source | ArtifactSource | TaskSource | UploadSource) -> AssetVersion:
         return AssetVersion(**payload.model_dump(include={"name", "definition"}),
                             version_id=uuid4().hex, number=number, created_at=now(), source=source)
 
@@ -205,6 +205,59 @@ class AssetLibrary:
                     asset.versions.append(self._version(payload, len(asset.versions) + 1, source))
             return asset
         return self._change(operation)
+
+    def upload_media(self, source: UploadSource, kind: str, payload: VersionInput,
+                     archive, temporary, details, asset_id: str | None = None) -> Asset:
+        """Persist a verified local upload; one upload ID is one immutable version."""
+        from core.media_archive import sync_directory
+
+        published, file_id = None, None
+
+        def operation(library):
+            nonlocal published, file_id
+            for asset in library.assets.values():
+                for prior in asset.versions:
+                    if isinstance(prior.source, UploadSource) and prior.source.upload_id == source.upload_id:
+                        if (prior.source != source or asset.kind != kind
+                                or asset_id is not None and asset_id != asset.asset_id
+                                or (asset_id is None) != (prior.number == 1)
+                                or prior.name != payload.name or prior.definition != payload.definition
+                                or prior.media.model_dump(exclude={"file_id"}) != details):
+                            raise AssetLibraryError(409, "UPLOAD_REQUEST_CONFLICT", "上传编号已用于不同内容，请核对已保存素材")
+                        archive.verify_file(prior.media)
+                        return asset
+            asset = self.get_asset(library, asset_id) if asset_id else None
+            if asset is not None and asset.kind != kind:
+                raise AssetLibraryError(409, "MEDIA_KIND_CONFLICT", "新文件与素材类型不同，请新建素材")
+            version = self._version(payload, len(asset.versions) + 1 if asset else 1, source)
+            file_id = version.version_id
+            version.media = MediaInfo(file_id=file_id, **details)
+            if asset is None:
+                asset = Asset(asset_id=uuid4().hex, kind=kind, versions=[version])
+                library.assets[asset.asset_id] = asset
+            else:
+                asset.versions.append(version)
+            published = archive.publish(temporary, version.media)
+            return asset
+
+        try:
+            result = self._change(operation)
+            sync_directory(self.directory)
+            return result
+        except Exception as exc:
+            if published is not None:
+                try:
+                    data = self.read()
+                except AssetLibraryError:
+                    pass
+                else:
+                    committed = any(v.media and v.media.file_id == file_id
+                                    for a in data.assets.values() for v in a.versions)
+                    if not committed:
+                        published.unlink(missing_ok=True)
+            if isinstance(exc, OSError):
+                raise AssetLibraryError(503, "MEDIA_STORE_UNAVAILABLE", "媒体归档暂不可用，请保留数据并重试") from exc
+            raise
 
     def create_reference(self, payload: ReferenceInput) -> Reference:
         def operation(library):

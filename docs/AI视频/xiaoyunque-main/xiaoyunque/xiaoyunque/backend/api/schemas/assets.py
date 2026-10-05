@@ -25,6 +25,11 @@ class AssetInput(VersionInput):
     kind: TextKind
 
 
+class UploadInput(VersionInput):
+    upload_id: Id
+    asset_id: Id | None = None
+
+
 class ScriptImport(Contract):
     project_id: ProjectId
     kind: Literal["character", "setting"]
@@ -75,6 +80,12 @@ class ArtifactSource(Contract):
         return self
 
 
+class UploadSource(Contract):
+    type: Literal["upload"] = "upload"
+    project_id: ProjectId
+    upload_id: Id
+
+
 class TaskSource(Contract):
     type: Literal["generation_task"] = "generation_task"
     project_id: ProjectId
@@ -116,7 +127,7 @@ class AssetVersion(VersionInput):
     version_id: Id
     number: int = Field(ge=1)
     created_at: str
-    source: Source | ArtifactSource | TaskSource
+    source: Source | ArtifactSource | TaskSource | UploadSource
     media: MediaInfo | None = None
 
 
@@ -172,7 +183,7 @@ class Library(Contract):
 
     @model_validator(mode="after")
     def valid_graph(self):
-        version_ids, import_keys, bindings, file_ids, task_ids = set(), set(), set(), set(), set()
+        version_ids, import_keys, bindings, file_ids, task_ids, upload_ids = set(), set(), set(), set(), set(), set()
         for key, asset in self.assets.items():
             if key != asset.asset_id:
                 raise ValueError("Asset ID mismatch")
@@ -181,6 +192,10 @@ class Library(Contract):
                     raise ValueError("Duplicate import source")
                 import_keys.add(asset.import_key)
             for number, version in enumerate(asset.versions, 1):
+                if isinstance(version.source, UploadSource):
+                    if version.source.upload_id in upload_ids:
+                        raise ValueError("Duplicate upload")
+                    upload_ids.add(version.source.upload_id)
                 if isinstance(version.source, TaskSource):
                     if version.source.task_id in task_ids:
                         raise ValueError("Duplicate task output")
@@ -190,13 +205,13 @@ class Library(Contract):
                 version_ids.add(version.version_id)
                 if asset.kind in {"image", "video"}:
                     media = version.media
-                    if (media is None or not isinstance(version.source, (ArtifactSource, TaskSource))
+                    if (media is None or not isinstance(version.source, (ArtifactSource, TaskSource, UploadSource))
                             or media.file_id in file_ids
                             or isinstance(version.source, TaskSource) and asset.kind != "video"
                             or (asset.kind == "video") != (media.mime_type == "video/mp4")):
                         raise ValueError("Invalid media version")
                     file_ids.add(media.file_id)
-                elif version.media is not None or isinstance(version.source, (ArtifactSource, TaskSource)):
+                elif version.media is not None or isinstance(version.source, (ArtifactSource, TaskSource, UploadSource)):
                     raise ValueError("Text assets cannot contain media")
         for key, ref in self.references.items():
             asset = self.assets.get(ref.asset_id)

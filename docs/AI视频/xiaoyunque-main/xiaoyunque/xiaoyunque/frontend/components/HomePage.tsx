@@ -753,7 +753,7 @@ export default function HomePage({ onStartProject, onResumeProject, onDeleteSess
               return <article className="xyq-history-card studio-project-card" key={item.id}>
                 <div className="studio-project-top"><span className="studio-project-icon"><Clapperboard size={22} /></span><span className={`studio-status ${progress.state}`}>{progress.label}</span></div>
                 <button className="studio-project-open" onClick={() => onResumeProject(item.id)}><strong>{item.idea || '未命名故事'}</strong><span>{item.date || '日期待同步'}{item.style ? ` · ${STYLES.find(style => style.id === item.style)?.label || item.style}` : ''}</span></button>
-                <div className="studio-project-bottom"><span><Clock size={12} /> {progress.completed} / {progress.total} 阶段</span>{manageMode ? <button className="studio-delete-project" aria-label={`删除项目：${item.idea}`} onClick={() => { setDeleteTarget(item.id); setDeleteError(''); }}><Trash2 size={16} /></button> : <ArrowUpRight size={17} />}</div>
+                <div className="studio-project-bottom"><span><Clock size={12} /> {progress.completed} / {progress.total} 阶段</span>{manageMode ? <button className="studio-delete-project" aria-label={`删除项目：${item.idea}`} onClick={() => { setDeleteTarget(item.id); setDeleteError(''); }}><Trash2 size={16} /></button> : <Link className="studio-assets-link" href={`/projects/${encodeURIComponent(item.id)}/assets`}><Layers size={14} />素材与版本<ArrowUpRight size={14} /></Link>}</div>
                 <div className="studio-project-progress" aria-label={`已完成 ${progress.completed} 个阶段`}><span style={{ width: `${progress.completed / progress.total * 100}%` }} /></div>
               </article>;
             })}</div>}

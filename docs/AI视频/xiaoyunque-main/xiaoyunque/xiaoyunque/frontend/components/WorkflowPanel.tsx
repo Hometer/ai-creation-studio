@@ -1369,6 +1369,7 @@ export default function WorkflowPanel() {
         onStageClick={handleStageClick}
         onHomeClick={handleGoHome}
         hasSession={sessionId !== null}
+        sessionId={sessionId}
         isRunning={effectiveIsRunning}
         onStop={handleStop}
         autoMode={autoMode}

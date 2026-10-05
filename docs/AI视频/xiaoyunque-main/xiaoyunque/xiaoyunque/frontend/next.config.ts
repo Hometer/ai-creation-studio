@@ -4,6 +4,8 @@ const backendApiUrl = (process.env.BACKEND_API_URL || 'http://127.0.0.1:8000').r
 
 const nextConfig: NextConfig = {
   agentRules: false,
+  // Allow a 100 MiB video plus multipart fields; the backend enforces media limits.
+  experimental: { proxyClientMaxBodySize: '110mb' },
   async rewrites() {
     return [
       {
@@ -19,6 +21,9 @@ const nextConfig: NextConfig = {
         destination: `${backendApiUrl}/api/sessions/:path*`,
       },
       // 工作流 API
+      ...['/api/assets', '/api/assets/:path*', '/api/asset-references', '/api/asset-references/:path*'].map(source => ({
+        source, destination: `${backendApiUrl}${source}`,
+      })),
       {
         source: '/api/project/:path*',
         destination: `${backendApiUrl}/api/project/:path*`,

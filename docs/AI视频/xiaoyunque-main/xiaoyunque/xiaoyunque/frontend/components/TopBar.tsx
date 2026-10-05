@@ -1,9 +1,10 @@
 'use client';
 
 import BrandMark from '@/components/BrandMark';
+import Link from 'next/link';
 
 import React, { useState, useRef, useEffect } from 'react';
-import { CheckCircle, Circle, Loader, Edit3, AlertCircle, Square, Zap, Settings2, ChevronDown } from 'lucide-react';
+import { CheckCircle, Circle, Loader, Edit3, AlertCircle, Square, Zap, Settings2, ChevronDown, Layers } from 'lucide-react';
 import clsx from 'clsx';
 import {
   VIDEO_RATIOS,
@@ -50,6 +51,7 @@ interface TopBarProps {
   onHomeClick: () => void;
   /** 是否处于工作流中（有 sessionId） */
   hasSession: boolean;
+  sessionId?: string | null;
   /** 是否正在执行 */
   isRunning: boolean;
   /** 停止执行 */
@@ -302,6 +304,7 @@ export default function TopBar({
   onStageClick,
   onHomeClick,
   hasSession,
+  sessionId,
   isRunning,
   onStop,
   autoMode,
@@ -353,6 +356,7 @@ export default function TopBar({
     >
       {/* Logo & 名称 */}
       {hasSession && (
+        <>
         <button
           onClick={onHomeClick}
           aria-label="返回首页"
@@ -365,6 +369,8 @@ export default function TopBar({
             </span>
           </div>
         </button>
+        {sessionId && <Link href={`/projects/${encodeURIComponent(sessionId)}/assets`} className="asset-workflow-link" aria-label="素材与版本"><Layers size={16} /><span>素材与版本</span></Link>}
+        </>
       )}
 
       {/* 分隔线 */}
