@@ -412,3 +412,13 @@ GPT 文本默认 timeout=300 秒、视觉 60 秒，Gemini 显式 300 秒；可�
 新增 GET `/api/project/{id}/content-revisions/editor/{stage}` 返回原编辑所需完整正文与同锁修订依据。已有预览／保存接口新增互斥 `replacement` 完整对象，兼容 path/value 与 restore；保存需明确确认、预览摘要、请求编号和修订依据。已知结构、2 MiB 正文、有限深度、500 个文字字段与 32 MiB 历史上限在写入前校验；不会截断、删除或迁移数据。差异以存在标记区分字段增删与 null。
 
 完整验证仍用 `python3.12 scripts/project.py check`；单模块在 backend 目录运行 `.venv/bin/python -m pytest tests/test_manual_revisions.py tests/test_content_revisions.py -q`。前端运行 `npm test`、`npm run typecheck`、`npm run lint -- --max-warnings=0`、`npm run build`。后端最终全量 751/751，前端 224/224；真实模型及真机继续待验。本轮工程说明和证据在 [原编辑入口版本接线验收报告](docs/evidence/阶段3/原编辑入口版本接线/验收报告.md)。
+
+## 修改影响人工核对（阶段 3 第 9 子阶段）
+
+项目的“文字版本与恢复”及原手动编辑面板新增“修改影响与人工核对”。清单按修改版本保留来源，选中事项后可看差异、当前镜头文字，并打开分镜、参考图、视频、后期、素材引用和生成计划。填写说明，选择“已核对，继续使用”或“仍需处理”，核对确认后追加保存。后一种决定继续计入待处理；前一种结论绑定当时项目正文／产物、素材引用与资产版本、计划及文字历史，依据变化或回退后提示重新核对。无法定位的目标不能标记继续使用。
+
+核对不重生成、删除或替换媒体，不改变计划有效性、预算、任务或执行授权。会话新增可选 `content_reviews`，兼容旧文件，原子保存、失败回滚；同编号同请求幂等。读取冲突或保存结果不明保留说明并冻结提交，不自动重发，重新读取前提醒放弃草稿。历史最多 2000 条／8 MiB、事项最多 1000、工作区响应最多 16 MiB，达到上限明确拒绝，不截断数据。当前仍为本地单用户、单服务实例；损坏或另一进程修改文件时保留数据并检查／重启服务。
+
+本轮保留独立人工预览 http://127.0.0.1:3005/projects/impact-review-demo/reviews 。停止后从根运行 `python3.12 scripts/project.py impact-review-demo` 启动 8005，数据在已忽略的 `data/impact-review-demo/`；独立前端目录运行 `BACKEND_API_URL=http://127.0.0.1:8005 npm run dev -- --webpack --hostname 127.0.0.1 --port 3005`，与主前端分开 `.next`。文字与引用是明确人工样例，服务只提供本地编辑／资产／计划与只读导航，没有模型执行或计费接口。
+
+GET／POST `/api/project/{id}/content-revisions/reviews` 提供真实读取与确认保存。检查命令仍为根 `python3.12 scripts/project.py check`；单模块在 backend 目录运行 `.venv/bin/python -m pytest tests/test_impact_reviews.py -q`；前端运行 `npm test`、`npm run typecheck`、`npm run lint -- --max-warnings=0`、`npm run build`。后端 779/779、前端 250/250；实际 HTTP 重启与浏览器异常恢复、四宽度检查已通过。详见 [开发文档](docs/阶段文档/阶段3-第9子阶段-修改影响人工核对开发文档.md) 和 [验收报告](docs/evidence/阶段3/修改影响人工核对/验收报告.md)。旧其他写入入口逐次归档、完整对话、真实模型、真机与业务阶段继续开放或待验。

@@ -69,6 +69,9 @@ def read_session(path: Path, session_id: str) -> dict[str, Any]:
     if 'content_history' in data:
         from core.content_revisions import validate_history
         validate_history(data['content_history'])
+    if 'content_reviews' in data:
+        from core.impact_reviews import validate_reviews
+        validate_reviews(data['content_reviews'])
     return data
 
 

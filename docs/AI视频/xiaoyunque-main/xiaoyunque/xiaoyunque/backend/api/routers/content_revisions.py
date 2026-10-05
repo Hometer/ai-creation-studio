@@ -25,3 +25,19 @@ def save(project_id: ProjectId, payload: SaveRevision, revisions=Depends(service
 @router.get('/api/project/{project_id}/content-revisions/editor/{stage}', response_model=Editor)
 def editor(project_id: ProjectId, stage: Stage, revisions=Depends(service)):
     return revisions.editor(project_id, stage)
+
+# Manual decisions are independent from workflow confirmation and generation.
+from api.routers.assets import get_asset_library
+from api.schemas.impact_reviews import ReviewInput, ReviewWorkspace, ReviewSaved
+from core.impact_reviews import ImpactReviews
+
+def reviews_service(engine=Depends(get_workflow_engine), library=Depends(get_asset_library)):
+    return ImpactReviews(engine, library)
+
+@router.get('/api/project/{project_id}/content-revisions/reviews', response_model=ReviewWorkspace)
+def read_reviews(project_id: ProjectId, reviews=Depends(reviews_service)):
+    return reviews.read(project_id)
+
+@router.post('/api/project/{project_id}/content-revisions/reviews', response_model=ReviewSaved, status_code=201)
+def save_review(project_id: ProjectId, payload: ReviewInput, reviews=Depends(reviews_service)):
+    return reviews.save(project_id, payload)

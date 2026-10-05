@@ -64,7 +64,7 @@ export function parsePreview(x: unknown, input: Input, before?: Record<string, u
 export class RevisionError extends Error {
   constructor(message: string, public status: number, public uncertain = false) { super(message); }
 }
-async function request(projectId: string, suffix = '', input?: unknown, write = false, fetcher: typeof fetch = fetch): Promise<unknown> {
+export async function revisionRequest(projectId: string, suffix = '', input?: unknown, write = false, fetcher: typeof fetch = fetch): Promise<unknown> {
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), 20000);
   try {
@@ -79,10 +79,10 @@ async function request(projectId: string, suffix = '', input?: unknown, write = 
     throw new RevisionError(write ? '保存结果尚未确认，请重新读取版本历史；不会自动重发' : '暂时无法读取，请检查本地服务后重新读取', 0, write);
   } finally { clearTimeout(timer); }
 }
-export async function readRevisions(projectId: string, fetcher?: typeof fetch) { return parseWorkspace(await request(projectId, '', undefined, false, fetcher), projectId); }
-export async function previewRevision(projectId: string, input: Input, fetcher?: typeof fetch) { return parsePreview(await request(projectId, '/preview', input, false, fetcher), input); }
+export async function readRevisions(projectId: string, fetcher?: typeof fetch) { return parseWorkspace(await revisionRequest(projectId, '', undefined, false, fetcher), projectId); }
+export async function previewRevision(projectId: string, input: Input, fetcher?: typeof fetch) { return parsePreview(await revisionRequest(projectId, '/preview', input, false, fetcher), input); }
 export async function saveRevision(projectId: string, input: SaveInput, fetcher?: typeof fetch) {
-  const x = await request(projectId, '', input, true, fetcher);
+  const x = await revisionRequest(projectId, '', input, true, fetcher);
   if (!isRecord(x) || !id(x.version_id)) return invalid();
   const workspace = parseWorkspace(x.workspace, projectId);
   const version = workspace.versions.find(v => v.version_id === x.version_id);
@@ -121,7 +121,7 @@ export function parseEditor(x: unknown, projectId: string, selected: Stage): Edi
   return {artifact,workspace};
 }
 export async function readEditor(projectId: string, selected: Stage, fetcher?: typeof fetch) {
-  return parseEditor(await request(projectId,`/editor/${selected}`,undefined,false,fetcher),projectId,selected);
+  return parseEditor(await revisionRequest(projectId,`/editor/${selected}`,undefined,false,fetcher),projectId,selected);
 }
 export function manualInput(editor: Editor, selected: Stage, content: unknown): Input {
   const replacement = editorStructure(selected,content);
@@ -145,7 +145,7 @@ function verifyManualChanges(changes: Change[], before: Record<string,unknown> |
   if (expected.length!==changes.length || expected.some((item,index)=>pathKey(item.path)!==pathKey(changes[index].path)||!matches(changes[index].before,item.before)||!matches(changes[index].after,item.after)||(changes[index].before_present??true)!==(item.before_present??true)||(changes[index].after_present??true)!==(item.after_present??true))) return invalid();
 }
 export async function previewManualRevision(projectId: string, editor: Editor, input: Input, fetcher?: typeof fetch) {
-  return parsePreview(await request(projectId,'/preview',input,false,fetcher),input,editor.artifact);
+  return parsePreview(await revisionRequest(projectId,'/preview',input,false,fetcher),input,editor.artifact);
 }
 
 export function editorStructure(selected: Stage, value: unknown): Record<string,unknown> {

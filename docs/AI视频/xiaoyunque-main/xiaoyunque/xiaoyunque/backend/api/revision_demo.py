@@ -34,6 +34,10 @@ def create_revision_demo(directory: Path):
     register_error_handlers(app)
     app.include_router(router)
     app.dependency_overrides[get_workflow_engine] = lambda: engine
+    from api.routers.assets import get_asset_library
+    from core.asset_library import AssetLibrary
+    library = AssetLibrary(directory / "asset-library")
+    app.dependency_overrides[get_asset_library] = lambda: library
     @app.get('/api/tasks')
     @app.get('/api/sandbox/tasks')
     def empty_tasks():

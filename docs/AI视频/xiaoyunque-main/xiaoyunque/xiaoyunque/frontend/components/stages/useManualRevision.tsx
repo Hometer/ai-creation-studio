@@ -88,6 +88,7 @@ export function ManualRevisionPanel({manual,projectId,onReload,onClose}:{manual:
   return <>
     <div className="manual-revision-panel">
       <a href={`/projects/${encodeURIComponent(projectId)}/revisions`}>文字版本与恢复</a>
+      <a href={`/projects/${encodeURIComponent(projectId)}/reviews`}>修改影响与人工核对</a>
       {manual.busy&&<p role="status">正在核对，请稍候…</p>}
       {manual.notice&&<p role="status">{manual.notice}</p>}
       {manual.error&&<p role="alert">{manual.error}。草稿会保留在当前页面。</p>}

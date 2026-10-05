@@ -1,0 +1,424 @@
+{
+  "initial": {
+    "project_id": "impact-review-demo",
+    "token": "8aa4d39c04d67257b7cffac13586db5b7fdcc204e053d06bcff01a798b77595d",
+    "running": false,
+    "untracked_stages": [],
+    "items": [
+      {
+        "item_id": "a4888a6b03c492e84911afc3fa515fcf0c5a8ec50631b1633ec2086365df9f22",
+        "version_id": "f3e2bfdccd67453cb211159dd3176caf",
+        "version_number": 3,
+        "stage": "script_generation",
+        "segment_id": "seg-1",
+        "shot_number": 1,
+        "reason": "剧本变化，现有分镜、参考图、视频及成片需人工核对",
+        "current_fields": [
+          {
+            "path": [
+              "episodes",
+              0,
+              "segments",
+              0,
+              "shots",
+              0,
+              "content"
+            ],
+            "label": "镜头正文",
+            "value": "阿舟望向河面。"
+          },
+          {
+            "path": [
+              "episodes",
+              0,
+              "segments",
+              0,
+              "shots",
+              0,
+              "dialogue"
+            ],
+            "label": "台词",
+            "value": "我会等最后一班渡船。"
+          },
+          {
+            "path": [
+              "episodes",
+              0,
+              "segments",
+              0,
+              "shots",
+              0,
+              "shot_type"
+            ],
+            "label": "景别",
+            "value": "中景"
+          },
+          {
+            "path": [
+              "episodes",
+              0,
+              "segments",
+              0,
+              "shots",
+              0,
+              "duration"
+            ],
+            "label": "时长",
+            "value": "5"
+          }
+        ],
+        "target_exists": true,
+        "status": "pending",
+        "latest_review_id": null
+      },
+      {
+        "item_id": "ce5246ebd583d1af2698a166b1ad70b6276d495032c3a8e87926352359432ca3",
+        "version_id": "f3e2bfdccd67453cb211159dd3176caf",
+        "version_number": 3,
+        "stage": "script_generation",
+        "segment_id": "seg-1",
+        "shot_number": 2,
+        "reason": "剧本变化，现有分镜、参考图、视频及成片需人工核对",
+        "current_fields": [
+          {
+            "path": [
+              "episodes",
+              0,
+              "segments",
+              0,
+              "shots",
+              1,
+              "content"
+            ],
+            "label": "镜头正文",
+            "value": "岸边的灯亮起。"
+          },
+          {
+            "path": [
+              "episodes",
+              0,
+              "segments",
+              0,
+              "shots",
+              1,
+              "shot_type"
+            ],
+            "label": "景别",
+            "value": "中景"
+          },
+          {
+            "path": [
+              "episodes",
+              0,
+              "segments",
+              0,
+              "shots",
+              1,
+              "duration"
+            ],
+            "label": "时长",
+            "value": "5"
+          }
+        ],
+        "target_exists": true,
+        "status": "pending",
+        "latest_review_id": null
+      },
+      {
+        "item_id": "18161657399b318cd5900a89e70e5da92e0aa4947ce00becf12a95bf18d5021b",
+        "version_id": "f3e2bfdccd67453cb211159dd3176caf",
+        "version_number": 3,
+        "stage": "script_generation",
+        "segment_id": "seg-2",
+        "shot_number": 1,
+        "reason": "剧本变化，现有分镜、参考图、视频及成片需人工核对",
+        "current_fields": [
+          {
+            "path": [
+              "episodes",
+              0,
+              "segments",
+              1,
+              "shots",
+              0,
+              "content"
+            ],
+            "label": "镜头正文",
+            "value": "守望者点亮灯塔。"
+          },
+          {
+            "path": [
+              "episodes",
+              0,
+              "segments",
+              1,
+              "shots",
+              0,
+              "shot_type"
+            ],
+            "label": "景别",
+            "value": "中景"
+          },
+          {
+            "path": [
+              "episodes",
+              0,
+              "segments",
+              1,
+              "shots",
+              0,
+              "duration"
+            ],
+            "label": "时长",
+            "value": "5"
+          }
+        ],
+        "target_exists": true,
+        "status": "pending",
+        "latest_review_id": null
+      }
+    ],
+    "records": [],
+    "sources": [
+      {
+        "version_id": "f3e2bfdccd67453cb211159dd3176caf",
+        "version_number": 3,
+        "stage": "script_generation",
+        "changes": [
+          {
+            "path": [
+              "logline"
+            ],
+            "before": "青年与灯塔守望者在渡口相遇。",
+            "after": "人工修改：守望者把灯交给青年，共同等待渡船。",
+            "before_present": true,
+            "after_present": true
+          }
+        ]
+      }
+    ]
+  },
+  "input": {
+    "expected_token": "8aa4d39c04d67257b7cffac13586db5b7fdcc204e053d06bcff01a798b77595d",
+    "item_id": "a4888a6b03c492e84911afc3fa515fcf0c5a8ec50631b1633ec2086365df9f22",
+    "decision": "retain",
+    "note": "人工核对：分镜与素材可继续使用。",
+    "request_id": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+    "acknowledged": true
+  },
+  "saved": {
+    "review_id": "eb96458f24df4e4691d41966e5fe9206",
+    "workspace": {
+      "project_id": "impact-review-demo",
+      "token": "f5c6bd81cd9b29d51590ddc3b5e0f5d93666502397430258d2a1d9df9da5204d",
+      "running": false,
+      "untracked_stages": [],
+      "items": [
+        {
+          "item_id": "a4888a6b03c492e84911afc3fa515fcf0c5a8ec50631b1633ec2086365df9f22",
+          "version_id": "f3e2bfdccd67453cb211159dd3176caf",
+          "version_number": 3,
+          "stage": "script_generation",
+          "segment_id": "seg-1",
+          "shot_number": 1,
+          "reason": "剧本变化，现有分镜、参考图、视频及成片需人工核对",
+          "current_fields": [
+            {
+              "path": [
+                "episodes",
+                0,
+                "segments",
+                0,
+                "shots",
+                0,
+                "content"
+              ],
+              "label": "镜头正文",
+              "value": "阿舟望向河面。"
+            },
+            {
+              "path": [
+                "episodes",
+                0,
+                "segments",
+                0,
+                "shots",
+                0,
+                "dialogue"
+              ],
+              "label": "台词",
+              "value": "我会等最后一班渡船。"
+            },
+            {
+              "path": [
+                "episodes",
+                0,
+                "segments",
+                0,
+                "shots",
+                0,
+                "shot_type"
+              ],
+              "label": "景别",
+              "value": "中景"
+            },
+            {
+              "path": [
+                "episodes",
+                0,
+                "segments",
+                0,
+                "shots",
+                0,
+                "duration"
+              ],
+              "label": "时长",
+              "value": "5"
+            }
+          ],
+          "target_exists": true,
+          "status": "retained",
+          "latest_review_id": "eb96458f24df4e4691d41966e5fe9206"
+        },
+        {
+          "item_id": "ce5246ebd583d1af2698a166b1ad70b6276d495032c3a8e87926352359432ca3",
+          "version_id": "f3e2bfdccd67453cb211159dd3176caf",
+          "version_number": 3,
+          "stage": "script_generation",
+          "segment_id": "seg-1",
+          "shot_number": 2,
+          "reason": "剧本变化，现有分镜、参考图、视频及成片需人工核对",
+          "current_fields": [
+            {
+              "path": [
+                "episodes",
+                0,
+                "segments",
+                0,
+                "shots",
+                1,
+                "content"
+              ],
+              "label": "镜头正文",
+              "value": "岸边的灯亮起。"
+            },
+            {
+              "path": [
+                "episodes",
+                0,
+                "segments",
+                0,
+                "shots",
+                1,
+                "shot_type"
+              ],
+              "label": "景别",
+              "value": "中景"
+            },
+            {
+              "path": [
+                "episodes",
+                0,
+                "segments",
+                0,
+                "shots",
+                1,
+                "duration"
+              ],
+              "label": "时长",
+              "value": "5"
+            }
+          ],
+          "target_exists": true,
+          "status": "pending",
+          "latest_review_id": null
+        },
+        {
+          "item_id": "18161657399b318cd5900a89e70e5da92e0aa4947ce00becf12a95bf18d5021b",
+          "version_id": "f3e2bfdccd67453cb211159dd3176caf",
+          "version_number": 3,
+          "stage": "script_generation",
+          "segment_id": "seg-2",
+          "shot_number": 1,
+          "reason": "剧本变化，现有分镜、参考图、视频及成片需人工核对",
+          "current_fields": [
+            {
+              "path": [
+                "episodes",
+                0,
+                "segments",
+                1,
+                "shots",
+                0,
+                "content"
+              ],
+              "label": "镜头正文",
+              "value": "守望者点亮灯塔。"
+            },
+            {
+              "path": [
+                "episodes",
+                0,
+                "segments",
+                1,
+                "shots",
+                0,
+                "shot_type"
+              ],
+              "label": "景别",
+              "value": "中景"
+            },
+            {
+              "path": [
+                "episodes",
+                0,
+                "segments",
+                1,
+                "shots",
+                0,
+                "duration"
+              ],
+              "label": "时长",
+              "value": "5"
+            }
+          ],
+          "target_exists": true,
+          "status": "pending",
+          "latest_review_id": null
+        }
+      ],
+      "records": [
+        {
+          "review_id": "eb96458f24df4e4691d41966e5fe9206",
+          "number": 1,
+          "item_id": "a4888a6b03c492e84911afc3fa515fcf0c5a8ec50631b1633ec2086365df9f22",
+          "decision": "retain",
+          "note": "人工核对：分镜与素材可继续使用。",
+          "context_hash": "18e9dc04bf86abc6764cfc6c6128786e8c056980644ba0c52fdbeb88c804ee36",
+          "request_id": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+          "request_digest": "173e597bf7a4d4e07cf6e1ea6aec526cf9f2d72172b3ace39108d2450defbb85",
+          "created_at": "2026-10-05T11:46:55.793121+00:00",
+          "applicable": true
+        }
+      ],
+      "sources": [
+        {
+          "version_id": "f3e2bfdccd67453cb211159dd3176caf",
+          "version_number": 3,
+          "stage": "script_generation",
+          "changes": [
+            {
+              "path": [
+                "logline"
+              ],
+              "before": "青年与灯塔守望者在渡口相遇。",
+              "after": "人工修改：守望者把灯交给青年，共同等待渡船。",
+              "before_present": true,
+              "after_present": true
+            }
+          ]
+        }
+      ]
+    }
+  }
+}

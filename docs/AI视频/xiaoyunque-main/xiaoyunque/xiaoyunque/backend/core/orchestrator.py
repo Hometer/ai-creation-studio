@@ -1407,6 +1407,8 @@ class WorkflowEngine:
                 data["stage_progress"] = state.stage_progress
                 if getattr(state, "content_history", None) is not None:
                     data["content_history"] = copy.deepcopy(state.content_history)
+                if getattr(state, "content_reviews", None) is not None:
+                    data["content_reviews"] = copy.deepcopy(state.content_reviews)
                 data["error"] = state.error
                 data["updated_at"] = restore_timestamp(state.updated_at).timestamp()
                 
@@ -1441,6 +1443,7 @@ class WorkflowEngine:
             state.status.update({key: aliases.get(value, value) for key, value in loaded_status.items()})
         state.artifacts = data.get("artifacts", {})
         state.content_history = copy.deepcopy(data.get("content_history"))
+        state.content_reviews = copy.deepcopy(data.get("content_reviews"))
         state.stage_progress = data.get("stage_progress", {})
         state.error = data.get("error")
         state.updated_at = restore_timestamp(data.get("updated_at", 0))
