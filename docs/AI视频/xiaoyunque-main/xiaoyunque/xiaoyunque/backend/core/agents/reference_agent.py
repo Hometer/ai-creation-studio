@@ -121,7 +121,7 @@ class ReferenceGeneratorAgent(AgentInterface):
             
             if cid and cid in asset_map['characters']:
                 refs.append(os.path.abspath(asset_map['characters'][cid]))
-                logger.info(f"[{segment.get('segment_id', '')}] 添加角色参考图: {cn} -> {cid}")
+                logger.info("Reference image processing event (private details omitted)")
 
         # 2. 场景匹配
         loc = segment.get('location', '')
@@ -131,14 +131,14 @@ class ReferenceGeneratorAgent(AgentInterface):
             for name, _id in setting_id_map.items():
                 if name in loc or loc in name:
                     set_id = _id
-                    logger.info(f"[{segment.get('segment_id', '')}] 场景模糊匹配成功: {loc} -> {name} ({set_id})")
+                    logger.info("Reference image processing event (private details omitted)")
                     break
 
         if set_id and set_id in asset_map['settings']:
             refs.append(os.path.abspath(asset_map['settings'][set_id]))
-            logger.info(f"[{segment.get('segment_id', '')}] 添加场景参考图: {loc} -> {set_id}")
+            logger.info("Reference image processing event (private details omitted)")
         else:
-            logger.warning(f"[{segment.get('segment_id', '')}] 未找到场景参考图: location={loc}, set_id={set_id}, available_settings={list(asset_map['settings'].keys())}")
+            logger.warning("Reference image processing event (private details omitted)")
         
         logger.info(f"[{segment.get('segment_id', '')}] 共收集 {len(refs)} 张参考图")
         return refs[:10]
@@ -275,7 +275,7 @@ class ReferenceGeneratorAgent(AgentInterface):
         logger.info(f"[{segment_id}] 使用模型: {model}, 参考图数量: {len(refs) if refs else 0}")
         if refs:
             for i, r in enumerate(refs):
-                logger.info(f"[{segment_id}] 参考图[{i}]: {r}")
+                logger.info("Reference image processing event (private details omitted)")
 
         # 收集所有生成的版本
         all_versions = []
@@ -324,7 +324,7 @@ class ReferenceGeneratorAgent(AgentInterface):
 
                 logger.info(f"[{segment_id}] 版本{version + 1}: 评分 {score}/10, {'✓通过' if is_acceptable else '✗不通过'}")
                 if hard_failures:
-                    logger.warning(f"[{segment_id}] 硬性失败项: {hard_failures}")
+                    logger.warning("Reference image processing event (private details omitted)")
 
                 # 记录版本信息
                 eval_result["final_visual_prompt"] = current_visual_prompt
@@ -342,7 +342,7 @@ class ReferenceGeneratorAgent(AgentInterface):
                     self._report_progress("参考图", f"重新生成中 ({version + 2}/{max_versions}): {segment_id}", 0)
 
             except Exception as e:
-                logger.error(f"Segment {segment_id} image generation failed: {e}")
+                logger.error(f"Segment {segment_id} image generation failed: {type(e).__name__}")
 
         # 所有版本都没有达到硬性标准，使用 VLM 选择最好的
         if all_versions:
@@ -360,9 +360,9 @@ class ReferenceGeneratorAgent(AgentInterface):
                 if is_acceptable:
                     return segment_id, best_path, best_eval
                 logger.warning(
-                    "[%s] VLM选择的最佳图仍有硬性失败项，不作为最终参考图: %s",
+                    "[%s] VLM选择的最佳图仍有硬性失败项，不作为最终参考图: failure_count=%d",
                     segment_id,
-                    hard_failures or best_eval.get("issues", []),
+                    len(hard_failures or best_eval.get("issues", [])),
                 )
                 return segment_id, None, best_eval
 
@@ -397,7 +397,7 @@ class ReferenceGeneratorAgent(AgentInterface):
         try:
             vlm = VLM()
             result = vlm.query(select_prompt, image_paths=image_paths, model=vlm_model)
-            logger.info(f"[{segment_id}] VLM选择结果: {result}")
+            logger.info("Reference image processing event (private details omitted)")
 
             # 解析 JSON 结果
             import re
@@ -423,7 +423,7 @@ class ReferenceGeneratorAgent(AgentInterface):
                     return best_path, best_eval
 
         except Exception as e:
-            logger.error(f"[{segment_id}] VLM选择最佳图片失败: {e}")
+            logger.error(f"[{segment_id}] VLM选择最佳图片失败: {type(e).__name__}")
 
         # 如果失败，不要把未通过硬性校验的图片静默标记为可用。
         return image_paths[0], {
@@ -480,7 +480,7 @@ class ReferenceGeneratorAgent(AgentInterface):
             }
 
         except Exception as e:
-            logger.warning(f"VLM evaluation failed: {e}")
+            logger.warning(f"VLM evaluation failed: {type(e).__name__}")
             return {
                 "score": 0,
                 "hard_failures": ["VLM评估失败，无法确认硬性标准"],
@@ -698,10 +698,10 @@ class ReferenceGeneratorAgent(AgentInterface):
                                 else:
                                     ff_prompt = str(ff_prompt_resp).strip()
                             except Exception as e:
-                                logger.error(f"Error generating first-frame prompt for {segment_id}: {e}")
+                                logger.error(f"Error generating first-frame prompt for {segment_id}: {type(e).__name__}")
                                 ff_prompt = plot[:200]
 
-                        logger.info(f"[{segment_id}] first-frame prompt: {ff_prompt}...")
+                        logger.info("Reference image processing event (private details omitted)")
 
                         refs = self._collect_refs(seg, asset_map, char_id_map, setting_id_map)
                         char_desc, set_desc = self._get_descriptions(
@@ -731,7 +731,7 @@ class ReferenceGeneratorAgent(AgentInterface):
                                 _, result_path, eval_result, ff_prompt = fut.result()
                                 prompt_map[segment_id_done] = ff_prompt
                             except Exception as e:
-                                logger.error(f"Regen future error for {segment_id_done}: {e}")
+                                logger.error(f"Regen future error for {segment_id_done}: {type(e).__name__}")
                                 result_path = None
                             done += 1
                             pct = calc_pct_regen(done)
@@ -846,7 +846,7 @@ class ReferenceGeneratorAgent(AgentInterface):
                             else:
                                 ff_prompt = str(ff_prompt_resp).strip()
                         except Exception as e:
-                            logger.error(f"Error generating first-frame prompt for {segment_id}: {e}")
+                            logger.error(f"Error generating first-frame prompt for {segment_id}: {type(e).__name__}")
                             ff_prompt = plot[:200]
 
                     logger.info(f"[{segment_id}] Prompt ready, starting image generation...")
@@ -877,7 +877,7 @@ class ReferenceGeneratorAgent(AgentInterface):
                         _, result_path, eval_result, ff_prompt = fut.result()
                         first_frame_prompts[segment_id_done] = ff_prompt
                     except Exception as e:
-                        logger.error(f"Image future error for {segment_id_done}: {e}")
+                        logger.error(f"Image future error for {segment_id_done}: {type(e).__name__}")
                         result_path = None
                     
                     done += 1

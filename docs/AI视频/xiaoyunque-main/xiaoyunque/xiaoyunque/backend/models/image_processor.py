@@ -141,86 +141,52 @@ class ImageProcessor:
         return output_path
     
     def download_image(self, image_url, save_path, max_retries=3, proxies=None):
-        """
-        下载图片，带有重试机制和SSL错误处理
-        
-        Args:
-            image_url: 图片URL
-            save_path: 本地保存路径
-            max_retries: 最大重试次数
-        """
+        """Download with verified TLS and atomic replacement; never downgrade TLS."""
+        import tempfile
         import time
-        import urllib3
-        
-        urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
-        
-        for attempt in range(max_retries):
+        from models.request_safety import ModelRequestError
+
+        if isinstance(max_retries, bool) or not isinstance(max_retries, int) or max_retries < 1:
+            raise ModelRequestError("图片下载重试配置无效。")
+        destination = Path(save_path)
+        for attempt in range(1, max_retries + 1):
+            response = None
+            temporary = None
             try:
                 response = requests.get(
-                    image_url, 
-                    timeout=(10, 30),
-                    stream=True,
-                    verify=True,
-                    headers={
-                        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
-                    },
-                    proxies=proxies,
+                    image_url, timeout=(10, 30), stream=True, verify=True,
+                    headers={"User-Agent": "Mozilla/5.0"}, proxies=proxies,
                 )
-                
                 if response.status_code == 200:
-                    with open(save_path, 'wb') as file:
+                    with tempfile.NamedTemporaryFile(dir=destination.parent, prefix=".image-", delete=False) as file:
+                        temporary = Path(file.name)
                         for chunk in response.iter_content(chunk_size=8192):
                             if chunk:
                                 file.write(chunk)
-                    logger.info("Image downloaded: %s", save_path)
+                        file.flush()
+                        os.fsync(file.fileno())
+                    os.replace(temporary, destination)
+                    logger.info("Image download completed")
                     return True
-                else:
-                    logger.warning("Image download failed: status=%s url=%s", response.status_code, image_url)
-                    
-            except requests.exceptions.SSLError as e:
-                logger.warning("Image download SSL error: attempt=%d/%d error=%s", attempt + 1, max_retries, str(e)[:100])
-                if attempt < max_retries - 1:
-                    wait_time = (attempt + 1) * 2
-                    logger.info("Retrying image download in %s seconds", wait_time)
-                    time.sleep(wait_time)
-                else:
-                    logger.warning("Retrying image download with SSL verification disabled")
-                    try:
-                        response = requests.get(
-                            image_url, 
-                            timeout=(10, 30),
-                            stream=True,
-                            verify=False,
-                            headers={
-                                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
-                            },
-                            proxies=proxies,
-                        )
-                        if response.status_code == 200:
-                            with open(save_path, 'wb') as file:
-                                for chunk in response.iter_content(chunk_size=8192):
-                                    if chunk:
-                                        file.write(chunk)
-                            logger.info("Image downloaded with SSL verification disabled: %s", save_path)
-                            return True
-                    except Exception as fallback_error:
-                        logger.exception("Image download failed after disabling SSL verification: %s", fallback_error)
-                        raise
-                        
-            except requests.exceptions.Timeout as e:
-                logger.warning("Image download timeout: attempt=%d/%d error=%s", attempt + 1, max_retries, e)
-                if attempt < max_retries - 1:
-                    time.sleep((attempt + 1) * 2)
-                else:
-                    raise
-                    
-            except Exception as e:
-                logger.warning("Image download error: attempt=%d/%d error=%s", attempt + 1, max_retries, e)
-                if attempt < max_retries - 1:
-                    time.sleep((attempt + 1) * 2)
-                else:
-                    raise
-        
+                logger.warning("Image download rejected: status=%d attempt=%d/%d",
+                               response.status_code, attempt, max_retries)
+                if response.status_code < 500 and response.status_code not in {408, 429}:
+                    return False
+            except requests.exceptions.SSLError:
+                logger.warning("Image download certificate verification failed")
+                raise ModelRequestError("图片下载证书校验失败，已停止下载。") from None
+            except (requests.exceptions.RequestException, OSError) as exc:
+                logger.warning("Image download failed: category=%s attempt=%d/%d",
+                               type(exc).__name__, attempt, max_retries)
+                if attempt == max_retries:
+                    raise ModelRequestError("图片下载失败，已停止重试。") from None
+            finally:
+                if response is not None:
+                    response.close()
+                if temporary is not None:
+                    temporary.unlink(missing_ok=True)
+            if attempt < max_retries:
+                time.sleep(attempt * 2)
         return False
 
     def resize_image(self, image_path):
@@ -385,9 +351,7 @@ class ImageProcessor:
         expire_time = datetime.now() + timedelta(hours=48)
         
         logger.info(
-            "File uploaded to OSS: file=%s oss_url=%s expires_at=%s",
-            file_path,
-            oss_url,
+            "File uploaded to OSS: expires_at=%s",
             expire_time.strftime('%Y-%m-%d %H:%M:%S'),
         )
         
@@ -409,7 +373,7 @@ class ImageProcessor:
                 img = Image.open(p)
                 images.append(img)
             except Exception as e:
-                logger.error("Cannot open image %s: %s", p, e)
+                logger.error("Cannot open image (%s)", type(e).__name__)
         
         if not images:
             return None

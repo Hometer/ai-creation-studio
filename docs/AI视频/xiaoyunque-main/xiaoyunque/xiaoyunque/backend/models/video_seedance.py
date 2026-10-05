@@ -131,7 +131,7 @@ class SeedanceVideoClient:
         )
         
         if not resp.ok:
-            logger.error(f"Seedance 提交失败: {resp.text}")
+            logger.error("Seedance submission failed: status=%d", resp.status_code)
             resp.raise_for_status()
             
         data = resp.json()
@@ -209,8 +209,8 @@ if __name__ == "__main__":
         print(f"✗ 输入图片不存在: {IMAGE_PATH}")
         sys.exit(1)
 
-    print(f"  API Key    : {api_key[:6]}***{api_key[-4:]}")
-    print(f"  Base URL   : {base_url}")
+    print("  API Key：已配置（不显示内容）")
+    print("  Base URL：使用后端配置（不显示地址）")
 
     for model in MODELS:
         print("\n" + "="*40)
@@ -236,10 +236,10 @@ if __name__ == "__main__":
             elapsed = time.time() - start
 
             print(f"✓ 视频生成完成！耗时 {elapsed:.1f}s")
-            print(f"  远端 URL : {video_url}")
+            print("✓ 获得响应（正文与媒体地址不显示）")
             print(f"  本地文件 : {os.path.abspath(OUTPUT_PATH)}")
             print(f"  文件大小 : {os.path.getsize(OUTPUT_PATH) / 1024 / 1024:.2f} MB")
         except Exception as e:
-            print(f"✗ 失败: {e}")
+            print(f"✗ 失败: {type(e).__name__}")
             sys.exit(1)
         break  # 只测试第一个模型

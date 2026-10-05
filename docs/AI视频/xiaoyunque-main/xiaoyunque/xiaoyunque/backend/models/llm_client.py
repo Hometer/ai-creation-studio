@@ -105,21 +105,7 @@ class LLM:
             model = "qwen3.6-max-preview"
             
         if Config.PRINT_MODEL_INPUT:
-            lines = [
-                "---- LLM QUERY REQUEST ----",
-                f"Model: {model}",
-            ]
-            if task_id:
-                lines.append(f"Task ID: {task_id}")
-            if image_urls:
-                lines.append(f"Images: {len(image_urls)}")
-                lines.extend(f"  - {u}" for u in image_urls)
-            lines.extend([
-                f"Web Search: {web_search}",
-                f"Prompt: {prompt[:200]}{'...' if len(prompt) > 200 else ''}",
-                "-" * 30,
-            ])
-            logger.info("\n%s", "\n".join(lines))
+            logger.info("LLM input summary: prompt_chars=%d images=%d web_search=%s", len(prompt), len(image_urls or []), bool(web_search))
             
         result = ""
         model_lower = model.lower()

@@ -155,24 +155,7 @@ class ImageClient:
             model = "wan2.7-image"  # Default model
 
         if Config.PRINT_MODEL_INPUT:
-            lines = [
-                "---- IMAGE GENERATION REQUEST ----",
-                f"Prompt: {prompt}",
-            ]
-            if image_paths:
-                lines.append(f"Refs: {len(image_paths)}")
-                for p in image_paths:
-                    lines.append(" - [Base64图片]" if str(p).startswith("data:") else f" - {p}")
-            lines.extend([
-                f"Model: {model}",
-                f"Video Ratio: {video_ratio}",
-                f"Resolution: {resolution}",
-                f"Final Size: {size}",
-            ])
-            if session_id:
-                lines.append(f"Session ID: {session_id}")
-            lines.append("-" * 30)
-            logger.info("\n%s", "\n".join(lines))
+            logger.info("Image input summary: prompt_chars=%d references=%d", len(prompt), len(image_paths or []))
             
         # Determine backend provider
         is_seedream = "seedream" in model.lower()
@@ -205,7 +188,7 @@ class ImageClient:
                     generated_local_paths.extend(paths)
 
             except Exception as e:
-                logger.exception("Seedream generation failed: %s", e)
+                logger.error("Seedream generation failed: %s", type(e).__name__)
 
         elif is_sora:
             # --- GPT/Sora Logic ---
@@ -228,10 +211,10 @@ class ImageClient:
                 if path and os.path.exists(path):
                     generated_local_paths.append(path)
                 else:
-                    logger.error("GPT/Sora returned invalid path or download failed: %s", path)
+                    logger.error("GPT/Sora result unavailable")
 
             except Exception as e:
-                logger.exception("GPT/Sora generation failed: %s", e)
+                logger.error("GPT/Sora generation failed: %s", type(e).__name__)
 
         else:
             # --- DashScope Logic ---
@@ -273,6 +256,6 @@ class ImageClient:
                     generated_local_paths.extend(paths)
                             
             except Exception as e:
-                logger.exception("DashScope generation failed: %s", e)
+                logger.error("DashScope generation failed: %s", type(e).__name__)
 
         return generated_local_paths

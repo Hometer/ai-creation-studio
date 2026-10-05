@@ -153,7 +153,7 @@ class DeepSeek:
                     attempts + 1,
                     self.max_attempts,
                     self.timeout,
-                    e,
+                    type(e).__name__,
                 )
                 time.sleep(5)
             attempts += 1
@@ -175,9 +175,9 @@ if __name__ == "__main__":
     if not api_key:
         print("✗ DEEPSEEK_API_KEY 未设置，跳过")
         sys.exit(1)
-    print(f"  API Key: {api_key[:6]}***{api_key[-4:]}")
+    print("  API Key：已配置（不显示内容）")
     if base_url:
-        print(f"  Base URL: {base_url}")
+        print("  Base URL：使用后端配置（不显示地址）")
 
     client = DeepSeek(api_key=api_key, base_url=base_url)
     prompt = "用一句话介绍你自己。"
@@ -189,6 +189,6 @@ if __name__ == "__main__":
         try:
             resp = client.query(prompt, model=model)
             elapsed = time.time() - t0
-            print(f"✓ 响应 ({elapsed:.1f}s): {resp.strip()[:200]}")
+            print("✓ 获得响应（正文与媒体地址不显示）")
         except Exception as e:
-            print(f"✗ 失败: {e}")
+            print(f"✗ 失败: {type(e).__name__}")

@@ -137,40 +137,7 @@ class VideoClient:
         duration = int(duration)
 
         if Config.PRINT_MODEL_INPUT:
-            lines = [
-                "---- VIDEO GENERATION REQUEST ----",
-                f"Prompt: {prompt}",
-                "Image: [Base64图片]" if image_path and str(image_path).startswith("data:") else f"Image: {image_path}",
-                f"Model: {model}",
-                f"Duration: {duration}s",
-                f"Shot Type: {shot_type}",
-                f"Video Ratio: {video_ratio}",
-            ]
-            if resolution:
-                lines.append(f"Resolution: {resolution}")
-            if last_image_path:
-                lines.append(f"Last Image: {last_image_path}")
-            if first_clip_path:
-                lines.append(f"First Clip: {first_clip_path}")
-            if reference_image_path:
-                lines.append(f"Reference Image: {reference_image_path}")
-            if reference_image_paths:
-                lines.append(f"Reference Images: {reference_image_paths}")
-            if reference_video_paths:
-                lines.append(f"Reference Videos: {reference_video_paths}")
-            if reference_audio_path:
-                lines.append(f"Reference Audio: {reference_audio_path}")
-            if audio_path:
-                lines.append(f"Audio: {audio_path}")
-            if negative_prompt:
-                lines.append(f"Negative Prompt: {negative_prompt}")
-            if sound:
-                lines.append(f"Sound: {sound}")
-            lines.extend([
-                f"Save: {save_path}",
-                "-" * 30,
-            ])
-            logger.info("\n%s", "\n".join(lines))
+            logger.info("Video input summary: prompt_chars=%d duration=%d", len(prompt), duration)
 
         model_lower = model.lower()
 

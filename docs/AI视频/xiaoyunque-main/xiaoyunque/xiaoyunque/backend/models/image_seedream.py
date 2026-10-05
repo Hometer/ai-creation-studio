@@ -245,7 +245,7 @@ class SeedreamClient:
                 f.write(response.content)
             return file_path
         except Exception as e:
-            logging.error(f"Failed to download image from {url}: {e}")
+            logging.error("Image download failed (%s)", type(e).__name__)
             return None
 
 
@@ -260,8 +260,8 @@ if __name__ == "__main__":
     if not api_key:
         print("✗ ARK_API_KEY 未设置，跳过")
         sys.exit(1)
-    print(f"  API Key: {api_key[:6]}***{api_key[-4:]}")
-    print(f"  Base URL: {base_url}")
+    print("  API Key：已配置（不显示内容）")
+    print("  Base URL：使用后端配置（不显示地址）")
 
     client = SeedreamClient(api_key=api_key, base_url=base_url)
 
@@ -282,7 +282,7 @@ if __name__ == "__main__":
         else:
             print(f"✗ 返回空列表 ({elapsed:.1f}s)")
     except Exception as e:
-        print(f"✗ 图片生成失败: {e}")
+        print(f"✗ 图片生成失败: {type(e).__name__}")
 
     # === 测试2: 图生图 ===
     # 需要一张已有的参考图路径
@@ -306,7 +306,7 @@ if __name__ == "__main__":
             else:
                 print(f"✗ 返回空列表 ({elapsed:.1f}s)")
         except Exception as e:
-            print(f"✗ 图生图失败: {e}")
+            print(f"✗ 图生图失败: {type(e).__name__}")
     else:
         print(f"\n[测试2: 图生图] ✗ 参考图不存在: {ref_image_path}")
         print("  跳过图生图测试，请先运行文生图测试生成参考图")

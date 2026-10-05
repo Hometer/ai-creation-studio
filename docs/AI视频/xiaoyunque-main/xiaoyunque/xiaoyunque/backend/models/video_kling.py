@@ -156,7 +156,7 @@ class KlingVideoClient:
                 img.save(buf, format="JPEG", quality=quality)
                 return base64.b64encode(buf.getvalue()).decode("utf-8")
         except Exception as e:
-            logger.warning(f"图片压缩失败 ({image_path})，使用原始文件: {e}")
+            logger.warning("Image compression failed (%s); using original", type(e).__name__)
             with open(image_path, "rb") as f:
                 return base64.b64encode(f.read()).decode("utf-8")
 
@@ -253,7 +253,7 @@ class KlingVideoClient:
                 err_body = resp.json()
             except Exception:
                 err_body = resp.text
-            logger.error(f"KlingVideoClient: HTTP {resp.status_code}, 响应: {err_body}")
+            logger.error("Kling request failed: status=%d", resp.status_code)
             resp.raise_for_status()
         data = resp.json()
 
@@ -436,7 +436,7 @@ if __name__ == "__main__":
         sys.exit(1)
 
     print(f"  Access Key : {ak[:6]}***{ak[-4:]}")
-    print(f"  Base URL   : {base_url}")
+    print("  Base URL：使用后端配置（不显示地址）")
     print(f"  输入图片   : {IMAGE_PATH}")
     print(f"  输出路径   : {OUTPUT_PATH}")
     print(f"  模型       : {MODEL}")
@@ -464,9 +464,9 @@ if __name__ == "__main__":
         elapsed = time.time() - start
 
         print(f"✓ 视频生成完成！耗时 {elapsed:.1f}s")
-        print(f"  远端 URL : {video_url}")
+        print("✓ 获得响应（正文与媒体地址不显示）")
         print(f"  本地文件 : {os.path.abspath(OUTPUT_PATH)}")
         print(f"  文件大小 : {os.path.getsize(OUTPUT_PATH) / 1024 / 1024:.2f} MB")
     except Exception as e:
-        print(f"✗ 失败: {e}")
+        print(f"✗ 失败: {type(e).__name__}")
         sys.exit(1)

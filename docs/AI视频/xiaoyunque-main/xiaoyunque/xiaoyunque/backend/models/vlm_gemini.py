@@ -21,10 +21,10 @@ if backend_dir not in sys.path:
 import time
 import base64
 import logging
-import httpx
 from openai import OpenAI
 from typing import Dict, List, Optional
 from config import Config
+from models.request_safety import completion_text, initialize_client, positive_seconds
 
 logger = logging.getLogger(__name__)
 
@@ -33,7 +33,8 @@ class GeminiVLClient:
     """
     Gemini VLM 客户端，使用 OpenAI 兼容格式调用
     """
-    def __init__(self, api_key: Optional[str] = None, base_url: Optional[str] = None):
+    def __init__(self, api_key: Optional[str] = None, base_url: Optional[str] = None,
+                 timeout: float = 300, total_timeout=None):
         """
         Gemini 多模态客户端
         :param api_key: Gemini API Key
@@ -44,11 +45,11 @@ class GeminiVLClient:
         self.base_url = base_url or Config.GOOGLE_GEMINI_BASE_URL or default_url
         if self.base_url and not self.base_url.endswith("/v1"):
             self.base_url = self.base_url.rstrip("/") + "/v1"
-        kwargs = {"api_key": self.api_key, "base_url": self.base_url}
+        self.timeout = positive_seconds(timeout)
+        self.total_timeout = positive_seconds(total_timeout if total_timeout is not None else timeout)
+        kwargs = {"api_key": self.api_key, "base_url": self.base_url, "timeout": self.timeout, "max_retries": 0}
         proxy = Config.provider_proxy("gemini")
-        if proxy:
-            kwargs["http_client"] = httpx.Client(proxy=proxy)
-        self.client = OpenAI(**kwargs)
+        self.client = initialize_client(OpenAI, kwargs, logger, proxy=proxy)
         self.max_attempts = 10
         self.max_tokens = 8000
 
@@ -110,27 +111,10 @@ class GeminiVLClient:
 
         messages = [{"role": "user", "content": content}]
 
-        attempts = 0
-        while attempts < self.max_attempts:
-            try:
-                # 直接使用模型名
-                response = self.client.chat.completions.create(
-                    model=model,
-                    messages=messages,
-                    max_tokens=self.max_tokens,
-                    temperature=parameters.get("temperature", 0.7) if parameters else 0.7
-                )
-
-                if response.choices and len(response.choices) > 0:
-                    return response.choices[0].message.content
-
-            except Exception as e:
-                logger.warning("Gemini VLM request failed: %s", e)
-                attempts += 1
-                if attempts < self.max_attempts:
-                    time.sleep(10)
-
-        raise Exception("GeminiVL: 达到最大重试次数，仍未获得有效响应。")
+        return completion_text(self, {
+            "model": model, "messages": messages, "max_tokens": self.max_tokens,
+            "temperature": parameters.get("temperature", 0.7) if parameters else 0.7,
+        }, logger)
 
 
 if __name__ == "__main__":
@@ -146,7 +130,7 @@ if __name__ == "__main__":
     if not api_key:
         print("✗ GEMINI_API_KEY 未设置，跳过")
         sys.exit(1)
-    print(f"  API Key: {api_key[:6]}***")
+    print("  API Key：已配置（不显示内容）")
     client = GeminiVLClient(api_key=api_key)
 
     # 测试图片（使用示例图片）
@@ -169,8 +153,8 @@ if __name__ == "__main__":
             result = client.chat(text=text, images=[img_path], model=model)
             elapsed = time.time() - t0
             if result:
-                print(f"✓ 返回结果 ({elapsed:.1f}s): {result[:200]}")
+                print("✓ 获得响应（正文与媒体地址不显示）")
             else:
                 print(f"✗ 返回空结果 ({elapsed:.1f}s)")
         except Exception as e:
-            print(f"✗ 失败: {e}")
+            print(f"✗ 失败: {type(e).__name__}")

@@ -81,7 +81,7 @@ class DashscopeVideoClient:
                 attempt,
                 max_attempts,
                 delay,
-                last_error,
+                type(last_error).__name__,
             )
             time.sleep(delay)
 
@@ -176,7 +176,7 @@ class DashscopeVideoClient:
         if audio_path and not os.path.exists(audio_path):
             raise FileNotFoundError(f"驱动音频不存在: {audio_path}")
 
-        logger.info(f"DashscopeVideoClient: model={model}, prompt={prompt[:60]}...")
+        logger.info("Dashscope video request prepared: prompt_chars=%d", len(prompt))
 
         if self._is_reference_to_video_model(model):
             media = self._build_reference_to_video_media(
@@ -350,7 +350,7 @@ class DashscopeVideoClient:
                     f"output={self._safe_output_repr(rsp)}"
                 )
 
-        logger.info(f"DashscopeVideoClient: 视频生成成功: {video_url}")
+        logger.info("Dashscope video generation completed")
 
         # 确保输出目录存在
         os.makedirs(os.path.dirname(save_path), exist_ok=True)
@@ -550,8 +550,8 @@ if __name__ == "__main__":
     for model in MODELS:
         output_path = os.path.join(OUTPUT_DIR, f"{model}.mp4")
         print(f"\n测试模型: {model}")
-        print(f"  API Key    : {ak[:6]}***{ak[-4:]}")
-        print(f"  Base URL   : {base_url}")
+        print("  API Key：已配置（不显示内容）")
+        print("  Base URL：使用后端配置（不显示地址）")
         print(f"  输入图片   : {IMAGE_PATH}")
         print(f"  输出路径   : {output_path}")
         print(f"  模型       : {model}")
@@ -577,9 +577,9 @@ if __name__ == "__main__":
             elapsed = time.time() - start
 
             print(f"✓ 视频生成完成！耗时 {elapsed:.1f}s")
-            print(f"  远端 URL : {video_url}")
+            print("✓ 获得响应（正文与媒体地址不显示）")
             print(f"  本地文件 : {os.path.abspath(output_path)}")
             print(f"  文件大小 : {os.path.getsize(output_path) / 1024 / 1024:.2f} MB")
         except Exception as e:
-            print(f"✗ 失败: {e}")
+            print(f"✗ 失败: {type(e).__name__}")
             sys.exit(1)

@@ -105,12 +105,12 @@ class QwenLLM:
                         logger.warning("Qwen returned an empty response; retrying")
                         time.sleep(2)
                 else:
-                    error_msg = f"Qwen API error: {response.code} - {response.message}"
+                    error_msg = "Qwen API request failed"
                     logger.error(error_msg)
                     raise RuntimeError(error_msg)
 
             except Exception as e:
-                logger.error(f"Error occurred with Qwen: {e}. Retrying.")
+                logger.error(f"Error occurred with Qwen: {type(e).__name__}. Retrying.")
                 time.sleep(5)
 
             attempts += 1
@@ -132,7 +132,7 @@ if __name__ == "__main__":
     if not api_key:
         print("✗ DASHSCOPE_API_KEY 未设置，跳过")
         sys.exit(1)
-    print(f"  API Key: {api_key[:6]}***{api_key[-4:]}")
+    print("  API Key：已配置（不显示内容）")
 
     client = QwenLLM(api_key=api_key)
     prompt = "用一句话介绍你自己。"
@@ -144,6 +144,6 @@ if __name__ == "__main__":
         try:
             resp = client.query(prompt, model=model)
             elapsed = time.time() - t0
-            print(f"✓ 响应 ({elapsed:.1f}s): {resp.strip()[:200]}")
+            print("✓ 获得响应（正文与媒体地址不显示）")
         except Exception as e:
-            print(f"✗ 失败: {e}")
+            print(f"✗ 失败: {type(e).__name__}")

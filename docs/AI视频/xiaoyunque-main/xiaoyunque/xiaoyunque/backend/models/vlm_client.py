@@ -82,19 +82,7 @@ class VLM:
              model: str = "qwen3.6-plus",
              session_id: Optional[str] = None) -> str:
         if Config.PRINT_MODEL_INPUT:
-            lines = [
-                "---- VLM REQUEST ----",
-                f"Prompt: {prompt}",
-            ]
-            if image_paths:
-                lines.append(f"Images: {len(image_paths)}")
-                for p in image_paths:
-                    lines.append(" - [Base64图片]" if p.startswith("data:") else f" - {p}")
-            lines.append(f"Model: {model}")
-            if session_id:
-                lines.append(f"Session ID: {session_id}")
-            lines.append("-" * 30)
-            logger.info("\n%s", "\n".join(lines))
+            logger.info("VLM input summary: prompt_chars=%d images=%d", len(prompt), len(image_paths or []))
 
         # Determine backend provider
         model_lower = model.lower()
@@ -136,8 +124,8 @@ class VLM:
                         abs_path = os.path.abspath(temp_path)
                         file_urls.append(f"file://{abs_path}")
                     except Exception as e:
-                        logger.exception("Failed to process base64 image")
-                        raise ValueError(f"无法解析 base64 图片: {e}")
+                        logger.error("Failed to process base64 image")
+                        raise ValueError(f"无法解析 base64 图片: {type(e).__name__}")
                 elif p.startswith("http") or p.startswith("file://"):
                     file_urls.append(p)
                 else:

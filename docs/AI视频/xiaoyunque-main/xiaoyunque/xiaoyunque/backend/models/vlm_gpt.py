@@ -16,11 +16,11 @@ if backend_dir not in sys.path:
 
 import time
 import base64
-import httpx
 import logging
 from openai import OpenAI
 from typing import Dict, List, Optional
 from config import Config
+from models.request_safety import completion_text, initialize_client, positive_seconds
 
 logger = logging.getLogger(__name__)
 
@@ -33,7 +33,7 @@ class GPTVLClient:
                  api_key: Optional[str] = None,
                  base_url: Optional[str] = None,
                  proxy: Optional[str] = None,
-                 timeout: float = 60.0):
+                 timeout: float = 60.0, total_timeout=None):
         """
         GPT 多模态客户端
         :param api_key: OpenAI API Key
@@ -42,21 +42,17 @@ class GPTVLClient:
         """
         # 优先使用传入的 api_key，否则从 config.yaml 读取
         self.api_key = api_key or Config.OPENAI_API_KEY
-        self.timeout = timeout
+        self.timeout = positive_seconds(timeout)
+        self.total_timeout = positive_seconds(total_timeout if total_timeout is not None else timeout)
         
-        kwargs = {"api_key": self.api_key, "timeout": self.timeout}
+        kwargs = {"api_key": self.api_key, "timeout": self.timeout, "max_retries": 0}
         
         self.base_url = base_url
         if proxy is None:
             proxy = Config.provider_proxy("openai")
-        if proxy:
-            kwargs["http_client"] = httpx.Client(
-                proxy=proxy,
-                timeout=self.timeout,
-            )
         if self.base_url:
             kwargs["base_url"] = self.base_url
-        self.client = OpenAI(**kwargs)
+        self.client = initialize_client(OpenAI, kwargs, logger, proxy=proxy)
         self.max_attempts = 5
         self.max_tokens = 4096
 
@@ -121,26 +117,10 @@ class GPTVLClient:
 
         messages = [{"role": "user", "content": content}]
 
-        attempts = 0
-        while attempts < self.max_attempts:
-            try:
-                response = self.client.chat.completions.create(
-                    model=model,
-                    messages=messages,
-                    max_tokens=self.max_tokens,
-                    temperature=parameters.get("temperature", 0.7) if parameters else 0.7
-                )
-
-                if response.choices and len(response.choices) > 0:
-                    return response.choices[0].message.content
-
-            except Exception as e:
-                logger.warning("GPT VLM request failed: %s", e)
-                attempts += 1
-                if attempts < self.max_attempts:
-                    time.sleep(2 * attempts)  # 指数退避
-
-        raise Exception("GPTVL: 达到最大重试次数，仍未获得有效响应。")
+        return completion_text(self, {
+            "model": model, "messages": messages, "max_tokens": self.max_tokens,
+            "temperature": parameters.get("temperature", 0.7) if parameters else 0.7,
+        }, logger, backoff=lambda attempt: 2 * attempt)
 
 
 if __name__ == "__main__":
@@ -171,8 +151,8 @@ if __name__ == "__main__":
                 result = client.chat(text=text, images=[img_path], model=model)
                 elapsed = time.time() - t0
                 if result:
-                    print(f"✓ 返回结果 ({elapsed:.1f}s): {result[:200]}")
+                    print("✓ 获得响应（正文与媒体地址不显示）")
                 else:
                     print(f"✗ 返回空结果 ({elapsed:.1f}s)")
             except Exception as e:
-                print(f"✗ 失败: {e}")
+                print(f"✗ 失败: {type(e).__name__}")

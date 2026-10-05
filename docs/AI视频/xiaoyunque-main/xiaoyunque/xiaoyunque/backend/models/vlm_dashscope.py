@@ -66,7 +66,7 @@ class QwenVLClient:
             else:
                 raise RuntimeError(f"DashScope QwenVLClient failed: {getattr(response, 'message', response)}")
         except Exception as e:
-            raise RuntimeError(f"DashScope QwenVLClient error: {e}")
+            raise RuntimeError(f"DashScope QwenVLClient error: {type(e).__name__}")
 
 
 if __name__ == "__main__":
@@ -84,7 +84,7 @@ if __name__ == "__main__":
     if not api_key:
         print("✗ DASHSCOPE_API_KEY 未设置，跳过")
         sys.exit(1)
-    print(f"  API Key: {api_key[:6]}***{api_key[-4:]}")
+    print("  API Key：已配置（不显示内容）")
     client = QwenVLClient(api_key=api_key)
 
     # 测试图片
@@ -112,4 +112,4 @@ if __name__ == "__main__":
             else:
                 print(f"✗ 返回空结果 ({elapsed:.1f}s)")
         except Exception as e:
-            print(f"✗ 失败: {e}")
+            print(f"✗ 失败: {type(e).__name__}")

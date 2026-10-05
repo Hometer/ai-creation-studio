@@ -73,7 +73,7 @@ class ImageGPT:
                 ext = "png"
             return f"data:image/{ext};base64,{img_data}"
         except Exception as e:
-            logger.warning("Failed to encode image %s: %s", image_path, e)
+            logger.warning("Image encoding failed (%s)", type(e).__name__)
             return image_path
 
     def generate_image(self, prompt, size="1024x1024", quality="high", model="gpt-image-2",
@@ -143,11 +143,11 @@ class ImageGPT:
             except Exception as e:
                 last_error = e
                 # Other errors: wait before retry
-                logger.warning("OpenAI image generation failed; retrying in 10 seconds: %s", e)
+                logger.warning("OpenAI image generation failed; retrying in 10 seconds: %s", type(e).__name__)
                 time.sleep(10)
                 break  # Break inner loop to retry all models
             attempts += 1
-        raise Exception(f"Max attempts reached, failed to generate image. Last error: {last_error}")
+        raise RuntimeError("图片生成失败，已停止重试。") from None
 
     def generate_images(self, prompt, count=4, size="1024x1024", quality="standard", model=None):
         """Generate multiple image URLs by calling Images API 'count' times."""
@@ -172,8 +172,8 @@ if __name__ == "__main__":
         print("✗ OPENAI_API_KEY 未设置，跳过")
         sys.exit(1)
     print("=== GPT 图片生成测试 ===")
-    print(f"  API Key: {api_key[:6]}***")
-    print(f"  Base URL: {base_url}")
+    print("  API Key：已配置（不显示内容）")
+    print("  Base URL：使用后端配置（不显示地址）")
 
 
     # 文生图
@@ -195,7 +195,7 @@ if __name__ == "__main__":
             print(f"✓ 生成成功 ({elapsed:.1f}s): {path}")
         except Exception as e:
             elapsed = time.time() - t0
-            print(f"✗ 失败 ({elapsed:.1f}s): {e}")
+            print(f"✗ 失败 ({elapsed:.1f}s): {type(e).__name__}")
 
     # 图生图
     print("\n=== GPT 图生图可用性测试 ===")
@@ -215,4 +215,4 @@ if __name__ == "__main__":
             print(f"✓ 生成成功 ({elapsed:.1f}s): {path}")
         except Exception as e:
             elapsed = time.time() - t0
-            print(f"✗ 失败 ({elapsed:.1f}s): {e}") 
+            print(f"✗ 失败 ({elapsed:.1f}s): {type(e).__name__}")

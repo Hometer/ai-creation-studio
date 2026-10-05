@@ -52,7 +52,7 @@ class DashScopeClient:
                             if 'message' in item and 'content' in item['message']:
                                 results.append(item['message']['content'][0]['image'])
                 except Exception as e:
-                    logging.error(f"Failed to parse ImageGeneration outputs: {e}")
+                    logging.error(f"Failed to parse ImageGeneration outputs: {type(e).__name__}")
                 
                 # Check if we should download
                 if save_dir:
@@ -67,10 +67,10 @@ class DashScopeClient:
                 
                 return results
             else:
-                logging.error(f"Image generation failed: {response.code}, {response.message}, status={response.status_code}")
+                logging.error("Image generation failed: status=%s", response.status_code)
                 return []
         except Exception as e:
-            logging.error(f"Error in generate_image (DashScope): {e}")
+            logging.error(f"Error in generate_image (DashScope): {type(e).__name__}")
             return []
 
     def edit_image(self, prompt, image_urls, model="wan2.7-image", size="1920*1080", n=1, session_id=None, save_dir=None):
@@ -120,7 +120,7 @@ class DashScopeClient:
                                             if isinstance(c, dict) and 'image' in c:
                                                 results.append(c['image'])
                 except Exception as e:
-                    logging.error(f"Failed to parse ImageGeneration outputs: {e}")
+                    logging.error(f"Failed to parse ImageGeneration outputs: {type(e).__name__}")
 
                 # Check if we should download
                 if save_dir:
@@ -135,10 +135,10 @@ class DashScopeClient:
 
                 return results
             else:
-                logging.error(f"Image edit failed: {response.code}, {response.message}, status={response.status_code}")
+                logging.error("Image edit failed: status=%s", response.status_code)
                 return []
         except Exception as e:
-            logging.error(f"Error in edit_image: {e}")
+            logging.error(f"Error in edit_image: {type(e).__name__}")
             return []
 
 
@@ -155,8 +155,8 @@ if __name__ == "__main__":
     if not api_key:
         print("✗ DASHSCOPE_API_KEY 未设置，跳过")
         sys.exit(1)
-    print(f"  API Key: {api_key[:6]}***{api_key[-4:]}")
-    print(f"  Base URL: {base_url}")
+    print("  API Key：已配置（不显示内容）")
+    print("  Base URL：使用后端配置（不显示地址）")
     client = DashScopeClient(api_key=api_key, base_url=base_url)
 
     # 文生图
@@ -178,7 +178,7 @@ if __name__ == "__main__":
             else:
                 print(f"✗ 返回空列表 ({elapsed:.1f}s)")
         except Exception as e:
-            print(f"✗ 失败: {e}")
+            print(f"✗ 失败: {type(e).__name__}")
             sys.exit(1)
 
     # 图生图
@@ -201,5 +201,5 @@ if __name__ == "__main__":
             else:
                 print(f"✗ 返回空列表 ({elapsed:.1f}s)")
         except Exception as e:
-            print(f"✗ 失败: {e}")
+            print(f"✗ 失败: {type(e).__name__}")
             sys.exit(1)

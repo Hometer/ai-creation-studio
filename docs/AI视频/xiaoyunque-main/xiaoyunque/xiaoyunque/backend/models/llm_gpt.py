@@ -10,6 +10,7 @@ import time
 import logging
 from openai import OpenAI
 from config import Config
+from models.request_safety import completion_text, initialize_client, positive_seconds
 
 logger = logging.getLogger(__name__)
 
@@ -19,25 +20,20 @@ class GPT:
     OpenAI 文本生成客户端
     可选模型：gpt-4o, 
     """
-    def __init__(self, base_url="", api_key="", proxy=None, timeout=300):
-        import httpx
+    def __init__(self, base_url="", api_key="", proxy=None, timeout=300, total_timeout=None):
         self.api_key = api_key or Config.OPENAI_API_KEY
-        self.timeout = timeout
+        self.timeout = positive_seconds(timeout)
+        self.total_timeout = positive_seconds(total_timeout if total_timeout is not None else timeout)
         
-        kwargs = {"api_key": self.api_key, "timeout": self.timeout}
+        kwargs = {"api_key": self.api_key, "timeout": self.timeout, "max_retries": 0}
 
         self.base_url = base_url
         if proxy is None:
             proxy = Config.provider_proxy("openai")
-        if proxy:
-            kwargs["http_client"] = httpx.Client(
-                proxy=proxy,
-                timeout=self.timeout,
-            )
         if self.base_url:
             kwargs["base_url"] = self.base_url
             
-        self.client = OpenAI(**kwargs)
+        self.client = initialize_client(OpenAI, kwargs, logger, proxy=proxy)
         self.max_attempts = 10
         self.max_tokens = 8000
 
@@ -62,31 +58,10 @@ class GPT:
             content.extend([{"type": "image_url", "image_url": {"url": url}} for url in image_urls])
         messages.append({"role": "user", "content": content})
 
-        attempts = 0
-        while attempts < self.max_attempts:
-            try:
-                # Build request parameters
-                request_params = {
-                    "model": self.model,
-                    "messages": messages,
-                    "max_tokens": self.max_tokens
-                }
-                # Add search tool if web_search is enabled
-                if web_search:
-                    request_params["search_tool"] = "auto"
-
-                response = self.client.chat.completions.create(**request_params)
-                if response.choices[0].message.content.strip():
-                    return response.choices[0].message.content
-                else:
-                    logger.warning("OpenAI returned an empty response; retrying in 10 seconds")
-            except Exception as e:
-                logger.warning("OpenAI request failed; retrying in 10 seconds: %s", e)
-                logger.debug("OpenAI request messages: %s", messages)
-                time.sleep(10)
-                attempts += 1
-
-        raise Exception("Max attempts reached, failed to get a response from OpenAI.") 
+        request_params = {"model": self.model, "messages": messages, "max_tokens": self.max_tokens}
+        if web_search:
+            request_params["search_tool"] = "auto"
+        return completion_text(self, request_params, logger)
 
 
 if __name__ == "__main__":
@@ -103,8 +78,8 @@ if __name__ == "__main__":
     if not api_key:
         print("✗ OPENAI_API_KEY 未设置，跳过")
         sys.exit(1)
-    print(f"  API Key: {api_key[:6]}***{api_key[-4:]}")
-    print(f"  Base URL: {base_url}")
+    print("  API Key：已配置（不显示内容）")
+    print("  Base URL：使用后端配置（不显示地址）")
     client = GPT(api_key=api_key, base_url=base_url)
 
     prompt = "用一句话介绍你自己。"
@@ -116,6 +91,6 @@ if __name__ == "__main__":
         try:
             resp = client.query(prompt, model=model)
             elapsed = time.time() - t0
-            print(f"✓ 响应 ({elapsed:.1f}s): {resp.strip()[:200]}")
+            print("✓ 获得响应（正文与媒体地址不显示）")
         except Exception as e:
-            print(f"✗ 失败: {e}")
+            print(f"✗ 失败: {type(e).__name__}")
