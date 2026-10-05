@@ -123,6 +123,7 @@ class WorkflowState:
         self.artifacts: Dict[str, Any] = {}
         self.content_history: Optional[Dict[str, Any]] = None
         self.content_reviews: Optional[Dict[str, Any]] = None
+        self.co_creation: Optional[Dict[str, Any]] = None
         self.error: Optional[str] = None
         self.started_at: Optional[datetime] = None
         self.updated_at: datetime = datetime.now()
@@ -1382,7 +1383,7 @@ class WorkflowEngine:
 
     # ──────────── 会话持久化 ────────────
 
-    def save_session_to_disk(self, session_id: str, meta: Dict = None, *, archive_text: bool = False, expected_text: Dict = None):
+    def save_session_to_disk(self, session_id: str, meta: Dict = None, *, archive_text: bool = False, expected_text: Dict = None, expected_co_creation=...):
         """保存 / 更新会话到磁盘（原子写入）"""
         with self._state_lock:
             path = session_path(self._session_dir, session_id)
@@ -1393,6 +1394,10 @@ class WorkflowEngine:
             if path.exists():
                 try:
                     data = read_session(path, session_id)
+                    if state:
+                        expected_ledger = getattr(state, "co_creation", None) if expected_co_creation is ... else expected_co_creation
+                        if data.get("co_creation") != expected_ledger:
+                            raise ValueError("Co-creation ledger changed outside current engine")
                 except Exception:
                     # The file is untrusted: undo new artifacts using our last accepted
                     # snapshot, rather than trying to restore from damaged disk data.
@@ -1433,6 +1438,8 @@ class WorkflowEngine:
                     data["content_history"] = copy.deepcopy(state.content_history)
                 if getattr(state, "content_reviews", None) is not None:
                     data["content_reviews"] = copy.deepcopy(state.content_reviews)
+                if getattr(state, "co_creation", None) is not None:
+                    data["co_creation"] = copy.deepcopy(state.co_creation)
                 data["error"] = state.error
                 data["updated_at"] = restore_timestamp(state.updated_at).timestamp()
                 
@@ -1469,7 +1476,7 @@ class WorkflowEngine:
                 state.artifacts = copy.deepcopy(fallback_artifacts)
             return
         restored = self._restore_state(durable)
-        for key in ('artifacts', 'status', 'content_history', 'content_reviews', 'meta',
+        for key in ('artifacts', 'status', 'content_history', 'content_reviews', 'co_creation', 'meta',
                     'current_stage', 'stage_progress', 'error', 'updated_at'):
             setattr(state, key, copy.deepcopy(getattr(restored, key)))
 
@@ -1494,6 +1501,7 @@ class WorkflowEngine:
         state.artifacts = data.get("artifacts", {})
         state.content_history = copy.deepcopy(data.get("content_history"))
         state.content_reviews = copy.deepcopy(data.get("content_reviews"))
+        state.co_creation = copy.deepcopy(data.get("co_creation"))
         state.stage_progress = data.get("stage_progress", {})
         state.error = data.get("error")
         state.updated_at = restore_timestamp(data.get("updated_at", 0))

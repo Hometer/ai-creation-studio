@@ -456,3 +456,15 @@ GET／POST `/api/project/{id}/content-revisions/reviews` 提供真实读取与�
 打开 [独立人工预览](http://127.0.0.1:3008/projects/comparison-demo/revisions#revision-export)，两个按钮均可实际下载八条人工版本。后端停止后从根运行 `python3.12 scripts/project.py export-demo`，默认 8008，数据在已忽略的 `data/export-demo/`；独立前端运行 `BACKEND_API_URL=http://127.0.0.1:8008 npm --prefix /tmp/revision-export-frontend run dev -- --webpack --hostname 127.0.0.1 --port 3008`。临时副本被清理时由开发者重新准备，使用独立 `.next`；人工服务没有供应商执行入口，样例不代表模型效果。主应用仍用根目录 backend／frontend 启动入口。
 
 验证：根目录 `python3.12 scripts/project.py check`；定向后端在 backend 运行 `.venv/bin/python -m pytest tests/test_revision_exports.py -q`；frontend 运行 `npm test`、`npm run typecheck`、`npm run lint -- --max-warnings=0`、`npm run build`。最终后端 864/864（新增 29）、前端 325/325（新增 44），类型／Lint 零警告／生产构建通过。实际下载、草稿保护、断线／过期／迟到响应、四宽度及 HTTP 服务重启已验，原 195 个文件和独立四个文件保持。详见 [先行开发文档](docs/阶段文档/阶段3-第12子阶段-文字版本导出备份开发文档.md) 和 [证据与闸门](docs/evidence/阶段3/文字版本导出备份/验收报告.md)。工程结果本地提交、不推送；真实模型、真机、业务及整体阶段继续待验，下一轮优先对话共创。
+
+## 对话共创记录与修改意图确认（阶段 3 第 13 子阶段）
+
+项目 → 素材与版本或文字版本页 → “对话共创”。选择剧本／分镜的一处文字，填写“希望怎样修改”和可选“必须保留的内容”，点“记录修改请求”。核对范围卡，勾选确认后点“确认修改意图”；请求和决定进入持久化历史，刷新后可通过选中请求的地址恢复。也可以撤回请求，原话与确认历史保留。修改意图最多 10,000 字、保留要求 2,000 字，每项目最多 100 条请求／200 条决定，账本最多 2 MiB，超限拒绝而不截断。
+
+当前模型尚未接入，范围卡只整理明确选定的对象，没有模拟 Agent 回复。确认意图不会改正文、创建文字版本、生成媒体或授权费用；后续人工修改仍走已有预览与版本保存。正文或版本历史变化后，旧意图提示重新核对，禁止继续确认旧依据。未提交输入只在当前页；失败保留输入，回复不确定时先重新读取，按原请求编号核对是否保存，不自动重发。项目执行时暂停创建／确认，撤回请求不取消任务。
+
+新增 GET／POST `/api/project/{id}/co-creation` 和 POST `/api/project/{id}/co-creation/decision`。可选 `co_creation` 账本兼容旧会话，原子追加、幂等及工作区摘要防并发；旧写入入口也保留账本，发现外部更新时拒绝覆盖。仍为本机单用户单写服务，正式账号隔离未接入。
+
+打开 [独立人工预览](http://127.0.0.1:3009/projects/comparison-demo/co-creation)，可查看五轮人工请求、确认与撤回记录。正文不代表模型效果。后端停止后从根运行 `python3.12 scripts/project.py co-creation-demo`，默认 8009，数据在忽略的 `data/co-creation-demo/`；独立前端运行 `BACKEND_API_URL=http://127.0.0.1:8009 npm --prefix /tmp/co-creation-frontend run dev -- --webpack --hostname 127.0.0.1 --port 3009`。临时副本清理后由开发者准备，使用独立 `.next`，没有供应商执行入口。主应用仍用根目录 backend／frontend 入口。
+
+全量验证仍用 `python3.12 scripts/project.py check`；定向后端在 backend 运行 `.venv/bin/python -m pytest tests/test_co_creation.py -q`；frontend 运行 `npm test`、`npm run typecheck`、`npm run lint -- --max-warnings=0`、`npm run build`。最终后端 901/901（新增 37）、前端 359/359（新增 34），类型／Lint 零警告／生产构建通过；真实浏览器闭环、断网／回复丢失／并发、撤回与地址恢复、正文变化失效、四宽度和 HTTP 重启通过。原 199 文件保持。详见 [先行开发文档](docs/阶段文档/阶段3-第13子阶段-对话共创意图确认开发文档.md) 和 [证据与闸门](docs/evidence/阶段3/对话共创意图确认/验收报告.md)。本轮工程结果本地提交、不推送；完整模型共创、真机、业务及整体阶段继续待验。下一步优先把已确认意图接到修改预览和版本保存。

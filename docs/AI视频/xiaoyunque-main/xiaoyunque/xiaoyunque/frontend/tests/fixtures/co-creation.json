@@ -1,0 +1,574 @@
+{
+  "empty": {
+    "project_id": "comparison-demo",
+    "token": "2c23bbd9045d2d1f138e6e7157507c593812eeefb092a4a6b1821f15baf7cca1",
+    "text_token": "10fc1dd5dac6cb0c74960ac40ee104055fe0956861f599f8947b8389d51556d7",
+    "running": false,
+    "model_enabled": false,
+    "fields": {
+      "script_generation": [
+        {
+          "path": [
+            "title"
+          ],
+          "label": "剧本标题",
+          "value": "最后一班渡船 · 人工第二版"
+        },
+        {
+          "path": [
+            "logline"
+          ],
+          "label": "故事梗概",
+          "value": "青年和守望者共同点亮灯塔，迎接最后一班渡船。"
+        },
+        {
+          "path": [
+            "episodes",
+            0,
+            "content"
+          ],
+          "label": "章节正文 1",
+          "value": "阿舟说：“我会等最后一班渡船。”"
+        },
+        {
+          "path": [
+            "episodes",
+            1,
+            "content"
+          ],
+          "label": "章节正文 2",
+          "value": "守望者点亮灯塔，远处的船缓缓靠岸。"
+        }
+      ],
+      "storyboard": [
+        {
+          "path": [
+            "episodes",
+            0,
+            "segments",
+            0,
+            "visual_prompt"
+          ],
+          "label": "seg-new · 画面提示词",
+          "value": "灯塔旁的新木桥。"
+        },
+        {
+          "path": [
+            "episodes",
+            0,
+            "segments",
+            0,
+            "shots",
+            0,
+            "content"
+          ],
+          "label": "seg-new · 镜头 1 · 镜头内容",
+          "value": "青年把灯交给守望者。"
+        },
+        {
+          "path": [
+            "episodes",
+            0,
+            "segments",
+            0,
+            "shots",
+            0,
+            "dialogue"
+          ],
+          "label": "seg-new · 镜头 1 · 台词",
+          "value": "我们一起点灯。"
+        },
+        {
+          "path": [
+            "episodes",
+            0,
+            "segments",
+            1,
+            "visual_prompt"
+          ],
+          "label": "seg-2 · 画面提示词",
+          "value": "灯塔与远处渡船。"
+        },
+        {
+          "path": [
+            "episodes",
+            0,
+            "segments",
+            1,
+            "shots",
+            0,
+            "content"
+          ],
+          "label": "seg-2 · 镜头 1 · 镜头内容",
+          "value": "守望者点亮灯塔。"
+        }
+      ]
+    },
+    "records": [],
+    "decisions": []
+  },
+  "request": {
+    "expected_token": "2c23bbd9045d2d1f138e6e7157507c593812eeefb092a4a6b1821f15baf7cca1",
+    "request_id": "263b185b0f1e40738042c03deadd4a05",
+    "stage": "storyboard",
+    "path": [
+      "episodes",
+      0,
+      "segments",
+      0,
+      "shots",
+      0,
+      "dialogue"
+    ],
+    "message": "让这句台词更坚定，只改语气。",
+    "preserve": "人物关系、情节和其他镜头保持。"
+  },
+  "saved": {
+    "intent_id": "d9e3f0ef279a49f488cd30c700a475b7",
+    "workspace": {
+      "project_id": "comparison-demo",
+      "token": "0708574c18c50eb9818b700d8e46ef124989635478beb0107b86bc29c4b508ff",
+      "text_token": "10fc1dd5dac6cb0c74960ac40ee104055fe0956861f599f8947b8389d51556d7",
+      "running": false,
+      "model_enabled": false,
+      "fields": {
+        "script_generation": [
+          {
+            "path": [
+              "title"
+            ],
+            "label": "剧本标题",
+            "value": "最后一班渡船 · 人工第二版"
+          },
+          {
+            "path": [
+              "logline"
+            ],
+            "label": "故事梗概",
+            "value": "青年和守望者共同点亮灯塔，迎接最后一班渡船。"
+          },
+          {
+            "path": [
+              "episodes",
+              0,
+              "content"
+            ],
+            "label": "章节正文 1",
+            "value": "阿舟说：“我会等最后一班渡船。”"
+          },
+          {
+            "path": [
+              "episodes",
+              1,
+              "content"
+            ],
+            "label": "章节正文 2",
+            "value": "守望者点亮灯塔，远处的船缓缓靠岸。"
+          }
+        ],
+        "storyboard": [
+          {
+            "path": [
+              "episodes",
+              0,
+              "segments",
+              0,
+              "visual_prompt"
+            ],
+            "label": "seg-new · 画面提示词",
+            "value": "灯塔旁的新木桥。"
+          },
+          {
+            "path": [
+              "episodes",
+              0,
+              "segments",
+              0,
+              "shots",
+              0,
+              "content"
+            ],
+            "label": "seg-new · 镜头 1 · 镜头内容",
+            "value": "青年把灯交给守望者。"
+          },
+          {
+            "path": [
+              "episodes",
+              0,
+              "segments",
+              0,
+              "shots",
+              0,
+              "dialogue"
+            ],
+            "label": "seg-new · 镜头 1 · 台词",
+            "value": "我们一起点灯。"
+          },
+          {
+            "path": [
+              "episodes",
+              0,
+              "segments",
+              1,
+              "visual_prompt"
+            ],
+            "label": "seg-2 · 画面提示词",
+            "value": "灯塔与远处渡船。"
+          },
+          {
+            "path": [
+              "episodes",
+              0,
+              "segments",
+              1,
+              "shots",
+              0,
+              "content"
+            ],
+            "label": "seg-2 · 镜头 1 · 镜头内容",
+            "value": "守望者点亮灯塔。"
+          }
+        ]
+      },
+      "records": [
+        {
+          "intent_id": "d9e3f0ef279a49f488cd30c700a475b7",
+          "number": 1,
+          "stage": "storyboard",
+          "target": {
+            "path": [
+              "episodes",
+              0,
+              "segments",
+              0,
+              "shots",
+              0,
+              "dialogue"
+            ],
+            "label": "seg-new · 镜头 1 · 台词",
+            "value": "我们一起点灯。"
+          },
+          "message": "让这句台词更坚定，只改语气。",
+          "preserve": "人物关系、情节和其他镜头保持。",
+          "text_token": "10fc1dd5dac6cb0c74960ac40ee104055fe0956861f599f8947b8389d51556d7",
+          "created_at": "2026-10-05T14:43:57.853468+00:00",
+          "request_id": "263b185b0f1e40738042c03deadd4a05",
+          "status": "pending"
+        }
+      ],
+      "decisions": []
+    }
+  },
+  "decision": {
+    "expected_token": "0708574c18c50eb9818b700d8e46ef124989635478beb0107b86bc29c4b508ff",
+    "request_id": "ad290284ea7c423e96f04b4b15ed66b2",
+    "intent_id": "d9e3f0ef279a49f488cd30c700a475b7",
+    "decision": "confirm",
+    "acknowledged": true
+  },
+  "confirmed": {
+    "intent_id": "d9e3f0ef279a49f488cd30c700a475b7",
+    "workspace": {
+      "project_id": "comparison-demo",
+      "token": "b92853dc2bda13c7aea1d17e25fa0f1992ddf71632e2bd432635577bdb03115a",
+      "text_token": "10fc1dd5dac6cb0c74960ac40ee104055fe0956861f599f8947b8389d51556d7",
+      "running": false,
+      "model_enabled": false,
+      "fields": {
+        "script_generation": [
+          {
+            "path": [
+              "title"
+            ],
+            "label": "剧本标题",
+            "value": "最后一班渡船 · 人工第二版"
+          },
+          {
+            "path": [
+              "logline"
+            ],
+            "label": "故事梗概",
+            "value": "青年和守望者共同点亮灯塔，迎接最后一班渡船。"
+          },
+          {
+            "path": [
+              "episodes",
+              0,
+              "content"
+            ],
+            "label": "章节正文 1",
+            "value": "阿舟说：“我会等最后一班渡船。”"
+          },
+          {
+            "path": [
+              "episodes",
+              1,
+              "content"
+            ],
+            "label": "章节正文 2",
+            "value": "守望者点亮灯塔，远处的船缓缓靠岸。"
+          }
+        ],
+        "storyboard": [
+          {
+            "path": [
+              "episodes",
+              0,
+              "segments",
+              0,
+              "visual_prompt"
+            ],
+            "label": "seg-new · 画面提示词",
+            "value": "灯塔旁的新木桥。"
+          },
+          {
+            "path": [
+              "episodes",
+              0,
+              "segments",
+              0,
+              "shots",
+              0,
+              "content"
+            ],
+            "label": "seg-new · 镜头 1 · 镜头内容",
+            "value": "青年把灯交给守望者。"
+          },
+          {
+            "path": [
+              "episodes",
+              0,
+              "segments",
+              0,
+              "shots",
+              0,
+              "dialogue"
+            ],
+            "label": "seg-new · 镜头 1 · 台词",
+            "value": "我们一起点灯。"
+          },
+          {
+            "path": [
+              "episodes",
+              0,
+              "segments",
+              1,
+              "visual_prompt"
+            ],
+            "label": "seg-2 · 画面提示词",
+            "value": "灯塔与远处渡船。"
+          },
+          {
+            "path": [
+              "episodes",
+              0,
+              "segments",
+              1,
+              "shots",
+              0,
+              "content"
+            ],
+            "label": "seg-2 · 镜头 1 · 镜头内容",
+            "value": "守望者点亮灯塔。"
+          }
+        ]
+      },
+      "records": [
+        {
+          "intent_id": "d9e3f0ef279a49f488cd30c700a475b7",
+          "number": 1,
+          "stage": "storyboard",
+          "target": {
+            "path": [
+              "episodes",
+              0,
+              "segments",
+              0,
+              "shots",
+              0,
+              "dialogue"
+            ],
+            "label": "seg-new · 镜头 1 · 台词",
+            "value": "我们一起点灯。"
+          },
+          "message": "让这句台词更坚定，只改语气。",
+          "preserve": "人物关系、情节和其他镜头保持。",
+          "text_token": "10fc1dd5dac6cb0c74960ac40ee104055fe0956861f599f8947b8389d51556d7",
+          "created_at": "2026-10-05T14:43:57.853468+00:00",
+          "request_id": "263b185b0f1e40738042c03deadd4a05",
+          "status": "confirmed"
+        }
+      ],
+      "decisions": [
+        {
+          "decision_id": "e2efcd36783a4fbeaaf3eaf952310960",
+          "number": 1,
+          "intent_id": "d9e3f0ef279a49f488cd30c700a475b7",
+          "decision": "confirm",
+          "created_at": "2026-10-05T14:43:57.859810+00:00",
+          "request_id": "ad290284ea7c423e96f04b4b15ed66b2"
+        }
+      ]
+    }
+  },
+  "withdraw": {
+    "expected_token": "b92853dc2bda13c7aea1d17e25fa0f1992ddf71632e2bd432635577bdb03115a",
+    "request_id": "75e6f4d6f4f3458994585982ea21e706",
+    "intent_id": "d9e3f0ef279a49f488cd30c700a475b7",
+    "decision": "withdraw",
+    "acknowledged": true
+  },
+  "withdrawn": {
+    "intent_id": "d9e3f0ef279a49f488cd30c700a475b7",
+    "workspace": {
+      "project_id": "comparison-demo",
+      "token": "b25d27186c298c82f5af6335c16514c33667cefbf73a02a3b5e33214627bb7ea",
+      "text_token": "10fc1dd5dac6cb0c74960ac40ee104055fe0956861f599f8947b8389d51556d7",
+      "running": false,
+      "model_enabled": false,
+      "fields": {
+        "script_generation": [
+          {
+            "path": [
+              "title"
+            ],
+            "label": "剧本标题",
+            "value": "最后一班渡船 · 人工第二版"
+          },
+          {
+            "path": [
+              "logline"
+            ],
+            "label": "故事梗概",
+            "value": "青年和守望者共同点亮灯塔，迎接最后一班渡船。"
+          },
+          {
+            "path": [
+              "episodes",
+              0,
+              "content"
+            ],
+            "label": "章节正文 1",
+            "value": "阿舟说：“我会等最后一班渡船。”"
+          },
+          {
+            "path": [
+              "episodes",
+              1,
+              "content"
+            ],
+            "label": "章节正文 2",
+            "value": "守望者点亮灯塔，远处的船缓缓靠岸。"
+          }
+        ],
+        "storyboard": [
+          {
+            "path": [
+              "episodes",
+              0,
+              "segments",
+              0,
+              "visual_prompt"
+            ],
+            "label": "seg-new · 画面提示词",
+            "value": "灯塔旁的新木桥。"
+          },
+          {
+            "path": [
+              "episodes",
+              0,
+              "segments",
+              0,
+              "shots",
+              0,
+              "content"
+            ],
+            "label": "seg-new · 镜头 1 · 镜头内容",
+            "value": "青年把灯交给守望者。"
+          },
+          {
+            "path": [
+              "episodes",
+              0,
+              "segments",
+              0,
+              "shots",
+              0,
+              "dialogue"
+            ],
+            "label": "seg-new · 镜头 1 · 台词",
+            "value": "我们一起点灯。"
+          },
+          {
+            "path": [
+              "episodes",
+              0,
+              "segments",
+              1,
+              "visual_prompt"
+            ],
+            "label": "seg-2 · 画面提示词",
+            "value": "灯塔与远处渡船。"
+          },
+          {
+            "path": [
+              "episodes",
+              0,
+              "segments",
+              1,
+              "shots",
+              0,
+              "content"
+            ],
+            "label": "seg-2 · 镜头 1 · 镜头内容",
+            "value": "守望者点亮灯塔。"
+          }
+        ]
+      },
+      "records": [
+        {
+          "intent_id": "d9e3f0ef279a49f488cd30c700a475b7",
+          "number": 1,
+          "stage": "storyboard",
+          "target": {
+            "path": [
+              "episodes",
+              0,
+              "segments",
+              0,
+              "shots",
+              0,
+              "dialogue"
+            ],
+            "label": "seg-new · 镜头 1 · 台词",
+            "value": "我们一起点灯。"
+          },
+          "message": "让这句台词更坚定，只改语气。",
+          "preserve": "人物关系、情节和其他镜头保持。",
+          "text_token": "10fc1dd5dac6cb0c74960ac40ee104055fe0956861f599f8947b8389d51556d7",
+          "created_at": "2026-10-05T14:43:57.853468+00:00",
+          "request_id": "263b185b0f1e40738042c03deadd4a05",
+          "status": "withdrawn"
+        }
+      ],
+      "decisions": [
+        {
+          "decision_id": "e2efcd36783a4fbeaaf3eaf952310960",
+          "number": 1,
+          "intent_id": "d9e3f0ef279a49f488cd30c700a475b7",
+          "decision": "confirm",
+          "created_at": "2026-10-05T14:43:57.859810+00:00",
+          "request_id": "ad290284ea7c423e96f04b4b15ed66b2"
+        },
+        {
+          "decision_id": "cfa6aa4640e64ad6aedf9f8a3fb51247",
+          "number": 2,
+          "intent_id": "d9e3f0ef279a49f488cd30c700a475b7",
+          "decision": "withdraw",
+          "created_at": "2026-10-05T14:43:57.868256+00:00",
+          "request_id": "75e6f4d6f4f3458994585982ea21e706"
+        }
+      ]
+    }
+  }
+}

@@ -72,6 +72,9 @@ def read_session(path: Path, session_id: str) -> dict[str, Any]:
     if 'content_reviews' in data:
         from core.impact_reviews import validate_reviews
         validate_reviews(data['content_reviews'])
+    if 'co_creation' in data:
+        from core.co_creation import validate_ledger
+        validate_ledger(data['co_creation'])
     return data
 
 

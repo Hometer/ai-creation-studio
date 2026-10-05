@@ -1,0 +1,7 @@
+.creation-grid{grid-template-columns:minmax(0,1fr) minmax(0,1.15fr)}
+.creation-record>p{line-height:1.8;overflow-wrap:anywhere}
+.creation-record details{margin:16px 0}
+.creation-record summary{min-height:44px;cursor:pointer;line-height:1.8;color:var(--lp-text-muted)}
+.creation-record .revision-boundary{margin-top:18px}
+.creation-record .revision-actions{margin:16px 0}
+@media(max-width:900px){.creation-grid{grid-template-columns:minmax(0,1fr)}}
