@@ -339,7 +339,7 @@ export default function HomePage({ onStartProject, onResumeProject, onDeleteSess
           <div className="xyq-hero-title">
             <div className="studio-eyebrow"><span /> YOUR NEXT STORY</div>
             <h1 id="studio-title">让想象，<br />成为<span>作品。</span></h1>
-            <p>从一句灵感到一部短片。<br />和小云雀一起，把脑海里的故事慢慢变成画面。</p>
+            <p>从一句灵感到一部短片。<br />把脑海里的故事，慢慢变成画面。</p>
             <a className="studio-text-link" href="#create">开始我的故事 <ArrowUpRight size={16} /></a>
           </div>
           <button className="studio-feature" onClick={() => handleExampleClick('一位宇航员收到来自地球的最后一封信，在寂静的空间站里，决定踏上回家的旅程。制作一部充满希望的科幻短片。')} aria-label="使用太空来信灵感">
@@ -758,7 +758,7 @@ export default function HomePage({ onStartProject, onResumeProject, onDeleteSess
               </article>;
             })}</div>}
         </section>
-        <footer className="studio-footer"><span>小云雀 · 给每个故事一个开始</span><span>本地创作工作室</span></footer>
+        <footer className="studio-footer"><span>给每个故事一个开始</span><span>本地创作工作室</span></footer>
       </div>
 
       {/* 删除确认弹窗 */}

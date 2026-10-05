@@ -23,10 +23,10 @@ logger = logging.getLogger(__name__)
 TEMPLATE_FIELD_DEFAULTS = {
     "title": "山河入梦",
     "text": "心之所向，素履而往",
-    "author": "HITsz-TMG",
-    "describe": "开源视频生成智能体",
-    "brand": "XiaoYunQue",
-    "signature": "HITsz-TMG",
+    "author": "创作者",
+    "describe": "AI 视频创作",
+    "brand": "创作工作室",
+    "signature": "原创故事",
     "subtitle": "这是一个副标题",
 }
 CUSTOM_TEMPLATE_FIELDS = ("author", "describe", "brand", "signature", "subtitle")

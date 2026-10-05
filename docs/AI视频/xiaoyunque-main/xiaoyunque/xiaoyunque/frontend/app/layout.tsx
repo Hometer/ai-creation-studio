@@ -3,8 +3,9 @@ import AppShell from "@/components/AppShell";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "小云雀 · 创作工作室",
-  description: "从一句灵感到一部短片，和小云雀一起创作你的故事。",
+  title: "创作工作室",
+  description: "从一句灵感到一部短片，把脑海里的故事变成画面。",
+  icons: { icon: { url: '/studio-mark.svg', type: 'image/svg+xml' }, shortcut: '/studio-mark.svg' },
 };
 
 export default function RootLayout({

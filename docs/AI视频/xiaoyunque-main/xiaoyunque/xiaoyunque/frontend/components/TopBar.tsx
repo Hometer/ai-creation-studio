@@ -1,6 +1,6 @@
 'use client';
 
-import MediaImage from '@/components/MediaImage';
+import BrandMark from '@/components/BrandMark';
 
 import React, { useState, useRef, useEffect } from 'react';
 import { CheckCircle, Circle, Loader, Edit3, AlertCircle, Square, Zap, Settings2, ChevronDown } from 'lucide-react';
@@ -358,14 +358,10 @@ export default function TopBar({
           aria-label="返回首页"
           className="xyq-topbar-brand flex items-center gap-2 mr-6 hover:opacity-80 transition-opacity flex-shrink-0"
         >
-          <MediaImage
-            src="/logo.jpg"
-            alt="Logo"
-            className="w-8 h-8 rounded-lg object-contain"
-          />
+          <BrandMark />
           <div className="xyq-topbar-brand-text flex flex-col leading-tight">
             <span className="font-bold text-sm text-gray-800 tracking-tight">
-              小云雀
+              创作工作室
             </span>
           </div>
         </button>

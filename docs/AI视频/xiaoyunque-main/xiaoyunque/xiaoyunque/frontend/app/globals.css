@@ -31,7 +31,7 @@
     --radius-20: 20px;
     --radius-pill: 9999px;
 
-    /* Semantic tokens used by the XiaoYunQue application surfaces. */
+    /* Semantic tokens used by the creative studio application surfaces. */
     --background: #101114;
     --foreground: #f2f3f5;
     --font-app: -apple-system, BlinkMacSystemFont, "PingFang SC", "Hiragino Sans GB", system-ui, "Segoe UI", "Microsoft YaHei", sans-serif;
@@ -774,6 +774,7 @@ body {
 .xyq-shell .bg-blue-50\/40 { background-color: #192a3e66 !important; }
 .xyq-shell .xyq-sidebar { background: #151619 !important; }
 .studio-brand-copy { display: flex; flex-direction: column; gap: 3px; }
+.xyq-shell .studio-brand-mark { background: var(--lp-accent); color: var(--lp-text-inverse) !important; }
 .studio-brand-copy small { font-size: 9px; color: var(--lp-text-subtle); letter-spacing: .13em; }
 .studio-nav-label { padding: 12px 12px 10px; color: var(--lp-text-subtle); font-size: 11px; letter-spacing: .05em; }
 .xyq-shell .xyq-sidebar-link[aria-current="page"] { background: #283320 !important; color: var(--lp-accent) !important; }
