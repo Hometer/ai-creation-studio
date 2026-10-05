@@ -1,5 +1,4 @@
 import logging
-import traceback
 
 from . import action_transfer, digital_human, standard
 from .storage import mark_completed, mark_failed, mark_running, update_task
@@ -28,6 +27,6 @@ async def run_pipeline_task(task_id: str, pipeline: str, params: dict) -> None:
             len(artifacts or []),
         )
     except Exception as exc:
-        logger.exception("Pipeline task failed: task_id=%s pipeline=%s", task_id, pipeline)
+        logger.error("Pipeline task failed: task_id=%s pipeline=%s (%s)", task_id, pipeline, type(exc).__name__)
         update_task(task_id, progress=0)
-        mark_failed(task_id, f"{exc}\n{traceback.format_exc()}")
+        mark_failed(task_id, "专项执行失败，已保留任务，请检查本地配置后重试")

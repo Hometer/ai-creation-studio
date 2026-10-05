@@ -20,7 +20,7 @@ httpx>=0.24.0
 Pillow>=10.0.0
 playwright>=1.51.0
 python-docx
-PyPDF2
+pypdf==6.19.0
 numpy>=1.24.0
 
 # Document Processing

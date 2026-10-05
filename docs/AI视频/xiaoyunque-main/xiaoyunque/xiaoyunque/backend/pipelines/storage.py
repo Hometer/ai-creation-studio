@@ -1,24 +1,31 @@
 import json
 import logging
 import os
+import re
 import shutil
 import threading
 import time
 import uuid
 from datetime import datetime
+from pathlib import Path
 from typing import Any, Dict, Optional
 
 from config import settings
+from core.asset_library import AssetLibraryError
+from core.persistence import atomic_write_session
 from .events import publish_task_event
 
 logger = logging.getLogger(__name__)
 _task_store_lock = threading.RLock()
+TASK_ID = re.compile(r"^[A-Za-z0-9][A-Za-z0-9_-]{0,127}$")
 
 TASK_DATA_DIR = os.path.join(settings.CODE_DIR, "data", "tasks")
 TASK_RESULT_DIR = os.path.join(settings.RESULT_DIR, "task")
 
 
 def ensure_task_dirs() -> None:
+    if Path(TASK_DATA_DIR).is_symlink() or Path(TASK_RESULT_DIR).is_symlink():
+        raise AssetLibraryError(503, "TASK_STORE_UNAVAILABLE", "任务存储暂不可用，原记录已保留")
     os.makedirs(TASK_DATA_DIR, exist_ok=True)
     os.makedirs(TASK_RESULT_DIR, exist_ok=True)
 
@@ -28,11 +35,20 @@ def new_task_id() -> str:
 
 
 def task_metadata_path(task_id: str) -> str:
-    return os.path.join(TASK_DATA_DIR, f"{task_id}.json")
+    if not isinstance(task_id, str) or not TASK_ID.fullmatch(task_id):
+        raise AssetLibraryError(422, "TASK_ID_INVALID", "任务编号不符合要求")
+    path = Path(TASK_DATA_DIR) / f"{task_id}.json"
+    if Path(TASK_DATA_DIR).is_symlink() or path.is_symlink():
+        raise AssetLibraryError(503, "TASK_STORE_UNAVAILABLE", "任务存储暂不可用，原记录已保留")
+    return str(path)
 
 
 def task_output_dir(task_id: str) -> str:
-    return os.path.join(TASK_RESULT_DIR, task_id)
+    task_metadata_path(task_id)
+    path = Path(TASK_RESULT_DIR) / task_id
+    if Path(TASK_RESULT_DIR).is_symlink() or path.is_symlink():
+        raise AssetLibraryError(503, "TASK_STORE_UNAVAILABLE", "任务结果目录暂不可用")
+    return str(path)
 
 
 def now_iso() -> str:
@@ -43,10 +59,7 @@ def save_task(metadata: Dict[str, Any]) -> None:
     with _task_store_lock:
         ensure_task_dirs()
         path = task_metadata_path(metadata["task_id"])
-        tmp_path = f"{path}.{uuid.uuid4().hex}.tmp"
-        with open(tmp_path, "w", encoding="utf-8") as f:
-            json.dump(metadata, f, ensure_ascii=False, indent=2)
-        os.replace(tmp_path, path)
+        atomic_write_session(Path(path), metadata)
 
 
 def load_task(task_id: str) -> Optional[Dict[str, Any]]:
@@ -54,8 +67,17 @@ def load_task(task_id: str) -> Optional[Dict[str, Any]]:
         path = task_metadata_path(task_id)
         if not os.path.exists(path):
             return None
-        with open(path, "r", encoding="utf-8") as f:
-            return json.load(f)
+        try:
+            descriptor = os.open(path, os.O_RDONLY | os.O_NOFOLLOW)
+            with os.fdopen(descriptor, "r", encoding="utf-8") as f:
+                data = json.load(f)
+            if (not isinstance(data, dict) or data.get("task_id") != task_id
+                    or not isinstance(data.get("created_at"), str)
+                    or not isinstance(data.get("status"), str) or not isinstance(data.get("pipeline"), str)):
+                raise ValueError("Invalid task record")
+            return data
+        except (OSError, ValueError, TypeError) as exc:
+            raise AssetLibraryError(503, "TASK_STORE_UNAVAILABLE", "任务记录暂不可读，原文件已保留") from exc
 
 
 def delete_task(task_id: str) -> bool:
@@ -64,8 +86,14 @@ def delete_task(task_id: str) -> bool:
         if not metadata:
             return False
 
+        if metadata["status"] in {"pending", "queued", "running"}:
+            raise AssetLibraryError(409, "TASK_ACTIVE", "请等待任务结束后再删除")
+
         metadata_path = task_metadata_path(task_id)
-        output_dir = metadata.get("output_dir") or task_output_dir(task_id)
+        output_dir = task_output_dir(task_id)
+        recorded = metadata.get("output_dir")
+        if recorded and Path(recorded).resolve() != Path(output_dir).resolve():
+            raise AssetLibraryError(409, "TASK_OUTPUT_MISMATCH", "任务结果目录不匹配，原记录已保留")
         if os.path.exists(metadata_path):
             os.remove(metadata_path)
         if output_dir and os.path.exists(output_dir):
@@ -81,11 +109,7 @@ def list_tasks(limit: int = 100) -> list[Dict[str, Any]]:
         for filename in os.listdir(TASK_DATA_DIR):
             if not filename.endswith(".json"):
                 continue
-            try:
-                with open(os.path.join(TASK_DATA_DIR, filename), "r", encoding="utf-8") as f:
-                    records.append(json.load(f))
-            except Exception:
-                continue
+            records.append(load_task(filename[:-5]))
         records.sort(key=lambda item: item.get("created_at", ""), reverse=True)
         return records[:limit]
 

@@ -1,5 +1,5 @@
 import { PROMPT_EXAMPLES } from '@/config/examples';
-import { getProjectStatus } from '@/lib/projectStatus';
+import { getProjectStatus, normalizeStageStatus } from '@/lib/projectStatus';
 import { startProject } from '@/lib/workflowApi';
 import { isRecord } from '@/lib/workflowTypes';
 import type { ProjectParams } from '@/components/HomePage';
@@ -22,11 +22,11 @@ export function matchesProject(idea: string, query: string) {
 }
 
 export function projectSummary(statuses: Record<string, string> | undefined, order: readonly string[]) {
-  const stages = Object.fromEntries(Object.entries(statuses || {}).map(([id, status]) => [id, { status: status === 'session_completed' ? 'completed' : status }]));
+  const stages = Object.fromEntries(Object.entries(statuses || {}).map(([id, status]) => [id, { status: normalizeStageStatus(status) }]));
   const state = getProjectStatus(stages, order);
   const completed = order.filter(id => ['completed', 'session_completed'].includes(statuses?.[id] || '')).length;
   const labels = { pending: '创作草稿', running: '创作中', waiting: '等待确认', completed: '已完成', error: '需要处理', stopped: '已停止' };
-  const hasUnknown = order.some(id => statuses?.[id] !== undefined && !['pending', 'running', 'waiting', 'completed', 'session_completed', 'error', 'stopped'].includes(statuses[id]));
+  const hasUnknown = order.some(id => statuses?.[id] !== undefined && !['pending', 'running', 'waiting', 'completed', 'error', 'stopped'].includes(normalizeStageStatus(statuses[id])));
   return { state, label: state === 'pending' && hasUnknown ? '状态待同步' : state === 'pending' && completed > 0 ? '待继续' : labels[state], completed, total: order.length };
 }
 

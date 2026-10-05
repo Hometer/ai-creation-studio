@@ -27,7 +27,7 @@ export interface StreamEvent {
   step_desc?: string;
   percent?: number;
   stage?: string;
-  status?: string;
+  status?: string | Record<string, string>;
   requires_intervention?: boolean;
   payload_summary?: unknown;
   content?: string;
@@ -410,9 +410,11 @@ export async function continueWorkflow(sessionId: string): Promise<{ status: str
 
 function readStreamEvent(value: unknown): StreamEvent | null {
   if (!isRecord(value) || !['progress', 'heartbeat', 'stage_complete', 'error', 'content'].includes(String(value.type))) return null;
-  for (const key of ['type', 'message', 'phase', 'step_desc', 'stage', 'status', 'content']) {
+  for (const key of ['type', 'message', 'phase', 'step_desc', 'stage', 'content']) {
     if (value[key] !== undefined && typeof value[key] !== 'string') return null;
   }
+  if (value.status !== undefined && typeof value.status !== 'string'
+      && (!isRecord(value.status) || !Object.values(value.status).every(status => typeof status === 'string'))) return null;
   if (value.percent !== undefined && typeof value.percent !== 'number') return null;
   if (value.requires_intervention !== undefined && typeof value.requires_intervention !== 'boolean') return null;
   if (value.data !== undefined && !isRecord(value.data)) return null;

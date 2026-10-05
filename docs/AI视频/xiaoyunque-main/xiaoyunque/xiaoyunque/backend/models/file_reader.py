@@ -1,6 +1,10 @@
 # -*- coding: utf-8 -*-
 
 import os
+import shutil
+import subprocess
+import zipfile
+import re
 import sys
 
 models_dir = os.path.dirname(os.path.abspath(__file__))
@@ -33,6 +37,8 @@ class FileReader:
 
         ext = os.path.splitext(file_path)[1].lower()
         
+        if ext == ".doc" and not zipfile.is_zipfile(file_path):
+            return FileReader._extract_legacy_doc(file_path)
         if ext in [".docx", ".doc"]:
             return FileReader._extract_docx(file_path)
         elif ext in [".txt", ".md"]:
@@ -65,8 +71,22 @@ class FileReader:
                             
             return "\n".join(full_text)
         except Exception as e:
-            logger.error(f"解析 Word 文档失败: {e}")
+            logger.error("Word parsing failed (%s)", type(e).__name__)
             return ""
+
+    @staticmethod
+    def _extract_legacy_doc(file_path: str) -> str:
+        executable = shutil.which("textutil")
+        if executable is None:
+            raise RuntimeError("Legacy Word conversion unavailable")
+        info = subprocess.run([executable, "-info", file_path], capture_output=True, timeout=10, check=False)
+        if info.returncode != 0 or not re.search(rb"(?m)^\s*Type:\s*Word format\s*$", info.stdout):
+            raise ValueError("Invalid legacy Word document")
+        result = subprocess.run([executable, "-convert", "txt", "-stdout", "-encoding", "UTF-8", file_path],
+                                capture_output=True, timeout=10, check=False)
+        if result.returncode != 0 or len(result.stdout) > 20 * 1024 * 1024:
+            raise ValueError("Invalid legacy Word document")
+        return result.stdout.decode("utf-8")
 
     @staticmethod
     def _extract_plain_text(file_path: str) -> str:
@@ -80,25 +100,13 @@ class FileReader:
                     continue
             return ""
         except Exception as e:
-            logger.error(f"解析文本文件失败: {e}")
+            logger.error("Text parsing failed (%s)", type(e).__name__)
             return ""
 
     @staticmethod
     def _extract_pdf(file_path: str) -> str:
-        try:
-            import PyPDF2
-            text = ""
-            with open(file_path, 'rb') as f:
-                reader = PyPDF2.PdfReader(f)
-                for page in reader.pages:
-                    text += page.extract_text() + "\n"
-            return text.strip()
-        except ImportError:
-            logger.error("未安装 PyPDF2，无法解析 PDF 文件。请运行: pip install PyPDF2")
-            return "[错误: 后端未安装 PDF 解析插件]"
-        except Exception as e:
-            logger.error(f"解析 PDF 失败: {e}")
-            return ""
+        from models.pdf_reader import read_pdf
+        return read_pdf(file_path)
 
     @staticmethod
     def format_as_prompt(filename: str, content: str) -> str:

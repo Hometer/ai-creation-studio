@@ -5,7 +5,9 @@ from fastapi.responses import StreamingResponse
 
 from api.dependencies import workflow_engine
 from api.routers.files import merge_uploaded_file_into_idea
-from api.schemas.project import InterventionRequest, ProjectStartRequest
+from api.schemas.project import InterventionRequest, ProjectStartRequest, ProjectModelUpdateRequest
+from core.orchestrator import STAGE_ORDER
+from core.persistence import SESSION_ID_PATTERN
 from api.services.project_helpers import (
     make_cancellation,
     make_progress_channel,
@@ -14,6 +16,11 @@ from api.services.project_helpers import (
 from config import settings
 
 router = APIRouter(tags=["Workflow"])
+
+
+def validate_execution_target(session_id: str, stage: str) -> None:
+    if not SESSION_ID_PATTERN.fullmatch(session_id) or stage not in {s.value for s in STAGE_ORDER}:
+        raise HTTPException(422)
 
 REQUIRED_MODEL_FIELDS = (
     "llm_model",
@@ -107,12 +114,18 @@ async def start_project(req: ProjectStartRequest):
 
 @router.post("/api/project/{session_id}/execute/{stage}")
 async def execute_stage(session_id: str, stage: str, request: Request):
+    validate_execution_target(session_id, stage)
     try:
-        body = await request.json()
-    except Exception:
-        body = {}
+        body = await request.json() if await request.body() else {}
+    except Exception as exc:
+        raise HTTPException(422) from exc
+    if not isinstance(body, dict):
+        raise HTTPException(422)
 
-    state, input_data = workflow_engine.prepare_stage_execution(session_id, stage, body)
+    try:
+        state, input_data = workflow_engine.prepare_stage_execution(session_id, stage, body)
+    except KeyError as exc:
+        raise HTTPException(404) from exc
     _require_model_fields(input_data)
 
     cancellation_check, on_disconnect = make_cancellation(workflow_engine, session_id)
@@ -172,8 +185,9 @@ async def get_artifact(session_id: str, stage: str):
 
 
 @router.patch("/api/project/{session_id}/models")
-async def update_models(session_id: str, request: Request):
-    body = await request.json()
+async def update_models(session_id: str, body: ProjectModelUpdateRequest):
+    if not SESSION_ID_PATTERN.fullmatch(session_id):
+        raise HTTPException(422)
     allowed_keys = (
         "llm_model",
         "vlm_model",
@@ -190,7 +204,7 @@ async def update_models(session_id: str, request: Request):
         "enable_concurrency",
     )
     try:
-        return workflow_engine.update_session_meta(session_id, body if isinstance(body, dict) else {}, allowed_keys)
+        return workflow_engine.update_session_meta(session_id, body.model_dump(exclude_unset=True), allowed_keys)
     except KeyError:
         raise HTTPException(404, "Session not found")
 
@@ -235,6 +249,7 @@ async def update_artifact(session_id: str, stage: str, request: Request):
 
 @router.post("/api/project/{session_id}/intervene")
 async def intervene(session_id: str, req: InterventionRequest, request: Request):
+    validate_execution_target(session_id, req.stage)
     try:
         state, input_data = workflow_engine.prepare_intervention_execution(
             session_id=session_id,

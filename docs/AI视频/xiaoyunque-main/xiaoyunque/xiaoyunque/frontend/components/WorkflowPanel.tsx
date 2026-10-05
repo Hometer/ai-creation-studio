@@ -142,6 +142,7 @@ export default function WorkflowPanel() {
 
   const [globalStatusMap, setGlobalStatusMap] = useState<Record<string, string>>({});
   const abortRef = useRef<AbortController | null>(null);
+  const streamingProjectRef = useRef<string | null>(null);
   const stoppedRef = useRef(false);
   const autoModeRef = useRef(autoMode);
   const pollRef = useRef<Map<string, symbol>>(new Map());
@@ -379,6 +380,8 @@ export default function WorkflowPanel() {
     if (stoppedRef.current) throw new Error('Stopped');
     updateStageState(stageId, { status: 'running', progress: 0, progressMessage: '启动中...', error: null });
     setActiveStage(stageId);
+    streamingProjectRef.current = sid;
+    router.replace(`/?session=${encodeURIComponent(sid)}&stage=${encodeURIComponent(stageId)}`);
 
     const controller = new AbortController();
     abortRef.current = controller;
@@ -524,6 +527,8 @@ export default function WorkflowPanel() {
         });
       }
       throw error;
+    } finally {
+      if (streamingProjectRef.current === sid) streamingProjectRef.current = null;
     }
   };
 
@@ -1114,6 +1119,7 @@ export default function WorkflowPanel() {
   useEffect(() => {
     const sid = searchParams.get('session');
     if (!sid) return;
+    if (streamingProjectRef.current === sid) return;
     const targetStage = searchParams.get('stage');
     let cancelled = false;
     const polls = pollRef.current;

@@ -4,6 +4,7 @@ import os
 import threading
 import uuid
 from datetime import datetime
+from pathlib import Path
 from typing import List
 
 from fastapi import APIRouter, HTTPException
@@ -18,6 +19,8 @@ from api.schemas.sandbox import (
 )
 from config import settings
 from path_security import resolve_media_reference
+from core.asset_library import AssetLibraryError
+from core.persistence import atomic_write_session
 
 router = APIRouter(tags=["Sandbox"])
 logger = logging.getLogger(__name__)
@@ -34,11 +37,20 @@ os.makedirs(SANDBOX_DIR, exist_ok=True)
 
 def _validated_media_reference(value: str) -> str:
     try:
-        return resolve_media_reference(
-            value,
-            [settings.TEMP_DIR, settings.CODE_DIR],
+        local = value
+        if value.startswith("/code/result/"):
+            local = str(Path(settings.RESULT_DIR) / value[len("/code/result/"):])
+        elif value.startswith("result/"):
+            local = str(Path(settings.RESULT_DIR) / value[len("result/"):])
+        resolved = resolve_media_reference(
+            local,
+            [settings.TEMP_DIR, settings.RESULT_DIR],
             allow_remote_urls=True,
         )
+        if not resolved.startswith(("http://", "https://")) and Path(resolved).suffix.lower() not in {
+                ".jpg", ".jpeg", ".png", ".webp", ".bmp", ".mp4", ".mov", ".avi", ".mkv", ".webm"}:
+            raise ValueError("Not a supported media file")
+        return resolved
     except ValueError as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
 
@@ -46,23 +58,31 @@ def _validated_media_reference(value: str) -> str:
 def _load_history() -> List[dict]:
     """加载历史记录"""
     with SANDBOX_LOCK:
+        if Path(SANDBOX_HISTORY_FILE).is_symlink():
+            raise AssetLibraryError(503, "SANDBOX_HISTORY_UNAVAILABLE", "历史记录暂不可读，原文件已保留")
         if os.path.exists(SANDBOX_HISTORY_FILE):
             try:
-                with open(SANDBOX_HISTORY_FILE, 'r', encoding='utf-8') as f:
-                    return json.load(f)
-            except Exception:
-                logger.warning("Failed to load sandbox history: %s", SANDBOX_HISTORY_FILE, exc_info=True)
-                return []
+                path = Path(SANDBOX_HISTORY_FILE)
+                if path.is_symlink() or path.parent.is_symlink():
+                    raise ValueError("Unsafe history path")
+                with path.open(encoding='utf-8') as f:
+                    history = json.load(f)
+                if (not isinstance(history, list) or any(not isinstance(item, dict)
+                        or not all(isinstance(item.get(key), str) for key in ("id", "tool", "model", "created_at"))
+                        or not isinstance(item.get("input"), dict)
+                        or not isinstance(item.get("output"), (dict, type(None))) for item in history)):
+                    raise ValueError("Invalid history")
+                return history
+            except Exception as exc:
+                logger.warning("Sandbox history unavailable (%s)", type(exc).__name__)
+                raise AssetLibraryError(503, "SANDBOX_HISTORY_UNAVAILABLE", "历史记录暂不可读，原文件已保留") from exc
         return []
 
 
 def _save_history(history: List[dict]):
     """保存历史记录"""
     with SANDBOX_LOCK:
-        tmp_path = f"{SANDBOX_HISTORY_FILE}.{uuid.uuid4().hex}.tmp"
-        with open(tmp_path, 'w', encoding='utf-8') as f:
-            json.dump(history, f, ensure_ascii=False, indent=2)
-        os.replace(tmp_path, SANDBOX_HISTORY_FILE)
+        atomic_write_session(Path(SANDBOX_HISTORY_FILE), history)
 
 
 def _normalize_path(path: str) -> str:
@@ -164,14 +184,27 @@ def _finish_active_task(task_id: str) -> None:
         SANDBOX_ACTIVE_TASKS.pop(task_id, None)
 
 
+def _record_files(files):
+    paths = []
+    root = Path(SANDBOX_DIR).resolve()
+    for value in files:
+        if not isinstance(value, str) or not value:
+            raise AssetLibraryError(409, "SANDBOX_FILE_INVALID", "历史文件路径不符合要求，记录已保留")
+        path = Path(value)
+        if path.is_symlink() or not path.resolve().is_relative_to(root) or path.resolve() == root:
+            raise AssetLibraryError(409, "SANDBOX_FILE_INVALID", "历史文件不属于临时工作台，记录已保留")
+        paths.append(path)
+    return paths
+
+
 def _delete_record_files(files: List[str]):
     """删除记录关联的文件"""
-    for f in files:
-        if f and os.path.exists(f):
+    for f in _record_files(files):
+        if f.exists():
             try:
                 os.remove(f)
             except Exception:
-                logger.warning("Failed to delete sandbox artifact: %s", f, exc_info=True)
+                logger.warning("Sandbox artifact deletion failed")
                 pass
 
 
@@ -231,6 +264,7 @@ async def sandbox_delete_record(record_id: str):
         if record_to_delete is None:
             return {"success": False, "error": "记录不存在"}
 
+        _record_files(record_to_delete.get("files", []))
         _save_history(new_history)
 
     # 删除关联文件不需要占用历史锁。
@@ -265,8 +299,10 @@ async def sandbox_llm(req: SandboxLLMRequest):
         logger.info("Sandbox LLM completed: model=%s record_id=%s", req.model, record_id)
         return {"success": True, "result": result, "record_id": record_id}
     except Exception as e:
-        logger.exception("Sandbox LLM failed: model=%s", req.model)
-        return {"success": False, "error": str(e)}
+        logger.error("Sandbox LLM failed (%s)", type(e).__name__)
+        if isinstance(e, AssetLibraryError):
+            raise
+        raise HTTPException(500) from e
     finally:
         _finish_active_task(task_id)
 
@@ -298,8 +334,10 @@ async def sandbox_vlm(req: SandboxVLMRequest):
         logger.info("Sandbox VLM completed: model=%s record_id=%s", req.model, record_id)
         return {"success": True, "result": result, "record_id": record_id}
     except Exception as e:
-        logger.exception("Sandbox VLM failed: model=%s", req.model)
-        return {"success": False, "error": str(e)}
+        logger.error("Sandbox VLM failed (%s)", type(e).__name__)
+        if isinstance(e, AssetLibraryError):
+            raise
+        raise HTTPException(500) from e
     finally:
         _finish_active_task(task_id)
 
@@ -342,8 +380,10 @@ async def sandbox_t2i(req: SandboxT2IRequest):
             "record_id": record_id,
         }
     except Exception as e:
-        logger.exception("Sandbox T2I failed: model=%s", req.model)
-        return {"success": False, "error": str(e)}
+        logger.error("Sandbox T2I failed (%s)", type(e).__name__)
+        if isinstance(e, AssetLibraryError):
+            raise
+        raise HTTPException(500) from e
     finally:
         _finish_active_task(task_id)
 
@@ -386,8 +426,10 @@ async def sandbox_i2i(req: SandboxI2IRequest):
             "record_id": record_id,
         }
     except Exception as e:
-        logger.exception("Sandbox I2I failed: model=%s", req.model)
-        return {"success": False, "error": str(e)}
+        logger.error("Sandbox I2I failed (%s)", type(e).__name__)
+        if isinstance(e, AssetLibraryError):
+            raise
+        raise HTTPException(500) from e
     finally:
         _finish_active_task(task_id)
 
@@ -433,7 +475,9 @@ async def sandbox_video(req: SandboxVideoRequest):
             "record_id": record_id,
         }
     except Exception as e:
-        logger.exception("Sandbox video failed: model=%s", req.model)
-        return {"success": False, "error": str(e)}
+        logger.error("Sandbox video failed (%s)", type(e).__name__)
+        if isinstance(e, AssetLibraryError):
+            raise
+        raise HTTPException(500) from e
     finally:
         _finish_active_task(task_id)

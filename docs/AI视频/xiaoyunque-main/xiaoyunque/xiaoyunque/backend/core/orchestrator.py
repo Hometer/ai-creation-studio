@@ -153,6 +153,7 @@ class WorkflowEngine:
             WorkflowStage.POST_PRODUCTION: VideoEditorAgent,
         }
         self.sessions: Dict[str, WorkflowState] = {}
+        self._unreadable_sessions: Set[str] = set()
         self._stop_events: Dict[str, threading.Event] = {}
         self._active_sessions: Set[str] = set()
         self._background_tasks: Set[Any] = set()
@@ -184,8 +185,10 @@ class WorkflowEngine:
                 try:
                     state = self._restore_state(read_session(path, session_id))
                     self.sessions[session_id] = state
+                    self._unreadable_sessions.discard(session_id)
                     return state
                 except Exception as exc:
+                    self._unreadable_sessions.add(session_id)
                     logger.warning("Session %s was not loaded (%s)", session_id, type(exc).__name__)
 
         return None
@@ -261,7 +264,9 @@ class WorkflowEngine:
     def prepare_stage_execution(self, session_id: str, stage: str, body: Dict[str, Any]) -> tuple[WorkflowState, Dict[str, Any]]:
         """Build stage input from current meta/artifacts without exposing mutable state to routers."""
         with self._state_lock:
-            state = self.get_or_create_state(session_id)
+            state = self.get_state(session_id)
+            if not state:
+                raise KeyError("Session not found")
             input_data = copy.deepcopy(body) if isinstance(body, dict) else {}
             input_data["session_id"] = session_id
 
@@ -775,7 +780,6 @@ class WorkflowEngine:
             input_data["_session_meta"] = copy.deepcopy(state.meta)
             input_data["_session_artifacts"] = copy.deepcopy(state.artifacts)
 
-        agent = self.agent_factories[stage]()
         active_registered = False
         background_item_regeneration = self._is_background_item_regeneration(stage, intervention)
 
@@ -784,7 +788,15 @@ class WorkflowEngine:
         def combined_cancel_check():
             return session_stop.is_set() or (cancellation_check and cancellation_check())
 
-        agent.set_cancellation_check(combined_cancel_check)
+        try:
+            agent = self.agent_factories[stage]()
+            agent.set_cancellation_check(combined_cancel_check)
+        except Exception as exc:
+            logger.error("Workflow initialization failed (%s)", type(exc).__name__)
+            with self._state_lock:
+                if state.session_id not in self._active_sessions:
+                    self._record_stage_failure(state, stage, background_item_regeneration, bool(combined_cancel_check()))
+            raise
 
         # 包装 progress_callback：运行中进度只写入全局内存实例，避免并发阶段频繁抢写 session JSON。
         def persist_stage_progress(phase: str, step: str, percent: float):
@@ -980,25 +992,25 @@ class WorkflowEngine:
             raise
 
         except Exception as e:
-            with self._state_lock:
-                if not background_item_regeneration:
-                    state.status[stage.value] = "error"
-                state.error = str(e)
-                state.updated_at = datetime.now()
-                state.stage_progress[stage.value] = {
-                    "phase": stage.value,
-                    "step": "执行失败",
-                    "message": "执行失败",
-                    "percent": state.stage_progress.get(stage.value, {}).get("percent", 0),
-                    "updated_at": time.time(),
-                }
-                # 确保保存错误状态
-                self.save_session_to_disk(state.session_id)
+            logger.error("Workflow stage failed (%s)", type(e).__name__)
+            self._record_stage_failure(state, stage, background_item_regeneration, bool(combined_cancel_check()))
             raise
         finally:
             if active_registered:
                 with self._state_lock:
                     self._active_sessions.discard(state.session_id)
+
+    def _record_stage_failure(self, state, stage, background, stopped):
+        with self._state_lock:
+            if not background:
+                state.current_stage = stage
+                state.status[stage.value] = "stopped" if stopped else "error"
+            state.error = None if stopped else "阶段执行失败，已保留项目，请检查本地配置后重试"
+            state.updated_at = datetime.now()
+            message = "已停止，已保留完成内容" if stopped else "执行失败"
+            state.stage_progress[stage.value] = {"phase": stage.value, "step": message, "message": message,
+                "percent": state.stage_progress.get(stage.value, {}).get("percent", 0), "updated_at": time.time()}
+            self.save_session_to_disk(state.session_id)
 
     async def continue_workflow(self, session_id: str) -> Dict:
         with self._state_lock:
@@ -1436,6 +1448,7 @@ class WorkflowEngine:
                 state = self._restore_state(read_session(path, sid))
                 self.sessions[sid] = state
             except Exception as exc:
+                self._unreadable_sessions.add(sid)
                 logger.warning("Session file was not loaded (%s)", type(exc).__name__)
 
     def delete_session(self, session_id: str) -> bool:
@@ -1457,6 +1470,7 @@ class WorkflowEngine:
             # 从内存中移除
             self.sessions.pop(session_id, None)
             self._stop_events.pop(session_id, None)
+            self._unreadable_sessions.discard(session_id)
 
             # 1. 删除会话元数据文件
             if os.path.exists(path):
@@ -1607,6 +1621,11 @@ class WorkflowEngine:
     def list_saved_sessions(self) -> List[Dict]:
         """列出所有已保存的会话概要"""
         with self._state_lock:
+            from core.asset_library import AssetLibraryError
+            for sid in tuple(self._unreadable_sessions):
+                self.get_state(sid)
+            if self._unreadable_sessions:
+                raise AssetLibraryError(503, "SESSION_STORE_UNAVAILABLE", "部分项目记录暂不可读，原文件已保留")
             sessions: List[Dict] = []
             for sid, state in self.sessions.items():
                 try:
@@ -1635,7 +1654,7 @@ class WorkflowEngine:
                         "meta": meta,
                         "stage_progress": copy.deepcopy(state.stage_progress),
                     })
-                except Exception:
-                    continue
+                except Exception as exc:
+                    raise AssetLibraryError(503, "SESSION_STORE_UNAVAILABLE", "部分项目记录暂不可读，原文件已保留") from exc
             sessions.sort(key=lambda x: x.get("date", 0), reverse=True)
             return sessions

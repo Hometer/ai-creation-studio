@@ -1,5 +1,6 @@
 import asyncio
 import json
+import logging
 import queue
 import threading
 import time
@@ -8,6 +9,9 @@ from typing import Any, AsyncIterator, Callable, Dict, Optional
 from fastapi import Request
 
 from core.orchestrator import WorkflowStage
+
+logger = logging.getLogger(__name__)
+WORKFLOW_FAILURE_MESSAGE = "阶段执行失败，已保留项目，请检查本地配置后重试"
 
 STAGE_NAME_MAP = {
     "script_generation": "剧本生成",
@@ -88,10 +92,14 @@ async def stream_workflow_task(
         )
 
         while not task.done():
+            waiter = asyncio.create_task(event_trigger.wait())
             try:
-                await asyncio.wait_for(event_trigger.wait(), timeout=15.0)
-            except asyncio.TimeoutError:
-                yield json.dumps({"type": "heartbeat", "time": time.time()}) + "\n"
+                done, _ = await asyncio.wait({task, waiter}, timeout=15.0, return_when=asyncio.FIRST_COMPLETED)
+                if not done:
+                    yield json.dumps({"type": "heartbeat", "time": time.time()}) + "\n"
+            finally:
+                waiter.cancel()
+                await asyncio.gather(waiter, return_exceptions=True)
 
             event_trigger.clear()
 
@@ -125,13 +133,23 @@ async def stream_workflow_task(
         if include_payload_summary:
             payload["payload_summary"] = result.get("payload")
         yield json.dumps(payload) + "\n"
+        yield json.dumps({"type": "done"}) + "\n"
 
+    except asyncio.CancelledError:
+        if 'task' in locals() and not task.done():
+            workflow_engine.track_background_task(task)
+        raise
     except Exception as e:
+        logger.error("Workflow stream failed (%s)", type(e).__name__)
         try:
             workflow_engine.persist_session_snapshot(state.session_id)
         except Exception:
             pass
-        yield json.dumps({"type": "error", "content": str(e)}) + "\n"
+        stopped = cancellation_check()
+        message = "已停止，已保留完成内容" if stopped else WORKFLOW_FAILURE_MESSAGE
+        code = "WORKFLOW_STOPPED" if stopped else "WORKFLOW_FAILED"
+        yield json.dumps({"type": "error", "content": message,
+                          "error": {"code": code, "message": message}}) + "\n"
 
 
 def make_cancellation(workflow_engine, session_id: str):

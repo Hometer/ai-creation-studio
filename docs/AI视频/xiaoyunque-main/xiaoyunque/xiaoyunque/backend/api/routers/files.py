@@ -10,6 +10,7 @@ from fastapi import APIRouter, File, HTTPException, UploadFile
 from config import settings
 from models.file_reader import FileReader
 from path_security import resolve_allowed_local_file
+from api.services.upload_validation import upload_filename, validate_document, validate_media
 
 logger = logging.getLogger(__name__)
 router = APIRouter(tags=["Files"])
@@ -36,7 +37,7 @@ async def _save_upload(file: UploadFile, destination: str, max_bytes: int) -> in
 
 
 def _safe_upload_name(filename: str, fallback: str = "upload") -> str:
-    original_name = Path(filename or fallback).name or fallback
+    original_name = upload_filename(filename or fallback)
     return f"{uuid.uuid4().hex}_{original_name}"
 
 
@@ -64,7 +65,7 @@ def _path_size(path: str) -> int:
 @router.post("/api/upload_file")
 async def upload_file(file: UploadFile = File(...)):
     allowed_exts = [".docx", ".doc", ".txt", ".md", ".pdf"]
-    filename = Path(file.filename or "upload").name
+    filename = upload_filename(file.filename)
     ext = os.path.splitext(filename)[1].lower()
     if ext not in allowed_exts:
         raise HTTPException(status_code=400, detail=f"仅支持 {', '.join(allowed_exts)} 格式的文件")
@@ -74,11 +75,13 @@ async def upload_file(file: UploadFile = File(...)):
     file_path = os.path.join(settings.TEMP_DIR, safe_filename)
     try:
         await _save_upload(file, file_path, DOCUMENT_UPLOAD_LIMIT)
-    except HTTPException:
-        raise
+        validate_document(Path(file_path), file)
     except Exception as e:
-        logger.error(f"保存上传文件失败: {e}")
-        raise HTTPException(status_code=500, detail=f"文件保存失败: {str(e)}")
+        Path(file_path).unlink(missing_ok=True)
+        if isinstance(e, HTTPException):
+            raise
+        logger.error("Document upload failed (%s)", type(e).__name__)
+        raise HTTPException(status_code=500) from e
 
     return {"filename": filename, "file_path": safe_filename}
 
@@ -89,7 +92,7 @@ async def upload_media(file: UploadFile = File(...)):
         ".jpg", ".jpeg", ".png", ".webp", ".bmp",
         ".mp4", ".mov", ".avi", ".mkv", ".webm",
     ]
-    filename = file.filename or "upload"
+    filename = upload_filename(file.filename)
     ext = os.path.splitext(filename)[1].lower()
     if ext not in allowed_exts:
         raise HTTPException(status_code=400, detail=f"仅支持 {', '.join(allowed_exts)} 格式的媒体文件")
@@ -99,11 +102,14 @@ async def upload_media(file: UploadFile = File(...)):
     file_path = os.path.join(settings.TEMP_DIR, safe_filename)
     try:
         await _save_upload(file, file_path, MEDIA_UPLOAD_LIMIT)
-    except HTTPException:
-        raise
+        validate_media(Path(file_path), file)
     except Exception as e:
-        logger.error(f"保存上传媒体失败: {e}")
-        raise HTTPException(status_code=500, detail=f"媒体保存失败: {str(e)}")
+        Path(file_path).unlink(missing_ok=True)
+        from core.asset_library import AssetLibraryError
+        if isinstance(e, (HTTPException, AssetLibraryError)):
+            raise
+        logger.error("Media upload failed (%s)", type(e).__name__)
+        raise HTTPException(status_code=500) from e
 
     return {
         "filename": filename,
@@ -126,8 +132,8 @@ async def clear_temp_cache():
                 os.remove(entry.path)
             deleted += 1
         except Exception as exc:
-            logger.warning("Failed to delete temp cache item: %s", entry.path, exc_info=True)
-            errors.append({"path": entry.name, "error": str(exc)})
+            logger.warning("Temp cache deletion failed (%s)", type(exc).__name__)
+            errors.append({"path": entry.name, "error": "临时文件清理失败"})
     return {
         "status": "ok",
         "deleted": deleted,
@@ -146,11 +152,13 @@ def merge_uploaded_file_into_idea(idea: str, file_path: Optional[str]) -> str:
     except ValueError as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
 
-    content = FileReader.extract_text(full_path)
+    try:
+        content = FileReader.extract_text(full_path)
+    except (ValueError, RuntimeError, TimeoutError) as exc:
+        raise HTTPException(422) from exc
     if content:
         original_filename = "_".join(os.path.basename(file_path).split("_")[1:])
         prompt_fragment = FileReader.format_as_prompt(original_filename, content)
         idea = f"{idea}\n\n{prompt_fragment}"
     logger.info(f"成功处理上传文件: {full_path}")
-    logger.debug(f"文件内容预览:\n{content[:500]}")
     return idea

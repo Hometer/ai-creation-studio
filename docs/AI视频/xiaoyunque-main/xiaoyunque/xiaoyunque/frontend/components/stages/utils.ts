@@ -17,7 +17,7 @@ export function assetVersionLabel(path: string, index: number): string {
   if (uploadMatch) return `用户上传: ${uploadMatch[1].toLowerCase()}`;
   const aiMatch = file.match(/_v(\d+)\.[^.]+$/i);
   const version = aiMatch ? `v${aiMatch[1]}` : `v${index + 1}`;
-  return `AI生成: ${version}`;
+  return `候选版本: ${version}`;
 }
 
 /* ─── 剧本 / 分镜 结构化文本解析 ─── */

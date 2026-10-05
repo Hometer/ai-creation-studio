@@ -3,6 +3,7 @@
 import MediaImage from '@/components/MediaImage';
 
 import { errorMessage } from '@/lib/workflowTypes';
+import { readLegacyJsonResponse as readJsonResponse } from '@/lib/legacyJson';
 
 import { useState, useEffect, useRef, useCallback, DragEvent } from 'react';
 import { Sparkles, Image as ImageIcon, Video, MessageSquare, Zap, Loader2, Copy, Check, Trash2, X, FolderOpen, Upload, Globe, Hexagon } from 'lucide-react';
@@ -25,20 +26,6 @@ const toMediaUrl = (path: string) => {
   }
   return path;
 };
-
-async function readJsonResponse(resp: Response) {
-  const text = await resp.text();
-  if (!text.trim()) {
-    if (!resp.ok) throw new Error(`请求失败：${resp.status}`);
-    return {};
-  }
-  try {
-    return JSON.parse(text);
-  } catch {
-    const preview = text.replace(/\s+/g, ' ').slice(0, 160);
-    throw new Error(resp.ok ? `接口返回了非 JSON 内容：${preview}` : `请求失败：${resp.status} ${preview}`);
-  }
-}
 
 // 工具类型
 type ToolType = 'llm' | 'vlm' | 't2i' | 'i2i' | 'video';
@@ -323,6 +310,8 @@ export default function SandboxPage() {
 
   // 历史记录状态
   const [history, setHistory] = useState<HistoryRecord[]>([]);
+  const [historyLoading, setHistoryLoading] = useState(true);
+  const [historyError, setHistoryError] = useState('');
   const [manageMode, setManageMode] = useState(false);
   const [deleting, setDeleting] = useState<string | null>(null);
   const [selectedRecord, setSelectedRecord] = useState<HistoryRecord | null>(null);
@@ -341,12 +330,22 @@ export default function SandboxPage() {
   const fetchHistory = useCallback(async () => {
     const resp = await fetch('/api/sandbox/history');
     const data = await readJsonResponse(resp);
-    return data.success && Array.isArray(data.records) ? data.records as HistoryRecord[] : [];
+    if (data.success !== true || !Array.isArray(data.records)) throw new Error('历史记录格式异常');
+    return data.records as HistoryRecord[];
   }, []);
+
+  const refreshHistory = async () => {
+    setHistoryLoading(true);
+    try { setHistory(await fetchHistory()); setHistoryError(''); }
+    catch (e) { setHistoryError(errorMessage(e, '历史记录读取失败')); }
+    finally { setHistoryLoading(false); }
+  };
 
   useEffect(() => {
     let cancelled = false;
-    fetchHistory().then(records => { if (!cancelled) setHistory(records); }).catch(() => {});
+    fetchHistory().then(records => { if (!cancelled) { setHistory(records); setHistoryError(''); } })
+      .catch(e => { if (!cancelled) setHistoryError(errorMessage(e, '历史记录读取失败')); })
+      .finally(() => { if (!cancelled) setHistoryLoading(false); });
     return () => { cancelled = true; };
   }, [fetchHistory]);
 
@@ -395,6 +394,7 @@ export default function SandboxPage() {
       const records = await fetchHistory();
       if (cancelled) return;
       setHistory(records);
+      setHistoryError('');
       const record = records.find(item => item.id === (recordId || taskId));
       if (record) { applyRecord(record); if (timer !== null) window.clearInterval(timer); return; }
       if (!taskId) return;
@@ -411,8 +411,9 @@ export default function SandboxPage() {
       setError(null);
       setLoading(true);
     };
-    load().catch(() => {});
-    timer = taskId ? window.setInterval(() => load().catch(() => {}), 3000) : null;
+    const onFailure = (e: unknown) => { if (!cancelled) setHistoryError(errorMessage(e, '历史记录读取失败')); };
+    load().catch(onFailure);
+    timer = taskId ? window.setInterval(() => load().catch(onFailure), 3000) : null;
     return () => { cancelled = true; if (timer !== null) window.clearInterval(timer); };
   }, [searchParams, fetchHistory, applyRecord]);
 
@@ -706,6 +707,7 @@ export default function SandboxPage() {
             <div className="flex items-center gap-2 mb-4">
               <FolderOpen className="w-4 h-4 text-gray-400" />
               <h2 className="text-sm font-medium text-gray-600">{getToolName(activeTool)}历史记录</h2>
+              <button disabled={historyLoading} onClick={refreshHistory} className="text-xs px-3 min-h-11 rounded-lg bg-gray-100">重新读取历史</button>
               <button
                 onClick={() => setManageMode(value => !value)}
                 className={`ml-auto text-xs px-2.5 h-8 rounded-lg transition-colors ${
@@ -715,11 +717,13 @@ export default function SandboxPage() {
                 {manageMode ? '完成' : '管理'}
               </button>
             </div>
-            {history.filter(record => record.tool === activeTool).length === 0 ? (
+            {historyLoading && <p role="status" className="text-sm text-gray-500 mb-3">正在读取历史记录…</p>}
+            {historyError && <p role="alert" className="text-sm text-red-600 mb-3">{historyError}。已保留先前读取的记录。</p>}
+            {history.filter(record => record.tool === activeTool).length === 0 ? (!historyLoading && !historyError && (
               <div className="h-32 rounded-xl border border-dashed border-gray-200 bg-white/70 flex items-center justify-center text-sm text-gray-400">
                 暂无历史记录
               </div>
-            ) : (
+            )) : (
               <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                 {history.filter(record => record.tool === activeTool).map(record => (
                   <div

@@ -568,14 +568,19 @@ function PipelineHistory({
   onDeleted?: (taskId: string) => void;
 }) {
   const [tasks, setTasks] = useState<PipelineTask[]>([]);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [historyError, setHistoryError] = useState('');
   const [manageMode, setManageMode] = useState(false);
   const [deleting, setDeleting] = useState<string | null>(null);
 
   const load = async () => {
-    const records = await fetchPipelineTasks(100);
-    setTasks(records.filter(task => task.pipeline === pipeline));
-    setLoading(false);
+    setLoading(true);
+    try {
+      const records = await fetchPipelineTasks(100);
+      setTasks(records.filter(task => task.pipeline === pipeline));
+      setHistoryError('');
+    } catch (e) { setHistoryError(errorMessage(e, '历史记录读取失败')); }
+    finally { setLoading(false); }
   };
   useEffect(() => {
     let cancelled = false;
@@ -583,11 +588,9 @@ function PipelineHistory({
       if (cancelled) return;
       setTasks(records.filter(task => task.pipeline === pipeline));
       setLoading(false);
-    }).catch(() => { if (!cancelled) setLoading(false); });
+    }).catch(e => { if (!cancelled) { setLoading(false); setHistoryError(errorMessage(e, '历史记录读取失败')); } });
     return () => { cancelled = true; };
   }, [pipeline]);
-
-  if (!tasks.length) return null;
 
   const remove = async (taskId: string) => {
     setDeleting(taskId);
@@ -595,6 +598,8 @@ function PipelineHistory({
       await deletePipelineTask(taskId);
       setTasks(prev => prev.filter(task => task.task_id !== taskId));
       onDeleted?.(taskId);
+    } catch (e) {
+      setHistoryError(errorMessage(e, '删除失败，记录已保留'));
     } finally {
       setDeleting(null);
     }
@@ -615,13 +620,17 @@ function PipelineHistory({
           {manageMode ? '完成' : '管理'}
         </button>
         <button
-          onClick={() => load().catch(() => {})}
+          disabled={loading}
+          onClick={load}
           className="w-8 h-8 rounded-lg bg-gray-100 text-gray-500 hover:bg-gray-200 flex items-center justify-center"
           title="刷新历史"
         >
           <RefreshCw className={clsx('w-3.5 h-3.5', loading && 'animate-spin')} />
         </button>
       </div>
+      {loading && <p role="status" className="text-sm text-gray-500">正在读取历史记录…</p>}
+      {historyError && <p role="alert" className="text-sm text-red-600 mb-3">{historyError}。已保留先前读取的记录，请检查服务后刷新。</p>}
+      {!loading && !historyError && tasks.length === 0 && <p className="text-sm text-gray-500">还没有这类创作记录</p>}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
         {tasks.map(task => (
           <div

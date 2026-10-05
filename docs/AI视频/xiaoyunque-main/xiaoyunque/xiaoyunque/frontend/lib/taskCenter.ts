@@ -1,4 +1,5 @@
 import { isRecord, parseSessions } from './workflowTypes';
+import { normalizeStageStatus } from './projectStatus';
 
 export const SOURCES = { workflow: '项目流程', pipeline: '专项创作', generation: '本地生成任务', sandbox: '临时工作台' } as const;
 export const STATUSES = { draft: '待开始', queued: '排队中', running: '进行中', waiting: '待确认', completed: '已完成', failed: '失败', review: '需核对', unknown: '状态未知' } as const;
@@ -36,7 +37,7 @@ export function parseTaskSource(source: TaskSource, value: unknown): TaskRecord[
   if (source === 'workflow') {
     rows = parseSessions(value).map(session => {
       const id = identifier(session.id), statuses = session.status ?? {};
-      const values = Object.keys(stageNames).map(s => statuses[s] ?? 'pending');
+      const values = Object.keys(stageNames).map(s => normalizeStageStatus(statuses[s] ?? 'pending'));
       const status: TaskStatus = values.includes('running') ? 'running' : values.some(s => s === 'error' || s === 'failed') ? 'failed'
         : values.includes('waiting') ? 'waiting' : values.includes('stopped') ? 'review' : values.every(s => s === 'completed') ? 'completed'
           : values.some(s => !['pending', 'completed'].includes(s)) ? 'unknown' : 'draft';

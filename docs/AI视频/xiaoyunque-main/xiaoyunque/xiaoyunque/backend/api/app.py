@@ -6,7 +6,7 @@ from urllib.parse import urlparse
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.staticfiles import StaticFiles
+from api.services.static_results import ResultStaticFiles
 
 _backend_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 if _backend_dir not in sys.path:
@@ -82,7 +82,7 @@ app.add_middleware(
 logger.info("CORS enabled for origins: %s", cors_origins)
 
 os.makedirs(settings.CODE_DIR, exist_ok=True)
-app.mount("/code", StaticFiles(directory=settings.CODE_DIR), name="code")
+app.mount("/code", ResultStaticFiles(directory=settings.CODE_DIR), name="code")
 
 app.include_router(health_router)
 app.include_router(files_router)

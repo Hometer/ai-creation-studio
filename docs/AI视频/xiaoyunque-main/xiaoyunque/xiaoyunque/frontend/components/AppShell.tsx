@@ -3,6 +3,7 @@
 import BrandMark from '@/components/BrandMark';
 
 import { errorMessage, type SessionSummary } from '@/lib/workflowTypes';
+import { BUSINESS_STAGES, normalizeStageStatus, workflowProgress } from '@/lib/projectStatus';
 
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
@@ -60,40 +61,37 @@ type RunningTaskItem = {
   progress: number;
 };
 
-const WORKFLOW_STAGE_COUNT = 7;
 const COMPLETED_TASK_DISMISS_KEY = 'xiaoyunque.dismissed-completed-tasks';
 const SIDEBAR_OPEN_KEY = 'xiaoyunque.sidebar-open';
 
-function projectTaskFromSession(session: SessionSummary): RunningTaskItem | null {
+export function projectTaskFromSession(session: SessionSummary): RunningTaskItem | null {
   const statusMap = session.status || {};
-  const values = Object.values(statusMap);
+  const values = BUSINESS_STAGES.map(id => normalizeStageStatus(statusMap[id] ?? 'pending'));
   if (!values.includes('running')) return null;
-  const completed = values.filter(value => ['completed', 'session_completed'].includes(String(value))).length;
-  const runningStage = Object.keys(statusMap).find(key => statusMap[key] === 'running');
+  const runningStage = BUSINESS_STAGES.find(key => normalizeStageStatus(statusMap[key]) === 'running');
   return {
     id: `project-${session.id}`,
     href: `/?session=${encodeURIComponent(session.id)}`,
     title: session.idea || session.id,
     scope: runningStage ? `主流程 · ${runningStage}` : '主流程',
     status: 'running',
-    progress: Math.round((completed / WORKFLOW_STAGE_COUNT) * 100),
+    progress: workflowProgress(statusMap).percent,
   };
 }
 
-function projectReviewTaskFromSession(session: SessionSummary): RunningTaskItem | null {
+export function projectReviewTaskFromSession(session: SessionSummary): RunningTaskItem | null {
   const statusMap = session.status || {};
-  const waitingStage = Object.keys(statusMap).find(key => statusMap[key] === 'waiting');
-  const completed = Object.values(statusMap).filter(value => ['completed', 'session_completed'].includes(String(value))).length;
-  const allDone = completed >= WORKFLOW_STAGE_COUNT || statusMap.completed === 'completed';
+  const waitingStage = BUSINESS_STAGES.find(key => normalizeStageStatus(statusMap[key]) === 'waiting');
+  const { allDone, percent } = workflowProgress(statusMap);
   if (!waitingStage && !allDone) return null;
-  const targetStage = waitingStage || Object.keys(statusMap).reverse().find(key => ['completed', 'session_completed'].includes(String(statusMap[key]))) || '';
+  const targetStage = waitingStage || [...BUSINESS_STAGES].reverse().find(key => normalizeStageStatus(statusMap[key]) === 'completed') || '';
   return {
     id: `project-review-${session.id}-${waitingStage || 'completed'}`,
     href: `/?session=${encodeURIComponent(session.id)}${targetStage ? `&stage=${encodeURIComponent(targetStage)}` : ''}`,
     title: session.idea || session.title || session.id,
     scope: waitingStage ? `主流程 · ${waitingStage}` : '主流程',
     status: waitingStage ? 'waiting' : 'completed',
-    progress: waitingStage ? Math.round((completed / WORKFLOW_STAGE_COUNT) * 100) : 100,
+    progress: waitingStage ? percent : 100,
   };
 }
 
