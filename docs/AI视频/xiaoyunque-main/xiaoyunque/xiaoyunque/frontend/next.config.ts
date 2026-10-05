@@ -24,6 +24,9 @@ const nextConfig: NextConfig = {
       ...['/api/assets', '/api/assets/:path*', '/api/asset-references', '/api/asset-references/:path*', '/api/generation-tasks', '/api/generation-tasks/:path*', '/api/generation-plans', '/api/generation-plans/:path*'].map(source => ({
         source, destination: `${backendApiUrl}${source}`,
       })),
+      ...['/api/wan-prices', '/api/wan-budget-policies', '/api/wan-quotes', '/api/wan-preparations', '/api/wan-preparations/:path*'].map(source => ({
+        source, destination: `${backendApiUrl}${source}`,
+      })),
       {
         source: '/api/project/:path*',
         destination: `${backendApiUrl}/api/project/:path*`,

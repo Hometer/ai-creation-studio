@@ -11,12 +11,19 @@ from api.schemas.generation_readiness import (
     PriceInput, PriceView, QuoteInput, QuoteView, ReviewInput, ReviewView,
 )
 from core.generation_readiness import GenerationReadiness
+from api.schemas.readiness_workspace import ReadinessWorkspace
+from core.readiness_workspace import read_workspace
 
 router = APIRouter(tags=["万相报价、额度与样例准备（不收费）"], responses={503: {"model": ErrorResponse}})
 
 
 def get_generation_readiness(plans=Depends(get_generation_plans), connection=Depends(get_preflight_connection)):
     return GenerationReadiness(plans, connection)
+
+
+@router.get("/api/generation-plans/{plan_id}/readiness", response_model=ReadinessWorkspace)
+def workspace(plan_id: Id, service=Depends(get_generation_readiness)):
+    return read_workspace(service, plan_id)
 
 
 @router.post("/api/wan-prices", response_model=PriceView, status_code=201)
