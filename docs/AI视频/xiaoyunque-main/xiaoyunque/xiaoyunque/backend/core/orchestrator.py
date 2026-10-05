@@ -1080,9 +1080,16 @@ class WorkflowEngine:
             if not state:
                 raise KeyError(f"Session not found: {session_id}")
 
-            self._apply_artifact_update(state, stage, body if isinstance(body, dict) else {})
-            self._recalculate_all_statuses(state)
-            self.save_session_to_disk(session_id)
+            previous_artifacts = copy.deepcopy(state.artifacts)
+            previous_status = copy.deepcopy(state.status)
+            try:
+                self._apply_artifact_update(state, stage, body if isinstance(body, dict) else {})
+                self._recalculate_all_statuses(state)
+                self.save_session_to_disk(session_id)
+            except Exception:
+                state.artifacts = previous_artifacts
+                state.status = previous_status
+                raise
             return {
                 "status": "ok",
                 "status_map": copy.deepcopy(state.status),
@@ -1398,6 +1405,8 @@ class WorkflowEngine:
                 # 这里的 state.artifacts 应该是已经经过 _sync_artifacts_cross_stages 处理的最新的内存对象
                 data["artifacts"] = state.artifacts
                 data["stage_progress"] = state.stage_progress
+                if getattr(state, "content_history", None) is not None:
+                    data["content_history"] = copy.deepcopy(state.content_history)
                 data["error"] = state.error
                 data["updated_at"] = restore_timestamp(state.updated_at).timestamp()
                 
@@ -1431,6 +1440,7 @@ class WorkflowEngine:
         else:
             state.status.update({key: aliases.get(value, value) for key, value in loaded_status.items()})
         state.artifacts = data.get("artifacts", {})
+        state.content_history = copy.deepcopy(data.get("content_history"))
         state.stage_progress = data.get("stage_progress", {})
         state.error = data.get("error")
         state.updated_at = restore_timestamp(data.get("updated_at", 0))

@@ -13,6 +13,7 @@ if _backend_dir not in sys.path:
     sys.path.insert(0, _backend_dir)
 
 from api.logging_config import setup_concurrent_logging
+from api.routers.content_revisions import router as content_revisions_router
 from api.routers.generation_plans import router as generation_plans_router
 from api.routers.generation_tasks import router as generation_tasks_router
 from api.routers.generation_readiness import router as generation_readiness_router
@@ -98,6 +99,7 @@ app.include_router(generation_tasks_router)
 app.include_router(model_preflight_router)
 app.include_router(generation_readiness_router)
 app.include_router(execution_checks_router)
+app.include_router(content_revisions_router)
 logger.info("API routers registered")
 
 

@@ -66,6 +66,9 @@ def read_session(path: Path, session_id: str) -> dict[str, Any]:
     if any(status not in SESSION_STATUSES for status in statuses):
         raise ValueError("Invalid session status")
     restore_timestamp(document.updated_at)
+    if 'content_history' in data:
+        from core.content_revisions import validate_history
+        validate_history(data['content_history'])
     return data
 
 
