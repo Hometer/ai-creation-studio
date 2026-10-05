@@ -1383,7 +1383,7 @@ class WorkflowEngine:
 
     # ──────────── 会话持久化 ────────────
 
-    def save_session_to_disk(self, session_id: str, meta: Dict = None, *, archive_text: bool = False, expected_text: Dict = None, expected_co_creation=...):
+    def save_session_to_disk(self, session_id: str, meta: Dict = None, *, archive_text: bool = False, expected_text: Dict = None, expected_co_creation=..., expected_revision=None):
         """保存 / 更新会话到磁盘（原子写入）"""
         with self._state_lock:
             path = session_path(self._session_dir, session_id)
@@ -1404,6 +1404,11 @@ class WorkflowEngine:
                     if archive_text and state and expected_text is not None:
                         state.artifacts = copy.deepcopy(expected_text)
                     raise
+            if expected_revision is not None:
+                from core.content_revisions import encoded, STAGES
+                old_artifacts, old_history = expected_revision
+                if data.get("content_history") != old_history or any(encoded(data.get("artifacts", {}).get(stage, {})) != encoded(old_artifacts.get(stage, {})) for stage in STAGES):
+                    raise ValueError("Text or history changed outside current engine")
             durable = copy.deepcopy(data)
             next_history = None
             if archive_text and state:

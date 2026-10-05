@@ -368,6 +368,26 @@ class ContentRevisions:
         with self.engine._state_lock:
             return self._preview(project_id, payload, *self._read(project_id))[0]
 
+    def _prepare_history(self, history, current, preview, target, request_id, request_digest):
+        next_history = history.model_copy(deep=True)
+        def append(stage, source, content, **kwargs):
+            version = Revision(version_id=uuid.uuid4().hex, number=len(next_history.versions)+1, stage=stage,
+                               source=source, content=copy.deepcopy(content), digest=digest(content),
+                               created_at=datetime.now(timezone.utc).isoformat(), changes=[], impacts=[], **kwargs)
+            next_history.versions.append(version)
+            return version
+        for stage in STAGES:
+            latest = next((v for v in reversed(history.versions) if v.stage == stage), None)
+            if current[stage] and (latest is None or latest.digest != digest(current[stage])):
+                append(stage, 'baseline' if latest is None else 'external', current[stage])
+        version = append(preview.stage, 'restore' if preview.restore_version_id else 'edit', target,
+                         restored_from=preview.restore_version_id, request_id=request_id, request_digest=request_digest)
+        version.changes = preview.changes
+        version.impacts = preview.impacts
+        if len(encoded(next_history.model_dump())) > MAX_HISTORY:
+            fail(422, 'HISTORY_LIMIT', '版本历史超过本轮支持上限，请保留数据并导出备份后处理')
+        return next_history, version
+
     def save(self, project_id, payload):
         with self.engine._state_lock:
             state, history, current = self._read(project_id)
@@ -381,23 +401,7 @@ class ContentRevisions:
             preview, target = self._preview(project_id, input_data, state, history, current)
             if payload.preview_token != preview.preview_token:
                 fail(409, 'PREVIEW_CHANGED', '预览与提交不一致，请重新预览')
-            next_history = history.model_copy(deep=True)
-            def append(stage, source, content, **kwargs):
-                version = Revision(version_id=uuid.uuid4().hex, number=len(next_history.versions)+1, stage=stage,
-                                   source=source, content=copy.deepcopy(content), digest=digest(content),
-                                   created_at=datetime.now(timezone.utc).isoformat(), changes=[], impacts=[], **kwargs)
-                next_history.versions.append(version)
-                return version
-            for stage in STAGES:
-                latest = next((v for v in reversed(history.versions) if v.stage == stage), None)
-                if current[stage] and (latest is None or latest.digest != digest(current[stage])):
-                    append(stage, 'baseline' if latest is None else 'external', current[stage])
-            version = append(payload.stage, 'restore' if payload.restore_version_id else 'edit', target,
-                             restored_from=payload.restore_version_id, request_id=payload.request_id, request_digest=request_digest)
-            version.changes = preview.changes
-            version.impacts = preview.impacts
-            if len(encoded(next_history.model_dump())) > MAX_HISTORY:
-                fail(422, 'HISTORY_LIMIT', '版本历史超过本轮支持上限，请保留数据并导出备份后处理')
+            next_history, version = self._prepare_history(history, current, preview, target, payload.request_id, request_digest)
             old_artifacts, old_history, old_time = copy.deepcopy(state.artifacts), getattr(state, 'content_history', None), state.updated_at
             try:
                 state.artifacts[payload.stage] = target

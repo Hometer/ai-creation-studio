@@ -2,8 +2,9 @@
 import copy
 import uuid
 from datetime import datetime, timezone
-from api.schemas.co_creation import Ledger, Intent, Decision, CreationWorkspace, CreationSaved
-from core.content_revisions import ContentRevisions, digest, encoded, fail
+from api.schemas.co_creation import Ledger, Intent, Decision, CreationWorkspace, CreationSaved, Application, ApplicationWorkspace, ApplyPreview, Applied
+from core.content_revisions import ContentRevisions, digest, encoded, fail, fields, differences
+from api.schemas.content_revisions import RevisionInput
 from core.persistence import read_session, session_path
 from core.asset_library import AssetLibraryError
 
@@ -29,6 +30,13 @@ def validate_ledger(raw):
         datetime.fromisoformat(d.created_at.replace('Z', '+00:00'))
         decision_ids.add(d.decision_id); requests.add(d.request_id)
         states[d.intent_id] = 'confirmed' if d.decision == 'confirm' else 'withdrawn'
+    applications, applied_intents, versions = set(), set(), set()
+    confirmed = {d.intent_id for d in ledger.decisions if d.decision == 'confirm'}
+    for n, a in enumerate(ledger.applications, 1):
+        if a.number != n or a.application_id in applications or a.intent_id in applied_intents or a.version_id in versions or a.request_id in requests or a.intent_id not in confirmed:
+            raise ValueError('Invalid application association')
+        datetime.fromisoformat(a.created_at.replace('Z', '+00:00'))
+        applications.add(a.application_id); applied_intents.add(a.intent_id); versions.add(a.version_id); requests.add(a.request_id)
     if len(encoded(ledger.model_dump())) > MAX_LEDGER_BYTES:
         raise ValueError('Intent ledger too large')
     return ledger
@@ -46,6 +54,20 @@ class CoCreation:
             if raw != disk.get('co_creation'):
                 raise ValueError('External ledger update')
             ledger = validate_ledger(raw) if raw is not None else Ledger()
+            for a in ledger.applications:
+                intent = next(r for r in ledger.records if r.intent_id == a.intent_id)
+                version = next((v for v in history.versions if v.version_id == a.version_id), None)
+                if version is None or version.source != 'edit' or version.stage != intent.stage or version.request_id != a.request_id or version.request_digest != a.request_digest or len(version.changes) != 1:
+                    raise ValueError('Invalid application version')
+                before = next((v for v in reversed(history.versions[:version.number-1]) if v.stage == version.stage), None)
+                actual = differences(before.content, version.content) if before else []
+                recorded = [{k:v for k,v in c.model_dump().items() if k not in ('before_present','after_present')} for c in version.changes]
+                if not before or actual != recorded or a.created_at != version.created_at or not any(d.intent_id == intent.intent_id and d.decision == 'confirm' and datetime.fromisoformat(d.created_at) <= datetime.fromisoformat(a.created_at) for d in ledger.decisions) or any(d.intent_id == intent.intent_id and d.decision == 'withdraw' and datetime.fromisoformat(d.created_at) < datetime.fromisoformat(a.created_at) for d in ledger.decisions):
+                    raise ValueError('Invalid application snapshot or chronology')
+                change = version.changes[0]
+                value = next((f['value'] for f in fields(version.stage, version.content) if f['path'] == intent.target.path), None)
+                if change.path != intent.target.path or change.before != intent.target.value or change.after != value or not change.before_present or not change.after_present or change.before == change.after:
+                    raise ValueError('Invalid application change')
             text = self.revisions._workspace(project_id, state, history, current)
             records = []
             for r in ledger.records:
@@ -70,9 +92,9 @@ class CoCreation:
         with self.engine._state_lock:
             state, ledger, workspace = self._read(project_id)
             request_digest = digest(payload.model_dump())
-            prior = next((r for r in [*ledger.records, *ledger.decisions] if r.request_id == payload.request_id), None)
+            prior = next((r for r in [*ledger.records, *ledger.decisions, *ledger.applications] if r.request_id == payload.request_id), None)
             if prior:
-                if prior.request_digest != request_digest:
+                if isinstance(prior, Application) or prior.request_digest != request_digest:
                     fail(409, 'INTENT_REQUEST_REUSED', '请求编号已用于其他操作，请重新读取')
                 return CreationSaved(intent_id=prior.intent_id, workspace=workspace)
             if payload.expected_token != workspace.token:
@@ -116,3 +138,71 @@ class CoCreation:
                 state.co_creation, state.updated_at = old, old_time
                 fail(503, 'INTENT_SAVE_FAILED', '保存结果尚未确认，请重新读取共创记录，原记录保留')
             return CreationSaved(intent_id=intent_id, workspace=self._read(project_id)[2])
+
+    def _application_workspace(self, project_id):
+        state, ledger, workspace = self._read(project_id)
+        _, history, current = self.revisions._read(project_id)
+        return ApplicationWorkspace(workspace=workspace,
+            revisions=self.revisions._workspace(project_id, state, history, current),
+            applications=[{k:v for k,v in a.model_dump().items() if k != 'request_digest'} for a in ledger.applications])
+
+    def applications(self, project_id):
+        with self.engine._state_lock:
+            return self._application_workspace(project_id)
+
+    def _apply_preview(self, project_id, payload, state, ledger, workspace):
+        if payload.expected_token != workspace.token:
+            fail(409, 'INTENT_CHANGED', '正文或共创记录已变化，请重新读取核对')
+        intent = next((r for r in workspace.records if r.intent_id == payload.intent_id), None)
+        if intent is None:
+            fail(404, 'INTENT_NOT_FOUND', '这条共创请求不存在')
+        if any(a.intent_id == intent.intent_id for a in ledger.applications):
+            fail(422, 'INTENT_ALREADY_APPLIED', '请求已保存为版本，请查看原关联版本')
+        if intent.status != 'confirmed':
+            fail(422, 'INTENT_NOT_CONFIRMED', '请基于当前正文记录并确认修改意图')
+        _, history, current = self.revisions._read(project_id)
+        revision, target = self.revisions._preview(project_id,
+            RevisionInput(expected_token=workspace.text_token, stage=intent.stage, path=intent.target.path, value=payload.value), state, history, current)
+        token = digest({'input': {'expected_token': payload.expected_token, 'intent_id': payload.intent_id, 'value': payload.value}, 'revision': revision.model_dump()})
+        return ApplyPreview(intent_id=intent.intent_id, expected_token=workspace.token, preview_token=token, revision=revision), target, history, current
+
+    def preview_application(self, project_id, payload):
+        with self.engine._state_lock:
+            return self._apply_preview(project_id, payload, *self._read(project_id))[0]
+
+    def apply(self, project_id, payload):
+        with self.engine._state_lock:
+            state, ledger, workspace = self._read(project_id)
+            request_digest = digest(payload.model_dump())
+            prior = next((r for r in [*ledger.records, *ledger.decisions, *ledger.applications] if r.request_id == payload.request_id), None)
+            if prior:
+                if not isinstance(prior, Application) or prior.request_digest != request_digest:
+                    fail(409, 'INTENT_REQUEST_REUSED', '请求编号已用于其他操作，请重新读取')
+                return Applied(application_id=prior.application_id, version_id=prior.version_id, data=self._application_workspace(project_id))
+            # A request from the legacy revision endpoint also cannot be reused.
+            _, existing, _ = self.revisions._read(project_id)
+            if any(v.request_id == payload.request_id for v in existing.versions):
+                fail(409, 'INTENT_REQUEST_REUSED', '请求编号已用于其他文字修改，请重新读取')
+            preview, target, history, current = self._apply_preview(project_id, payload, state, ledger, workspace)
+            if payload.preview_token != preview.preview_token:
+                fail(409, 'PREVIEW_CHANGED', '修改内容或预览已变化，请重新预览')
+            next_history, version = self.revisions._prepare_history(history, current, preview.revision, target, payload.request_id, request_digest)
+            next_ledger = ledger.model_copy(deep=True)
+            application = Application(application_id=uuid.uuid4().hex, number=len(ledger.applications)+1,
+                intent_id=payload.intent_id, version_id=version.version_id, created_at=version.created_at,
+                request_id=payload.request_id, request_digest=request_digest)
+            next_ledger.applications.append(application)
+            if len(next_ledger.applications) > 100 or len(encoded(next_ledger.model_dump())) > MAX_LEDGER_BYTES:
+                fail(422, 'INTENT_LIMIT', '共创记录达到本轮上限，请保留数据')
+            old_artifacts, old_history = copy.deepcopy(state.artifacts), copy.deepcopy(getattr(state, 'content_history', None))
+            old_ledger, old_time = copy.deepcopy(getattr(state, 'co_creation', None)), state.updated_at
+            try:
+                state.artifacts[preview.revision.stage] = target
+                state.content_history = next_history.model_dump()
+                state.co_creation = next_ledger.model_dump()
+                state.updated_at = datetime.now()
+                self.engine.save_session_to_disk(project_id, expected_co_creation=old_ledger, expected_revision=(old_artifacts, old_history))
+            except Exception:
+                state.artifacts, state.content_history, state.co_creation, state.updated_at = old_artifacts, old_history, old_ledger, old_time
+                fail(503, 'INTENT_APPLY_FAILED', '保存结果尚未确认，请重新读取关联和版本；原记录保留')
+            return Applied(application_id=application.application_id, version_id=version.version_id, data=self._application_workspace(project_id))

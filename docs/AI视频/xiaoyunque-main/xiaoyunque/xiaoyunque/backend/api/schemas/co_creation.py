@@ -2,7 +2,7 @@
 from typing import Annotated, Literal
 from pydantic import Field, StringConstraints, field_validator
 from api.schemas.assets import Contract, Id
-from api.schemas.content_revisions import Stage, TextField
+from api.schemas.content_revisions import Stage, TextField, Preview, Workspace
 
 Hash = Annotated[str, StringConstraints(pattern=r'^[a-f0-9]{64}$')]
 
@@ -56,10 +56,20 @@ class Decision(Contract):
     request_id: Id
     request_digest: Hash
 
+class Application(Contract):
+    application_id: Id
+    number: int = Field(ge=1)
+    intent_id: Id
+    version_id: Id
+    created_at: str
+    request_id: Id
+    request_digest: Hash
+
 class Ledger(Contract):
     schema_version: Literal[1] = 1
     records: list[Intent] = Field(default_factory=list, max_length=100)
     decisions: list[Decision] = Field(default_factory=list, max_length=200)
+    applications: list[Application] = Field(default_factory=list, max_length=100)
 
 class IntentView(Contract):
     intent_id: Id
@@ -94,3 +104,44 @@ class CreationWorkspace(Contract):
 class CreationSaved(Contract):
     intent_id: Id
     workspace: CreationWorkspace
+
+class ApplyInput(Contract):
+    expected_token: Hash
+    intent_id: Id
+    value: str = Field(max_length=10000)
+
+class ApplySave(ApplyInput):
+    preview_token: Hash
+    request_id: Id
+    acknowledged: Literal[True]
+
+    @field_validator('acknowledged', mode='before')
+    @classmethod
+    def explicit(cls, value):
+        if value is not True:
+            raise ValueError('Explicit acknowledgement required')
+        return value
+
+class ApplicationView(Contract):
+    application_id: Id
+    number: int
+    intent_id: Id
+    version_id: Id
+    created_at: str
+    request_id: Id
+
+class ApplicationWorkspace(Contract):
+    workspace: CreationWorkspace
+    revisions: Workspace
+    applications: list[ApplicationView]
+
+class ApplyPreview(Contract):
+    intent_id: Id
+    expected_token: Hash
+    preview_token: Hash
+    revision: Preview
+
+class Applied(Contract):
+    application_id: Id
+    version_id: Id
+    data: ApplicationWorkspace

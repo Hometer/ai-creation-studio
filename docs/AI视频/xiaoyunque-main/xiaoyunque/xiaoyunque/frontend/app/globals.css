@@ -971,3 +971,7 @@ body {
     .xyq-generation-panel .col-span-2 { grid-column: auto; }
     .xyq-generation-panel button { min-height: 44px; }
 }
+
+.creation-apply { margin-top: 1.4rem; padding-top: 1rem; border-top: 1px solid var(--border); min-width: 0; }
+.creation-apply-preview { margin-top: 1rem; }
+.creation-apply h4 { margin: 1rem 0 .4rem; font-size: .9rem; }

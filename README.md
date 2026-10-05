@@ -468,3 +468,15 @@ GET／POST `/api/project/{id}/content-revisions/reviews` 提供真实读取与�
 打开 [独立人工预览](http://127.0.0.1:3009/projects/comparison-demo/co-creation)，可查看五轮人工请求、确认与撤回记录。正文不代表模型效果。后端停止后从根运行 `python3.12 scripts/project.py co-creation-demo`，默认 8009，数据在忽略的 `data/co-creation-demo/`；独立前端运行 `BACKEND_API_URL=http://127.0.0.1:8009 npm --prefix /tmp/co-creation-frontend run dev -- --webpack --hostname 127.0.0.1 --port 3009`。临时副本清理后由开发者准备，使用独立 `.next`，没有供应商执行入口。主应用仍用根目录 backend／frontend 入口。
 
 全量验证仍用 `python3.12 scripts/project.py check`；定向后端在 backend 运行 `.venv/bin/python -m pytest tests/test_co_creation.py -q`；frontend 运行 `npm test`、`npm run typecheck`、`npm run lint -- --max-warnings=0`、`npm run build`。最终后端 901/901（新增 37）、前端 359/359（新增 34），类型／Lint 零警告／生产构建通过；真实浏览器闭环、断网／回复丢失／并发、撤回与地址恢复、正文变化失效、四宽度和 HTTP 重启通过。原 199 文件保持。详见 [先行开发文档](docs/阶段文档/阶段3-第13子阶段-对话共创意图确认开发文档.md) 和 [证据与闸门](docs/evidence/阶段3/对话共创意图确认/验收报告.md)。本轮工程结果本地提交、不推送；完整模型共创、真机、业务及整体阶段继续待验。下一步优先把已确认意图接到修改预览和版本保存。
+
+## 已确认共创意图应用与版本保存（阶段 3 第 14 子阶段）
+
+项目 → 对话共创 → 选择已确认且依据有效的请求 → 人工填写“修改后的文字” → “预览这次修改” → 核对前后、保留要求和影响 → 勾选 → “保存文字并关联请求”。正文、文字版本和请求关联一次原子保存；只修改原请求指定的一处字段。新文字最多 10,000 字，可以明确清空。每个请求只能应用一次，每项目应用最多 100 条，计入原 2 MiB 共创账本；原正文／版本历史上限继续 2 MiB／32 MiB。
+
+未确认、撤回、旧依据、项目执行中禁止应用，保存前重新检查 token 与预览。保存回复不确定时，面板点“重新读取关联与版本”按请求编号找回，不自动重发；输入保留，修改后需再次预览确认。修改候选会清掉预览和勾选，保存中锁定重复操作和导航。未保存文字仍只在当前页，刷新或明确离开会丢失；持久化草稿为下一轮范围。撤回已应用请求不会回退正文，已有版本和关联保留；回退需到文字版本页另行预览确认。
+
+新增 GET `/api/project/{project_id}/co-creation/applications` 原子读取共创、文字工作区和关联；POST 同地址保存应用，POST `/applications/preview` 仅计算预览。客户端不传阶段／路径／整篇替换，后端从已确认请求确定单字段范围。旧接口返回结构保持，老 co_creation v1 文件默认没有应用数组，不写回迁移；旧编辑、回退和文字导出继续可用。文字导出不包含共创账本，完整恢复仍需保留会话目录与资产库。
+
+独立人工后端：根目录 `python3.12 scripts/project.py co-creation-apply-demo`，默认 8010，独立数据 `data/co-creation-apply-demo/`。独立前端可把 frontend 复制到仓库外临时目录，排除 `.env*`、`.next`，安装／复用依赖后，在该目录运行 `BACKEND_API_URL=http://127.0.0.1:8010 npm run dev -- --webpack --port 3010 --hostname 127.0.0.1`；或先以相同 BACKEND_API_URL 运行 `npm run build -- --webpack`，再 `npm run start -- --port 3010 --hostname 127.0.0.1`。勿改主服务代理。当前独立生产预览 [共创页](http://127.0.0.1:3010/projects/comparison-demo/co-creation) 保留五轮请求、三条应用、十一条文字版本，均为人工样例。模型仍后置，不调用供应商，不收费。
+
+验证仍用根目录 `python3.12 scripts/project.py check`；定向后端在 backend 运行 `.venv/bin/python -m pytest tests/test_co_creation_applications.py -q`；frontend 运行 `npm test`、`npm run typecheck`、`npm run lint -- --max-warnings=0`、`npm run build`。后端全量 938/938（新增 37）、前端 389/389（新增 30），类型／零警告 Lint／生产构建通过；实际浏览器、四宽度、生产断网／回复丢失／409／操作锁、HTTP 重启通过。原 204 个保护文件保持，主库五项目可读。详见 [先行文档](docs/阶段文档/阶段3-第14子阶段-共创意图应用与版本保存开发文档.md) 和 [证据与闸门](docs/evidence/阶段3/共创意图应用/验收报告.md)。本轮本地提交、不推送；真实模型、业务、真机及整个阶段仍待验。
