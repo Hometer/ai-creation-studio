@@ -6,13 +6,14 @@ import { errorMessage, type SessionSummary } from '@/lib/workflowTypes';
 
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
-import { CheckCircle2, ChevronLeft, ChevronRight, Clapperboard, Clock, Hexagon, Home, Loader2, Menu, Repeat2, Settings, Trash2, UserRound } from 'lucide-react';
+import { CheckCircle2, ChevronLeft, ChevronRight, Clapperboard, Clock, Hexagon, Home, ListChecks, Loader2, Menu, Repeat2, Settings, Trash2, UserRound } from 'lucide-react';
 import clsx from 'clsx';
 import { useEffect, useState, useSyncExternalStore, type CSSProperties } from 'react';
 import { clearTempCache, fetchPipelineTasks, fetchSandboxTasks, fetchSessions, type PipelineTask, type SandboxTask } from '@/lib/workflowApi';
 
 const NAV_ITEMS = [
   { href: '/', label: '创作首页', icon: Home },
+  { href: '/tasks', label: '任务中心', icon: ListChecks },
   { href: '/sandbox', label: '临时工作台', icon: Hexagon },
   { href: '/pipelines/standard', label: '文艺短视频', icon: Clapperboard },
   { href: '/pipelines/action-transfer', label: '动作迁移', icon: Repeat2 },
@@ -414,7 +415,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
             })}
           </nav>
           <div className="studio-local-badge"><span /> 本地工作室<span>专注你的下一部作品</span></div>
-          <SidebarTaskPanels currentPath={pathname} />
+          {pathname !== '/tasks' && <SidebarTaskPanels currentPath={pathname} />}
           <div className="xyq-sidebar-footer relative border-t border-gray-100 p-3">
             {(() => {
               const Icon = SETTINGS_ITEM.icon;

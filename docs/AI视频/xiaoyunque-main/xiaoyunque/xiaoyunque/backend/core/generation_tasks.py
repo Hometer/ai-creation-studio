@@ -186,6 +186,12 @@ class GenerationTasks:
         with self._transaction() as (library, plans, data):
             return [self._view(t, library, plans, data) for t in data.tasks.values() if t.project_id == project_id]
 
+    def list_all(self):
+        """Read retained history without querying a provider or advancing any task."""
+        with self._transaction() as (library, plans, data):
+            records = sorted(data.tasks.values(), key=lambda t: (t.created_at, t.task_id), reverse=True)
+            return [self._view(t, library, plans, data) for t in records]
+
     def budget(self, project_id):
         with self._transaction() as (_, _, data):
             return self._budget(data, project_id)

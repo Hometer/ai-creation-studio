@@ -40,6 +40,11 @@ def create_task(payload: TaskInput, tasks=Depends(get_generation_tasks)):
     return tasks.create(payload)
 
 
+@router.get("/api/generation-tasks", response_model=list[TaskView])
+def list_all_tasks(tasks=Depends(get_generation_tasks)):
+    return tasks.list_all()
+
+
 @router.get("/api/generation-tasks/{task_id}", response_model=TaskView)
 def get_task(task_id: Id, tasks=Depends(get_generation_tasks)):
     return tasks.get(task_id)
