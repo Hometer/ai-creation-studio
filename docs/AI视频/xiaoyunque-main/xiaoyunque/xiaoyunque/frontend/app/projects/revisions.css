@@ -79,3 +79,4 @@
 .revision-compare-result>p{margin:10px 0}
 .revision-compare-result>.revision-change{padding-top:12px;border-top:1px solid var(--lp-border-divider)}
 @media(max-width:700px){.revision-compare-controls,.revision-compare .revision-change>div{grid-template-columns:minmax(0,1fr)}}
+.revision-export { margin-top: 24px; scroll-margin-top: 84px; }

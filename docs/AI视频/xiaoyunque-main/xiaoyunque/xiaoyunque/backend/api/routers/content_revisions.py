@@ -1,5 +1,6 @@
 """No-charge, local-only text revision workspace."""
 from fastapi import APIRouter, Depends, Query
+from fastapi.responses import Response
 from api.dependencies import get_workflow_engine
 from api.schemas.assets import ProjectId, Id
 from api.schemas.content_revisions import RevisionInput, SaveRevision, Workspace, Preview, Saved, Editor, Stage
@@ -32,6 +33,17 @@ def compare(project_id: ProjectId, before_version_id: Id, after_version_id: Id,
             expected_token: str = Query(pattern=r'^[a-f0-9]{64}$'), revisions=Depends(service)):
     return revisions.compare(project_id, ComparisonInput(expected_token=expected_token,
         before_version_id=before_version_id, after_version_id=after_version_id))
+
+@router.get('/api/project/{project_id}/content-revisions/export', response_class=Response,
+            responses={200: {'content': {'application/json': {}, 'text/plain': {}}, 'description': 'UTF-8 text snapshot attachment'},
+                       404: {'description': 'Project missing'}, 409: {'description': 'Revision changed'},
+                       422: {'description': 'Invalid format, unsupported content or export limit'},
+                       503: {'description': 'Revision storage unavailable'}})
+def export(project_id: ProjectId, format: str = Query(pattern=r'^(json|text)$'),
+           expected_token: str = Query(pattern=r'^[a-f0-9]{64}$'), revisions=Depends(service)):
+    from core.revision_exports import RevisionExports
+    result = RevisionExports(revisions.engine).download(project_id, expected_token, format)
+    return Response(result.body, media_type=result.media_type, headers=result.headers)
 
 # Manual decisions are independent from workflow confirmation and generation.
 from api.routers.assets import get_asset_library

@@ -446,3 +446,13 @@ GET／POST `/api/project/{id}/content-revisions/reviews` 提供真实读取与�
 本轮保留 [独立人工预览](http://127.0.0.1:3007/projects/comparison-demo/revisions#revision-comparison)。停止后从根运行 `python3.12 scripts/project.py comparison-demo` 启动后端 8007，数据在已忽略的 `data/comparison-demo/`；在独立副本运行 `BACKEND_API_URL=http://127.0.0.1:8007 npm --prefix /tmp/revision-comparison-frontend run dev -- --webpack --hostname 127.0.0.1 --port 3007`。临时副本被清理时由开发者重新准备；与主前端分开 `.next`。人工文字、数字类型与结构样例不是模型结果，服务只挂本地版本／资产／计划与只读导航，没有供应商执行入口。
 
 主应用仍用根目录 backend／frontend 启动入口；全量验证 `python3.12 scripts/project.py check`，定向后端 `.venv/bin/python -m pytest tests/test_revision_comparison.py -q`；前端 `npm test`、`npm run typecheck`、`npm run lint -- --max-warnings=0`、`npm run build`。最终后端 835/835（新增 24）、前端 281/281（新增 31），类型／Lint 零警告／生产构建通过。四宽度、实际断线／地址／迟到响应／草稿保护与服务重启已验；[先行开发文档](docs/阶段文档/阶段3-第11子阶段-两版文字对比开发文档.md) 和 [证据与闸门](docs/evidence/阶段3/两版文字对比/验收报告.md) 可核对。真实模型、真机、业务及整体阶段仍待验，本轮工程结果本地提交、不推送。
+
+## 文字版本导出与备份（阶段 3 第 12 子阶段）
+
+项目 → 素材与版本 → 文字版本与恢复 → “导出与备份”。点“下载 JSON 备份”保留结构，或“下载可读 TXT”阅读正文与历史。一次包含已保存的当前剧本、分镜和全部已归档文字版本；没有历史也可以下载当前正文。未归档正文单独标明，编辑草稿不进入文件，下载保留草稿。失败可手动重试；依据过期先重新读取版本，有草稿时仍会提醒放弃。
+
+这是文字快照备份，不包含媒体、资产库、任务／计划、费用、人工核对、会话元数据或配置；本轮没有导入恢复、清理或云上传。两种文件保留完整正文、类型、结构、历史来源与恢复关系，同一依据导出的字节稳定。单文件上限 64 MiB，超限拒绝、不截断。GET `/api/project/{id}/content-revisions/export?format=json|text&expected_token=工作区摘要` 返回安全附件；前端限时读取、校验原文件长度和 SHA-256，兼容 Next.js 代理压缩。下载只读、不创建版本、不调用模型。
+
+打开 [独立人工预览](http://127.0.0.1:3008/projects/comparison-demo/revisions#revision-export)，两个按钮均可实际下载八条人工版本。后端停止后从根运行 `python3.12 scripts/project.py export-demo`，默认 8008，数据在已忽略的 `data/export-demo/`；独立前端运行 `BACKEND_API_URL=http://127.0.0.1:8008 npm --prefix /tmp/revision-export-frontend run dev -- --webpack --hostname 127.0.0.1 --port 3008`。临时副本被清理时由开发者重新准备，使用独立 `.next`；人工服务没有供应商执行入口，样例不代表模型效果。主应用仍用根目录 backend／frontend 启动入口。
+
+验证：根目录 `python3.12 scripts/project.py check`；定向后端在 backend 运行 `.venv/bin/python -m pytest tests/test_revision_exports.py -q`；frontend 运行 `npm test`、`npm run typecheck`、`npm run lint -- --max-warnings=0`、`npm run build`。最终后端 864/864（新增 29）、前端 325/325（新增 44），类型／Lint 零警告／生产构建通过。实际下载、草稿保护、断线／过期／迟到响应、四宽度及 HTTP 服务重启已验，原 195 个文件和独立四个文件保持。详见 [先行开发文档](docs/阶段文档/阶段3-第12子阶段-文字版本导出备份开发文档.md) 和 [证据与闸门](docs/evidence/阶段3/文字版本导出备份/验收报告.md)。工程结果本地提交、不推送；真实模型、真机、业务及整体阶段继续待验，下一轮优先对话共创。

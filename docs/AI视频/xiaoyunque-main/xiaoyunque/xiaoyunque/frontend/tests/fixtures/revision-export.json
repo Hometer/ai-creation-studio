@@ -1,0 +1,1008 @@
+{
+  "workspace": {
+    "project_id": "comparison-demo",
+    "token": "d836fc97796eb23fca871553ef5b875548ba31dd88b9ee99aa1ac3eb8f18e277",
+    "running": false,
+    "fields": {
+      "script_generation": [
+        {
+          "path": [
+            "title"
+          ],
+          "label": "剧本标题",
+          "value": "最后一班渡船 · 人工第二版"
+        },
+        {
+          "path": [
+            "logline"
+          ],
+          "label": "故事梗概",
+          "value": "青年和守望者共同点亮灯塔，迎接最后一班渡船。"
+        },
+        {
+          "path": [
+            "episodes",
+            0,
+            "content"
+          ],
+          "label": "章节正文 1",
+          "value": "阿舟说：“我会等最后一班渡船。”"
+        },
+        {
+          "path": [
+            "episodes",
+            1,
+            "content"
+          ],
+          "label": "章节正文 2",
+          "value": "守望者点亮灯塔，远处的船缓缓靠岸。"
+        }
+      ],
+      "storyboard": [
+        {
+          "path": [
+            "episodes",
+            0,
+            "segments",
+            0,
+            "visual_prompt"
+          ],
+          "label": "seg-new · 画面提示词",
+          "value": "灯塔旁的新木桥。"
+        },
+        {
+          "path": [
+            "episodes",
+            0,
+            "segments",
+            0,
+            "shots",
+            0,
+            "content"
+          ],
+          "label": "seg-new · 镜头 1 · 镜头内容",
+          "value": "青年把灯交给守望者。"
+        },
+        {
+          "path": [
+            "episodes",
+            0,
+            "segments",
+            0,
+            "shots",
+            0,
+            "dialogue"
+          ],
+          "label": "seg-new · 镜头 1 · 台词",
+          "value": "我们一起点灯。"
+        },
+        {
+          "path": [
+            "episodes",
+            0,
+            "segments",
+            1,
+            "visual_prompt"
+          ],
+          "label": "seg-2 · 画面提示词",
+          "value": "灯塔与远处渡船。"
+        },
+        {
+          "path": [
+            "episodes",
+            0,
+            "segments",
+            1,
+            "shots",
+            0,
+            "content"
+          ],
+          "label": "seg-2 · 镜头 1 · 镜头内容",
+          "value": "守望者点亮灯塔。"
+        }
+      ]
+    },
+    "versions": [
+      {
+        "version_id": "8d2237a660194834a32037fe9c90e2d1",
+        "number": 1,
+        "stage": "script_generation",
+        "source": "baseline",
+        "created_at": "2026-10-05T14:04:38.981465+00:00",
+        "current": false,
+        "fields": [
+          {
+            "path": [
+              "title"
+            ],
+            "label": "剧本标题",
+            "value": "最后一班渡船 · 人工样例"
+          },
+          {
+            "path": [
+              "logline"
+            ],
+            "label": "故事梗概",
+            "value": "青年与灯塔守望者在渡口相遇。"
+          },
+          {
+            "path": [
+              "episodes",
+              0,
+              "content"
+            ],
+            "label": "章节正文 1",
+            "value": "阿舟说：“我会等最后一班渡船。”"
+          },
+          {
+            "path": [
+              "episodes",
+              1,
+              "content"
+            ],
+            "label": "章节正文 2",
+            "value": "守望者点亮灯塔，远处的船缓缓靠岸。"
+          }
+        ],
+        "changes": [],
+        "impacts": [],
+        "restored_from": null
+      },
+      {
+        "version_id": "9f8c30ac4b3b4a97a25adeeea0068244",
+        "number": 2,
+        "stage": "storyboard",
+        "source": "baseline",
+        "created_at": "2026-10-05T14:04:38.981671+00:00",
+        "current": false,
+        "fields": [
+          {
+            "path": [
+              "episodes",
+              0,
+              "segments",
+              0,
+              "visual_prompt"
+            ],
+            "label": "seg-1 · 画面提示词",
+            "value": "暮色渡口，青年站在木桥上。"
+          },
+          {
+            "path": [
+              "episodes",
+              0,
+              "segments",
+              0,
+              "shots",
+              0,
+              "content"
+            ],
+            "label": "seg-1 · 镜头 1 · 镜头内容",
+            "value": "阿舟望向河面。"
+          },
+          {
+            "path": [
+              "episodes",
+              0,
+              "segments",
+              0,
+              "shots",
+              0,
+              "dialogue"
+            ],
+            "label": "seg-1 · 镜头 1 · 台词",
+            "value": "我会等最后一班渡船。"
+          },
+          {
+            "path": [
+              "episodes",
+              0,
+              "segments",
+              0,
+              "shots",
+              1,
+              "content"
+            ],
+            "label": "seg-1 · 镜头 2 · 镜头内容",
+            "value": "岸边的灯亮起。"
+          },
+          {
+            "path": [
+              "episodes",
+              0,
+              "segments",
+              1,
+              "visual_prompt"
+            ],
+            "label": "seg-2 · 画面提示词",
+            "value": "灯塔与远处渡船。"
+          },
+          {
+            "path": [
+              "episodes",
+              0,
+              "segments",
+              1,
+              "shots",
+              0,
+              "content"
+            ],
+            "label": "seg-2 · 镜头 1 · 镜头内容",
+            "value": "守望者点亮灯塔。"
+          }
+        ],
+        "changes": [],
+        "impacts": [],
+        "restored_from": null
+      },
+      {
+        "version_id": "d13c4cd6ad204cf7b14d9b633ca4fe15",
+        "number": 3,
+        "stage": "script_generation",
+        "source": "external",
+        "created_at": "2026-10-05T14:04:38.981864+00:00",
+        "current": false,
+        "fields": [
+          {
+            "path": [
+              "title"
+            ],
+            "label": "剧本标题",
+            "value": "最后一班渡船 · 人工第一版"
+          },
+          {
+            "path": [
+              "logline"
+            ],
+            "label": "故事梗概",
+            "value": "青年等待渡船，守望者独自守着灯塔。"
+          },
+          {
+            "path": [
+              "episodes",
+              0,
+              "content"
+            ],
+            "label": "章节正文 1",
+            "value": "阿舟说：“我会等最后一班渡船。”"
+          },
+          {
+            "path": [
+              "episodes",
+              1,
+              "content"
+            ],
+            "label": "章节正文 2",
+            "value": "守望者点亮灯塔，远处的船缓缓靠岸。"
+          }
+        ],
+        "changes": [
+          {
+            "path": [
+              "logline"
+            ],
+            "before": "青年与灯塔守望者在渡口相遇。",
+            "after": "青年等待渡船，守望者独自守着灯塔。",
+            "before_present": true,
+            "after_present": true
+          },
+          {
+            "path": [
+              "title"
+            ],
+            "before": "最后一班渡船 · 人工样例",
+            "after": "最后一班渡船 · 人工第一版",
+            "before_present": true,
+            "after_present": true
+          }
+        ],
+        "impacts": [
+          {
+            "segment_id": "seg-1",
+            "shot_number": 1,
+            "reason": "剧本变化，现有分镜、参考图、视频及成片需人工核对"
+          },
+          {
+            "segment_id": "seg-1",
+            "shot_number": 2,
+            "reason": "剧本变化，现有分镜、参考图、视频及成片需人工核对"
+          },
+          {
+            "segment_id": "seg-2",
+            "shot_number": 1,
+            "reason": "剧本变化，现有分镜、参考图、视频及成片需人工核对"
+          }
+        ],
+        "restored_from": null
+      },
+      {
+        "version_id": "974a584328bd44e996aaa6327e16a206",
+        "number": 4,
+        "stage": "script_generation",
+        "source": "external",
+        "created_at": "2026-10-05T14:04:38.984385+00:00",
+        "current": false,
+        "fields": [
+          {
+            "path": [
+              "title"
+            ],
+            "label": "剧本标题",
+            "value": "最后一班渡船 · 人工第二版"
+          },
+          {
+            "path": [
+              "logline"
+            ],
+            "label": "故事梗概",
+            "value": "青年和守望者共同点亮灯塔，迎接最后一班渡船。"
+          },
+          {
+            "path": [
+              "episodes",
+              0,
+              "content"
+            ],
+            "label": "章节正文 1",
+            "value": "阿舟说：“我会等最后一班渡船。”"
+          },
+          {
+            "path": [
+              "episodes",
+              1,
+              "content"
+            ],
+            "label": "章节正文 2",
+            "value": "守望者点亮灯塔，远处的船缓缓靠岸。"
+          }
+        ],
+        "changes": [
+          {
+            "path": [
+              "logline"
+            ],
+            "before": "青年等待渡船，守望者独自守着灯塔。",
+            "after": "青年和守望者共同点亮灯塔，迎接最后一班渡船。",
+            "before_present": true,
+            "after_present": true
+          },
+          {
+            "path": [
+              "title"
+            ],
+            "before": "最后一班渡船 · 人工第一版",
+            "after": "最后一班渡船 · 人工第二版",
+            "before_present": true,
+            "after_present": true
+          },
+          {
+            "path": [
+              "制作批次"
+            ],
+            "before": "1",
+            "after": "1",
+            "before_present": true,
+            "after_present": true
+          },
+          {
+            "path": [
+              "待补说明"
+            ],
+            "before": "null",
+            "after": "null",
+            "before_present": true,
+            "after_present": false
+          },
+          {
+            "path": [
+              "新增说明"
+            ],
+            "before": "null",
+            "after": "null",
+            "before_present": false,
+            "after_present": true
+          }
+        ],
+        "impacts": [
+          {
+            "segment_id": "seg-1",
+            "shot_number": 1,
+            "reason": "剧本变化，现有分镜、参考图、视频及成片需人工核对"
+          },
+          {
+            "segment_id": "seg-1",
+            "shot_number": 2,
+            "reason": "剧本变化，现有分镜、参考图、视频及成片需人工核对"
+          },
+          {
+            "segment_id": "seg-2",
+            "shot_number": 1,
+            "reason": "剧本变化，现有分镜、参考图、视频及成片需人工核对"
+          }
+        ],
+        "restored_from": null
+      },
+      {
+        "version_id": "b4aa3971af894478a7f8a02f0735ad5e",
+        "number": 5,
+        "stage": "script_generation",
+        "source": "external",
+        "created_at": "2026-10-05T14:04:38.987556+00:00",
+        "current": false,
+        "fields": [
+          {
+            "path": [
+              "title"
+            ],
+            "label": "剧本标题",
+            "value": "最后一班渡船 · 人工第一版"
+          },
+          {
+            "path": [
+              "logline"
+            ],
+            "label": "故事梗概",
+            "value": "青年等待渡船，守望者独自守着灯塔。"
+          },
+          {
+            "path": [
+              "episodes",
+              0,
+              "content"
+            ],
+            "label": "章节正文 1",
+            "value": "阿舟说：“我会等最后一班渡船。”"
+          },
+          {
+            "path": [
+              "episodes",
+              1,
+              "content"
+            ],
+            "label": "章节正文 2",
+            "value": "守望者点亮灯塔，远处的船缓缓靠岸。"
+          }
+        ],
+        "changes": [
+          {
+            "path": [
+              "logline"
+            ],
+            "before": "青年和守望者共同点亮灯塔，迎接最后一班渡船。",
+            "after": "青年等待渡船，守望者独自守着灯塔。",
+            "before_present": true,
+            "after_present": true
+          },
+          {
+            "path": [
+              "title"
+            ],
+            "before": "最后一班渡船 · 人工第二版",
+            "after": "最后一班渡船 · 人工第一版",
+            "before_present": true,
+            "after_present": true
+          },
+          {
+            "path": [
+              "制作批次"
+            ],
+            "before": "1",
+            "after": "1",
+            "before_present": true,
+            "after_present": true
+          },
+          {
+            "path": [
+              "待补说明"
+            ],
+            "before": "null",
+            "after": "null",
+            "before_present": false,
+            "after_present": true
+          },
+          {
+            "path": [
+              "新增说明"
+            ],
+            "before": "null",
+            "after": "null",
+            "before_present": true,
+            "after_present": false
+          }
+        ],
+        "impacts": [
+          {
+            "segment_id": "seg-1",
+            "shot_number": 1,
+            "reason": "剧本变化，现有分镜、参考图、视频及成片需人工核对"
+          },
+          {
+            "segment_id": "seg-1",
+            "shot_number": 2,
+            "reason": "剧本变化，现有分镜、参考图、视频及成片需人工核对"
+          },
+          {
+            "segment_id": "seg-2",
+            "shot_number": 1,
+            "reason": "剧本变化，现有分镜、参考图、视频及成片需人工核对"
+          }
+        ],
+        "restored_from": null
+      },
+      {
+        "version_id": "15d4fa10922a4cecbe85cfbad264fbbf",
+        "number": 6,
+        "stage": "script_generation",
+        "source": "external",
+        "created_at": "2026-10-05T14:04:38.990616+00:00",
+        "current": true,
+        "fields": [
+          {
+            "path": [
+              "title"
+            ],
+            "label": "剧本标题",
+            "value": "最后一班渡船 · 人工第二版"
+          },
+          {
+            "path": [
+              "logline"
+            ],
+            "label": "故事梗概",
+            "value": "青年和守望者共同点亮灯塔，迎接最后一班渡船。"
+          },
+          {
+            "path": [
+              "episodes",
+              0,
+              "content"
+            ],
+            "label": "章节正文 1",
+            "value": "阿舟说：“我会等最后一班渡船。”"
+          },
+          {
+            "path": [
+              "episodes",
+              1,
+              "content"
+            ],
+            "label": "章节正文 2",
+            "value": "守望者点亮灯塔，远处的船缓缓靠岸。"
+          }
+        ],
+        "changes": [
+          {
+            "path": [
+              "logline"
+            ],
+            "before": "青年等待渡船，守望者独自守着灯塔。",
+            "after": "青年和守望者共同点亮灯塔，迎接最后一班渡船。",
+            "before_present": true,
+            "after_present": true
+          },
+          {
+            "path": [
+              "title"
+            ],
+            "before": "最后一班渡船 · 人工第一版",
+            "after": "最后一班渡船 · 人工第二版",
+            "before_present": true,
+            "after_present": true
+          },
+          {
+            "path": [
+              "制作批次"
+            ],
+            "before": "1",
+            "after": "1",
+            "before_present": true,
+            "after_present": true
+          },
+          {
+            "path": [
+              "待补说明"
+            ],
+            "before": "null",
+            "after": "null",
+            "before_present": true,
+            "after_present": false
+          },
+          {
+            "path": [
+              "新增说明"
+            ],
+            "before": "null",
+            "after": "null",
+            "before_present": false,
+            "after_present": true
+          }
+        ],
+        "impacts": [
+          {
+            "segment_id": "seg-1",
+            "shot_number": 1,
+            "reason": "剧本变化，现有分镜、参考图、视频及成片需人工核对"
+          },
+          {
+            "segment_id": "seg-1",
+            "shot_number": 2,
+            "reason": "剧本变化，现有分镜、参考图、视频及成片需人工核对"
+          },
+          {
+            "segment_id": "seg-2",
+            "shot_number": 1,
+            "reason": "剧本变化，现有分镜、参考图、视频及成片需人工核对"
+          }
+        ],
+        "restored_from": null
+      },
+      {
+        "version_id": "a6aad647da7147f58314891928df8736",
+        "number": 7,
+        "stage": "storyboard",
+        "source": "external",
+        "created_at": "2026-10-05T14:04:38.995295+00:00",
+        "current": false,
+        "fields": [
+          {
+            "path": [
+              "episodes",
+              0,
+              "segments",
+              0,
+              "visual_prompt"
+            ],
+            "label": "seg-1 · 画面提示词",
+            "value": "暮色渡口，青年站在木桥上。"
+          },
+          {
+            "path": [
+              "episodes",
+              0,
+              "segments",
+              0,
+              "shots",
+              0,
+              "content"
+            ],
+            "label": "seg-1 · 镜头 1 · 镜头内容",
+            "value": "阿舟望向河面。"
+          },
+          {
+            "path": [
+              "episodes",
+              0,
+              "segments",
+              0,
+              "shots",
+              0,
+              "dialogue"
+            ],
+            "label": "seg-1 · 镜头 1 · 台词",
+            "value": "和你一起等最后一班渡船。"
+          },
+          {
+            "path": [
+              "episodes",
+              0,
+              "segments",
+              0,
+              "shots",
+              1,
+              "content"
+            ],
+            "label": "seg-1 · 镜头 2 · 镜头内容",
+            "value": "岸边的灯亮起。"
+          },
+          {
+            "path": [
+              "episodes",
+              0,
+              "segments",
+              1,
+              "visual_prompt"
+            ],
+            "label": "seg-2 · 画面提示词",
+            "value": "灯塔与远处渡船。"
+          },
+          {
+            "path": [
+              "episodes",
+              0,
+              "segments",
+              1,
+              "shots",
+              0,
+              "content"
+            ],
+            "label": "seg-2 · 镜头 1 · 镜头内容",
+            "value": "守望者点亮灯塔。"
+          }
+        ],
+        "changes": [
+          {
+            "path": [
+              "episodes",
+              0,
+              "segments",
+              0,
+              "shots",
+              0,
+              "dialogue"
+            ],
+            "before": "我会等最后一班渡船。",
+            "after": "和你一起等最后一班渡船。",
+            "before_present": true,
+            "after_present": true
+          }
+        ],
+        "impacts": [
+          {
+            "segment_id": "seg-1",
+            "shot_number": 1,
+            "reason": "该片段或镜头的参考图、视频及成片需人工核对"
+          }
+        ],
+        "restored_from": null
+      },
+      {
+        "version_id": "3c7277f69fda44bead55aec1cb6d4b97",
+        "number": 8,
+        "stage": "storyboard",
+        "source": "external",
+        "created_at": "2026-10-05T14:04:39.000063+00:00",
+        "current": true,
+        "fields": [
+          {
+            "path": [
+              "episodes",
+              0,
+              "segments",
+              0,
+              "visual_prompt"
+            ],
+            "label": "seg-new · 画面提示词",
+            "value": "灯塔旁的新木桥。"
+          },
+          {
+            "path": [
+              "episodes",
+              0,
+              "segments",
+              0,
+              "shots",
+              0,
+              "content"
+            ],
+            "label": "seg-new · 镜头 1 · 镜头内容",
+            "value": "青年把灯交给守望者。"
+          },
+          {
+            "path": [
+              "episodes",
+              0,
+              "segments",
+              0,
+              "shots",
+              0,
+              "dialogue"
+            ],
+            "label": "seg-new · 镜头 1 · 台词",
+            "value": "我们一起点灯。"
+          },
+          {
+            "path": [
+              "episodes",
+              0,
+              "segments",
+              1,
+              "visual_prompt"
+            ],
+            "label": "seg-2 · 画面提示词",
+            "value": "灯塔与远处渡船。"
+          },
+          {
+            "path": [
+              "episodes",
+              0,
+              "segments",
+              1,
+              "shots",
+              0,
+              "content"
+            ],
+            "label": "seg-2 · 镜头 1 · 镜头内容",
+            "value": "守望者点亮灯塔。"
+          }
+        ],
+        "changes": [
+          {
+            "path": [
+              "episodes",
+              0,
+              "segments",
+              0,
+              "characters"
+            ],
+            "before": "[\"阿舟\"]",
+            "after": "null",
+            "before_present": true,
+            "after_present": false
+          },
+          {
+            "path": [
+              "episodes",
+              0,
+              "segments",
+              0,
+              "episode_number"
+            ],
+            "before": "1",
+            "after": "null",
+            "before_present": true,
+            "after_present": false
+          },
+          {
+            "path": [
+              "episodes",
+              0,
+              "segments",
+              0,
+              "location"
+            ],
+            "before": "渡口",
+            "after": "null",
+            "before_present": true,
+            "after_present": false
+          },
+          {
+            "path": [
+              "episodes",
+              0,
+              "segments",
+              0,
+              "segment_id"
+            ],
+            "before": "seg-1",
+            "after": "seg-new",
+            "before_present": true,
+            "after_present": true
+          },
+          {
+            "path": [
+              "episodes",
+              0,
+              "segments",
+              0,
+              "segment_number"
+            ],
+            "before": "1",
+            "after": "null",
+            "before_present": true,
+            "after_present": false
+          },
+          {
+            "path": [
+              "episodes",
+              0,
+              "segments",
+              0,
+              "shots"
+            ],
+            "before": "[{\"content\":\"阿舟望向河面。\",\"dialogue\":\"和你一起等最后一班渡船。\",\"duration\":5,\"shot_number\":1,\"shot_type\":\"中景\",\"unknown\":{\"binding\":\"人工附加字段保留\"}},{\"content\":\"岸边的灯亮起。\",\"duration\":5,\"shot_number\":2,\"shot_type\":\"中景\",\"unknown\":{\"binding\":\"人工附加字段保留\"}}]",
+            "after": "[{\"content\":\"青年把灯交给守望者。\",\"dialogue\":\"我们一起点灯。\",\"duration\":5,\"shot_number\":1}]",
+            "before_present": true,
+            "after_present": true
+          },
+          {
+            "path": [
+              "episodes",
+              0,
+              "segments",
+              0,
+              "total_duration"
+            ],
+            "before": "10",
+            "after": "null",
+            "before_present": true,
+            "after_present": false
+          },
+          {
+            "path": [
+              "episodes",
+              0,
+              "segments",
+              0,
+              "visual_prompt"
+            ],
+            "before": "暮色渡口，青年站在木桥上。",
+            "after": "灯塔旁的新木桥。",
+            "before_present": true,
+            "after_present": true
+          }
+        ],
+        "impacts": [
+          {
+            "segment_id": "seg-1",
+            "shot_number": 1,
+            "reason": "该片段或镜头的参考图、视频及成片需人工核对"
+          },
+          {
+            "segment_id": "seg-1",
+            "shot_number": 2,
+            "reason": "该片段或镜头的参考图、视频及成片需人工核对"
+          },
+          {
+            "segment_id": "seg-new",
+            "shot_number": 1,
+            "reason": "该片段或镜头的参考图、视频及成片需人工核对"
+          }
+        ],
+        "restored_from": null
+      }
+    ],
+    "untracked_stages": [],
+    "impacts": [
+      {
+        "segment_id": "seg-1",
+        "shot_number": 1,
+        "reason": "剧本变化，现有分镜、参考图、视频及成片需人工核对"
+      },
+      {
+        "segment_id": "seg-1",
+        "shot_number": 2,
+        "reason": "剧本变化，现有分镜、参考图、视频及成片需人工核对"
+      },
+      {
+        "segment_id": "seg-2",
+        "shot_number": 1,
+        "reason": "剧本变化，现有分镜、参考图、视频及成片需人工核对"
+      },
+      {
+        "segment_id": "seg-1",
+        "shot_number": 1,
+        "reason": "该片段或镜头的参考图、视频及成片需人工核对"
+      },
+      {
+        "segment_id": "seg-1",
+        "shot_number": 2,
+        "reason": "该片段或镜头的参考图、视频及成片需人工核对"
+      },
+      {
+        "segment_id": "seg-new",
+        "shot_number": 1,
+        "reason": "该片段或镜头的参考图、视频及成片需人工核对"
+      }
+    ]
+  },
+  "json": {
+    "body": "{\"current\":{\"script_generation\":{\"content\":{\"episodes\":[{\"act_number\":1,\"act_title\":\"渡口\",\"content\":\"阿舟说：“我会等最后一班渡船。”\",\"episode_number\":1},{\"act_number\":2,\"act_title\":\"灯塔\",\"content\":\"守望者点亮灯塔，远处的船缓缓靠岸。\",\"episode_number\":2}],\"extra\":{\"preserve\":\"人工附加字段\"},\"genre\":[\"剧情\"],\"logline\":\"青年和守望者共同点亮灯塔，迎接最后一班渡船。\",\"mood\":\"宁静\",\"phase\":\"completed\",\"session_id\":\"comparison-demo\",\"title\":\"最后一班渡船 · 人工第二版\",\"制作批次\":1,\"新增说明\":null},\"digest\":\"07ea6992b24127f3142b7d4714c97de29b54cc1e3066412a5eb9590dfd2409fd\",\"version_id\":\"15d4fa10922a4cecbe85cfbad264fbbf\"},\"storyboard\":{\"content\":{\"episodes\":[{\"episode_number\":1,\"episode_title\":\"最后的渡船\",\"segments\":[{\"segment_id\":\"seg-new\",\"shots\":[{\"content\":\"青年把灯交给守望者。\",\"dialogue\":\"我们一起点灯。\",\"duration\":5,\"shot_number\":1}],\"visual_prompt\":\"灯塔旁的新木桥。\"},{\"characters\":[\"守望者\"],\"episode_number\":1,\"location\":\"灯塔\",\"segment_id\":\"seg-2\",\"segment_number\":2,\"shots\":[{\"content\":\"守望者点亮灯塔。\",\"duration\":5,\"shot_number\":1,\"shot_type\":\"中景\",\"unknown\":{\"binding\":\"人工附加字段保留\"}}],\"total_duration\":5,\"visual_prompt\":\"灯塔与远处渡船。\"}],\"unknown\":\"人工章节附加字段\"}],\"extra\":{\"preserve\":\"原编辑不丢字段\"},\"session_id\":\"comparison-demo\"},\"digest\":\"24f673528e4ffc4ffbdee3ee9d8fa98f880e85e35948c451edf1d8ac74f6b1b3\",\"version_id\":\"3c7277f69fda44bead55aec1cb6d4b97\"}},\"format\":\"text-revisions\",\"project_id\":\"comparison-demo\",\"schema_version\":1,\"token\":\"d836fc97796eb23fca871553ef5b875548ba31dd88b9ee99aa1ac3eb8f18e277\",\"untracked_stages\":[],\"versions\":[{\"changes\":[],\"content\":{\"episodes\":[{\"act_number\":1,\"act_title\":\"渡口\",\"content\":\"阿舟说：“我会等最后一班渡船。”\",\"episode_number\":1},{\"act_number\":2,\"act_title\":\"灯塔\",\"content\":\"守望者点亮灯塔，远处的船缓缓靠岸。\",\"episode_number\":2}],\"extra\":{\"preserve\":\"人工附加字段\"},\"genre\":[\"剧情\"],\"logline\":\"青年与灯塔守望者在渡口相遇。\",\"mood\":\"宁静\",\"phase\":\"completed\",\"session_id\":\"comparison-demo\",\"title\":\"最后一班渡船 · 人工样例\",\"制作批次\":\"1\",\"待补说明\":null},\"created_at\":\"2026-10-05T14:04:38.981465+00:00\",\"digest\":\"73a91072a174369655e60a1aabb0ec6670f11610dc60359339ac9ccb006b6424\",\"impacts\":[],\"number\":1,\"restored_from\":null,\"source\":\"baseline\",\"stage\":\"script_generation\",\"version_id\":\"8d2237a660194834a32037fe9c90e2d1\"},{\"changes\":[],\"content\":{\"episodes\":[{\"episode_number\":1,\"episode_title\":\"最后的渡船\",\"segments\":[{\"characters\":[\"阿舟\"],\"episode_number\":1,\"location\":\"渡口\",\"segment_id\":\"seg-1\",\"segment_number\":1,\"shots\":[{\"content\":\"阿舟望向河面。\",\"dialogue\":\"我会等最后一班渡船。\",\"duration\":5,\"shot_number\":1,\"shot_type\":\"中景\",\"unknown\":{\"binding\":\"人工附加字段保留\"}},{\"content\":\"岸边的灯亮起。\",\"duration\":5,\"shot_number\":2,\"shot_type\":\"中景\",\"unknown\":{\"binding\":\"人工附加字段保留\"}}],\"total_duration\":10,\"visual_prompt\":\"暮色渡口，青年站在木桥上。\"},{\"characters\":[\"守望者\"],\"episode_number\":1,\"location\":\"灯塔\",\"segment_id\":\"seg-2\",\"segment_number\":2,\"shots\":[{\"content\":\"守望者点亮灯塔。\",\"duration\":5,\"shot_number\":1,\"shot_type\":\"中景\",\"unknown\":{\"binding\":\"人工附加字段保留\"}}],\"total_duration\":5,\"visual_prompt\":\"灯塔与远处渡船。\"}],\"unknown\":\"人工章节附加字段\"}],\"extra\":{\"preserve\":\"原编辑不丢字段\"},\"session_id\":\"comparison-demo\"},\"created_at\":\"2026-10-05T14:04:38.981671+00:00\",\"digest\":\"6203a5a1e31302404cc1247411c422f8e65f144d3a1faba484a642ab53233154\",\"impacts\":[],\"number\":2,\"restored_from\":null,\"source\":\"baseline\",\"stage\":\"storyboard\",\"version_id\":\"9f8c30ac4b3b4a97a25adeeea0068244\"},{\"changes\":[{\"after\":\"青年等待渡船，守望者独自守着灯塔。\",\"after_present\":true,\"before\":\"青年与灯塔守望者在渡口相遇。\",\"before_present\":true,\"path\":[\"logline\"]},{\"after\":\"最后一班渡船 · 人工第一版\",\"after_present\":true,\"before\":\"最后一班渡船 · 人工样例\",\"before_present\":true,\"path\":[\"title\"]}],\"content\":{\"episodes\":[{\"act_number\":1,\"act_title\":\"渡口\",\"content\":\"阿舟说：“我会等最后一班渡船。”\",\"episode_number\":1},{\"act_number\":2,\"act_title\":\"灯塔\",\"content\":\"守望者点亮灯塔，远处的船缓缓靠岸。\",\"episode_number\":2}],\"extra\":{\"preserve\":\"人工附加字段\"},\"genre\":[\"剧情\"],\"logline\":\"青年等待渡船，守望者独自守着灯塔。\",\"mood\":\"宁静\",\"phase\":\"completed\",\"session_id\":\"comparison-demo\",\"title\":\"最后一班渡船 · 人工第一版\",\"制作批次\":\"1\",\"待补说明\":null},\"created_at\":\"2026-10-05T14:04:38.981864+00:00\",\"digest\":\"dce2f26361f4f2f989a65c43b45e7acfb005df9aa13b57a86cb5eb31ef1c9195\",\"impacts\":[{\"reason\":\"剧本变化，现有分镜、参考图、视频及成片需人工核对\",\"segment_id\":\"seg-1\",\"shot_number\":1},{\"reason\":\"剧本变化，现有分镜、参考图、视频及成片需人工核对\",\"segment_id\":\"seg-1\",\"shot_number\":2},{\"reason\":\"剧本变化，现有分镜、参考图、视频及成片需人工核对\",\"segment_id\":\"seg-2\",\"shot_number\":1}],\"number\":3,\"restored_from\":null,\"source\":\"external\",\"stage\":\"script_generation\",\"version_id\":\"d13c4cd6ad204cf7b14d9b633ca4fe15\"},{\"changes\":[{\"after\":\"青年和守望者共同点亮灯塔，迎接最后一班渡船。\",\"after_present\":true,\"before\":\"青年等待渡船，守望者独自守着灯塔。\",\"before_present\":true,\"path\":[\"logline\"]},{\"after\":\"最后一班渡船 · 人工第二版\",\"after_present\":true,\"before\":\"最后一班渡船 · 人工第一版\",\"before_present\":true,\"path\":[\"title\"]},{\"after\":\"1\",\"after_present\":true,\"before\":\"1\",\"before_present\":true,\"path\":[\"制作批次\"]},{\"after\":\"null\",\"after_present\":false,\"before\":\"null\",\"before_present\":true,\"path\":[\"待补说明\"]},{\"after\":\"null\",\"after_present\":true,\"before\":\"null\",\"before_present\":false,\"path\":[\"新增说明\"]}],\"content\":{\"episodes\":[{\"act_number\":1,\"act_title\":\"渡口\",\"content\":\"阿舟说：“我会等最后一班渡船。”\",\"episode_number\":1},{\"act_number\":2,\"act_title\":\"灯塔\",\"content\":\"守望者点亮灯塔，远处的船缓缓靠岸。\",\"episode_number\":2}],\"extra\":{\"preserve\":\"人工附加字段\"},\"genre\":[\"剧情\"],\"logline\":\"青年和守望者共同点亮灯塔，迎接最后一班渡船。\",\"mood\":\"宁静\",\"phase\":\"completed\",\"session_id\":\"comparison-demo\",\"title\":\"最后一班渡船 · 人工第二版\",\"制作批次\":1,\"新增说明\":null},\"created_at\":\"2026-10-05T14:04:38.984385+00:00\",\"digest\":\"07ea6992b24127f3142b7d4714c97de29b54cc1e3066412a5eb9590dfd2409fd\",\"impacts\":[{\"reason\":\"剧本变化，现有分镜、参考图、视频及成片需人工核对\",\"segment_id\":\"seg-1\",\"shot_number\":1},{\"reason\":\"剧本变化，现有分镜、参考图、视频及成片需人工核对\",\"segment_id\":\"seg-1\",\"shot_number\":2},{\"reason\":\"剧本变化，现有分镜、参考图、视频及成片需人工核对\",\"segment_id\":\"seg-2\",\"shot_number\":1}],\"number\":4,\"restored_from\":null,\"source\":\"external\",\"stage\":\"script_generation\",\"version_id\":\"974a584328bd44e996aaa6327e16a206\"},{\"changes\":[{\"after\":\"青年等待渡船，守望者独自守着灯塔。\",\"after_present\":true,\"before\":\"青年和守望者共同点亮灯塔，迎接最后一班渡船。\",\"before_present\":true,\"path\":[\"logline\"]},{\"after\":\"最后一班渡船 · 人工第一版\",\"after_present\":true,\"before\":\"最后一班渡船 · 人工第二版\",\"before_present\":true,\"path\":[\"title\"]},{\"after\":\"1\",\"after_present\":true,\"before\":\"1\",\"before_present\":true,\"path\":[\"制作批次\"]},{\"after\":\"null\",\"after_present\":true,\"before\":\"null\",\"before_present\":false,\"path\":[\"待补说明\"]},{\"after\":\"null\",\"after_present\":false,\"before\":\"null\",\"before_present\":true,\"path\":[\"新增说明\"]}],\"content\":{\"episodes\":[{\"act_number\":1,\"act_title\":\"渡口\",\"content\":\"阿舟说：“我会等最后一班渡船。”\",\"episode_number\":1},{\"act_number\":2,\"act_title\":\"灯塔\",\"content\":\"守望者点亮灯塔，远处的船缓缓靠岸。\",\"episode_number\":2}],\"extra\":{\"preserve\":\"人工附加字段\"},\"genre\":[\"剧情\"],\"logline\":\"青年等待渡船，守望者独自守着灯塔。\",\"mood\":\"宁静\",\"phase\":\"completed\",\"session_id\":\"comparison-demo\",\"title\":\"最后一班渡船 · 人工第一版\",\"制作批次\":\"1\",\"待补说明\":null},\"created_at\":\"2026-10-05T14:04:38.987556+00:00\",\"digest\":\"dce2f26361f4f2f989a65c43b45e7acfb005df9aa13b57a86cb5eb31ef1c9195\",\"impacts\":[{\"reason\":\"剧本变化，现有分镜、参考图、视频及成片需人工核对\",\"segment_id\":\"seg-1\",\"shot_number\":1},{\"reason\":\"剧本变化，现有分镜、参考图、视频及成片需人工核对\",\"segment_id\":\"seg-1\",\"shot_number\":2},{\"reason\":\"剧本变化，现有分镜、参考图、视频及成片需人工核对\",\"segment_id\":\"seg-2\",\"shot_number\":1}],\"number\":5,\"restored_from\":null,\"source\":\"external\",\"stage\":\"script_generation\",\"version_id\":\"b4aa3971af894478a7f8a02f0735ad5e\"},{\"changes\":[{\"after\":\"青年和守望者共同点亮灯塔，迎接最后一班渡船。\",\"after_present\":true,\"before\":\"青年等待渡船，守望者独自守着灯塔。\",\"before_present\":true,\"path\":[\"logline\"]},{\"after\":\"最后一班渡船 · 人工第二版\",\"after_present\":true,\"before\":\"最后一班渡船 · 人工第一版\",\"before_present\":true,\"path\":[\"title\"]},{\"after\":\"1\",\"after_present\":true,\"before\":\"1\",\"before_present\":true,\"path\":[\"制作批次\"]},{\"after\":\"null\",\"after_present\":false,\"before\":\"null\",\"before_present\":true,\"path\":[\"待补说明\"]},{\"after\":\"null\",\"after_present\":true,\"before\":\"null\",\"before_present\":false,\"path\":[\"新增说明\"]}],\"content\":{\"episodes\":[{\"act_number\":1,\"act_title\":\"渡口\",\"content\":\"阿舟说：“我会等最后一班渡船。”\",\"episode_number\":1},{\"act_number\":2,\"act_title\":\"灯塔\",\"content\":\"守望者点亮灯塔，远处的船缓缓靠岸。\",\"episode_number\":2}],\"extra\":{\"preserve\":\"人工附加字段\"},\"genre\":[\"剧情\"],\"logline\":\"青年和守望者共同点亮灯塔，迎接最后一班渡船。\",\"mood\":\"宁静\",\"phase\":\"completed\",\"session_id\":\"comparison-demo\",\"title\":\"最后一班渡船 · 人工第二版\",\"制作批次\":1,\"新增说明\":null},\"created_at\":\"2026-10-05T14:04:38.990616+00:00\",\"digest\":\"07ea6992b24127f3142b7d4714c97de29b54cc1e3066412a5eb9590dfd2409fd\",\"impacts\":[{\"reason\":\"剧本变化，现有分镜、参考图、视频及成片需人工核对\",\"segment_id\":\"seg-1\",\"shot_number\":1},{\"reason\":\"剧本变化，现有分镜、参考图、视频及成片需人工核对\",\"segment_id\":\"seg-1\",\"shot_number\":2},{\"reason\":\"剧本变化，现有分镜、参考图、视频及成片需人工核对\",\"segment_id\":\"seg-2\",\"shot_number\":1}],\"number\":6,\"restored_from\":null,\"source\":\"external\",\"stage\":\"script_generation\",\"version_id\":\"15d4fa10922a4cecbe85cfbad264fbbf\"},{\"changes\":[{\"after\":\"和你一起等最后一班渡船。\",\"after_present\":true,\"before\":\"我会等最后一班渡船。\",\"before_present\":true,\"path\":[\"episodes\",0,\"segments\",0,\"shots\",0,\"dialogue\"]}],\"content\":{\"episodes\":[{\"episode_number\":1,\"episode_title\":\"最后的渡船\",\"segments\":[{\"characters\":[\"阿舟\"],\"episode_number\":1,\"location\":\"渡口\",\"segment_id\":\"seg-1\",\"segment_number\":1,\"shots\":[{\"content\":\"阿舟望向河面。\",\"dialogue\":\"和你一起等最后一班渡船。\",\"duration\":5,\"shot_number\":1,\"shot_type\":\"中景\",\"unknown\":{\"binding\":\"人工附加字段保留\"}},{\"content\":\"岸边的灯亮起。\",\"duration\":5,\"shot_number\":2,\"shot_type\":\"中景\",\"unknown\":{\"binding\":\"人工附加字段保留\"}}],\"total_duration\":10,\"visual_prompt\":\"暮色渡口，青年站在木桥上。\"},{\"characters\":[\"守望者\"],\"episode_number\":1,\"location\":\"灯塔\",\"segment_id\":\"seg-2\",\"segment_number\":2,\"shots\":[{\"content\":\"守望者点亮灯塔。\",\"duration\":5,\"shot_number\":1,\"shot_type\":\"中景\",\"unknown\":{\"binding\":\"人工附加字段保留\"}}],\"total_duration\":5,\"visual_prompt\":\"灯塔与远处渡船。\"}],\"unknown\":\"人工章节附加字段\"}],\"extra\":{\"preserve\":\"原编辑不丢字段\"},\"session_id\":\"comparison-demo\"},\"created_at\":\"2026-10-05T14:04:38.995295+00:00\",\"digest\":\"20fc79e3d2e94373e58b19ffc17046d85a59b717a2b4e7ca870fe35434cfaf4a\",\"impacts\":[{\"reason\":\"该片段或镜头的参考图、视频及成片需人工核对\",\"segment_id\":\"seg-1\",\"shot_number\":1}],\"number\":7,\"restored_from\":null,\"source\":\"external\",\"stage\":\"storyboard\",\"version_id\":\"a6aad647da7147f58314891928df8736\"},{\"changes\":[{\"after\":\"null\",\"after_present\":false,\"before\":\"[\\\"阿舟\\\"]\",\"before_present\":true,\"path\":[\"episodes\",0,\"segments\",0,\"characters\"]},{\"after\":\"null\",\"after_present\":false,\"before\":\"1\",\"before_present\":true,\"path\":[\"episodes\",0,\"segments\",0,\"episode_number\"]},{\"after\":\"null\",\"after_present\":false,\"before\":\"渡口\",\"before_present\":true,\"path\":[\"episodes\",0,\"segments\",0,\"location\"]},{\"after\":\"seg-new\",\"after_present\":true,\"before\":\"seg-1\",\"before_present\":true,\"path\":[\"episodes\",0,\"segments\",0,\"segment_id\"]},{\"after\":\"null\",\"after_present\":false,\"before\":\"1\",\"before_present\":true,\"path\":[\"episodes\",0,\"segments\",0,\"segment_number\"]},{\"after\":\"[{\\\"content\\\":\\\"青年把灯交给守望者。\\\",\\\"dialogue\\\":\\\"我们一起点灯。\\\",\\\"duration\\\":5,\\\"shot_number\\\":1}]\",\"after_present\":true,\"before\":\"[{\\\"content\\\":\\\"阿舟望向河面。\\\",\\\"dialogue\\\":\\\"和你一起等最后一班渡船。\\\",\\\"duration\\\":5,\\\"shot_number\\\":1,\\\"shot_type\\\":\\\"中景\\\",\\\"unknown\\\":{\\\"binding\\\":\\\"人工附加字段保留\\\"}},{\\\"content\\\":\\\"岸边的灯亮起。\\\",\\\"duration\\\":5,\\\"shot_number\\\":2,\\\"shot_type\\\":\\\"中景\\\",\\\"unknown\\\":{\\\"binding\\\":\\\"人工附加字段保留\\\"}}]\",\"before_present\":true,\"path\":[\"episodes\",0,\"segments\",0,\"shots\"]},{\"after\":\"null\",\"after_present\":false,\"before\":\"10\",\"before_present\":true,\"path\":[\"episodes\",0,\"segments\",0,\"total_duration\"]},{\"after\":\"灯塔旁的新木桥。\",\"after_present\":true,\"before\":\"暮色渡口，青年站在木桥上。\",\"before_present\":true,\"path\":[\"episodes\",0,\"segments\",0,\"visual_prompt\"]}],\"content\":{\"episodes\":[{\"episode_number\":1,\"episode_title\":\"最后的渡船\",\"segments\":[{\"segment_id\":\"seg-new\",\"shots\":[{\"content\":\"青年把灯交给守望者。\",\"dialogue\":\"我们一起点灯。\",\"duration\":5,\"shot_number\":1}],\"visual_prompt\":\"灯塔旁的新木桥。\"},{\"characters\":[\"守望者\"],\"episode_number\":1,\"location\":\"灯塔\",\"segment_id\":\"seg-2\",\"segment_number\":2,\"shots\":[{\"content\":\"守望者点亮灯塔。\",\"duration\":5,\"shot_number\":1,\"shot_type\":\"中景\",\"unknown\":{\"binding\":\"人工附加字段保留\"}}],\"total_duration\":5,\"visual_prompt\":\"灯塔与远处渡船。\"}],\"unknown\":\"人工章节附加字段\"}],\"extra\":{\"preserve\":\"原编辑不丢字段\"},\"session_id\":\"comparison-demo\"},\"created_at\":\"2026-10-05T14:04:39.000063+00:00\",\"digest\":\"24f673528e4ffc4ffbdee3ee9d8fa98f880e85e35948c451edf1d8ac74f6b1b3\",\"impacts\":[{\"reason\":\"该片段或镜头的参考图、视频及成片需人工核对\",\"segment_id\":\"seg-1\",\"shot_number\":1},{\"reason\":\"该片段或镜头的参考图、视频及成片需人工核对\",\"segment_id\":\"seg-1\",\"shot_number\":2},{\"reason\":\"该片段或镜头的参考图、视频及成片需人工核对\",\"segment_id\":\"seg-new\",\"shot_number\":1}],\"number\":8,\"restored_from\":null,\"source\":\"external\",\"stage\":\"storyboard\",\"version_id\":\"3c7277f69fda44bead55aec1cb6d4b97\"}]}\n",
+    "headers": {
+      "content-disposition": "attachment; filename=\"text-versions-comparison-demo-d836fc97796e.json\"",
+      "cache-control": "no-store",
+      "x-content-type-options": "nosniff",
+      "x-revision-token": "d836fc97796eb23fca871553ef5b875548ba31dd88b9ee99aa1ac3eb8f18e277",
+      "x-export-format": "json",
+      "x-export-versions": "8",
+      "x-export-sha256": "890d14146ec25379d4f02b77719d6a84eca40403dc30a12275123098a8cc9025",
+      "content-length": "15445",
+      "content-type": "application/json",
+      "x-export-bytes": "15445"
+    }
+  },
+  "text": {
+    "body": "创作工作室 · 文字版本导出\n项目：comparison-demo\n导出依据：d836fc97796eb23fca871553ef5b875548ba31dd88b9ee99aa1ac3eb8f18e277\n范围：当前剧本、当前分镜与全部 8 条已归档文字版本\n仅文字留存；不含未保存草稿、媒体、计划、任务、费用或人工核对记录。没有导入恢复功能。\n\n===== 当前剧本 · 已归档 v6 =====\n内容摘要：07ea6992b24127f3142b7d4714c97de29b54cc1e3066412a5eb9590dfd2409fd\n章节 · 1 · 附加字段 act_number\n1\n章节 · 1 · 附加字段 act_title\n渡口\n章节 · 1 · 正文\n阿舟说：“我会等最后一班渡船。”\n章节 · 1 · 章节编号\n1\n章节 · 2 · 附加字段 act_number\n2\n章节 · 2 · 附加字段 act_title\n灯塔\n章节 · 2 · 正文\n守望者点亮灯塔，远处的船缓缓靠岸。\n章节 · 2 · 章节编号\n2\n附加字段 extra · 附加字段 preserve\n人工附加字段\n附加字段 genre · 1\n剧情\n梗概\n青年和守望者共同点亮灯塔，迎接最后一班渡船。\n附加字段 mood\n宁静\n附加字段 phase\ncompleted\n附加字段 session_id\ncomparison-demo\n标题\n最后一班渡船 · 人工第二版\n附加字段 制作批次\n1\n附加字段 新增说明\nnull\n完整结构（保留附加字段与类型）\n{\"episodes\":[{\"act_number\":1,\"act_title\":\"渡口\",\"content\":\"阿舟说：“我会等最后一班渡船。”\",\"episode_number\":1},{\"act_number\":2,\"act_title\":\"灯塔\",\"content\":\"守望者点亮灯塔，远处的船缓缓靠岸。\",\"episode_number\":2}],\"extra\":{\"preserve\":\"人工附加字段\"},\"genre\":[\"剧情\"],\"logline\":\"青年和守望者共同点亮灯塔，迎接最后一班渡船。\",\"mood\":\"宁静\",\"phase\":\"completed\",\"session_id\":\"comparison-demo\",\"title\":\"最后一班渡船 · 人工第二版\",\"制作批次\":1,\"新增说明\":null}\n\n===== 当前分镜 · 已归档 v8 =====\n内容摘要：24f673528e4ffc4ffbdee3ee9d8fa98f880e85e35948c451edf1d8ac74f6b1b3\n章节 · 1 · 章节编号\n1\n章节 · 1 · 章节标题\n最后的渡船\n章节 · 1 · 片段 · 1 · 片段编号\nseg-new\n章节 · 1 · 片段 · 1 · 镜头 · 1 · 正文\n青年把灯交给守望者。\n章节 · 1 · 片段 · 1 · 镜头 · 1 · 台词\n我们一起点灯。\n章节 · 1 · 片段 · 1 · 镜头 · 1 · 时长\n5\n章节 · 1 · 片段 · 1 · 镜头 · 1 · 镜头编号\n1\n章节 · 1 · 片段 · 1 · 画面提示词\n灯塔旁的新木桥。\n章节 · 1 · 片段 · 2 · 角色 · 1\n守望者\n章节 · 1 · 片段 · 2 · 章节编号\n1\n章节 · 1 · 片段 · 2 · 附加字段 location\n灯塔\n章节 · 1 · 片段 · 2 · 片段编号\nseg-2\n章节 · 1 · 片段 · 2 · 附加字段 segment_number\n2\n章节 · 1 · 片段 · 2 · 镜头 · 1 · 正文\n守望者点亮灯塔。\n章节 · 1 · 片段 · 2 · 镜头 · 1 · 时长\n5\n章节 · 1 · 片段 · 2 · 镜头 · 1 · 镜头编号\n1\n章节 · 1 · 片段 · 2 · 镜头 · 1 · 景别\n中景\n章节 · 1 · 片段 · 2 · 镜头 · 1 · 附加字段 unknown · 附加字段 binding\n人工附加字段保留\n章节 · 1 · 片段 · 2 · 总时长\n5\n章节 · 1 · 片段 · 2 · 画面提示词\n灯塔与远处渡船。\n章节 · 1 · 附加字段 unknown\n人工章节附加字段\n附加字段 extra · 附加字段 preserve\n原编辑不丢字段\n附加字段 session_id\ncomparison-demo\n完整结构（保留附加字段与类型）\n{\"episodes\":[{\"episode_number\":1,\"episode_title\":\"最后的渡船\",\"segments\":[{\"segment_id\":\"seg-new\",\"shots\":[{\"content\":\"青年把灯交给守望者。\",\"dialogue\":\"我们一起点灯。\",\"duration\":5,\"shot_number\":1}],\"visual_prompt\":\"灯塔旁的新木桥。\"},{\"characters\":[\"守望者\"],\"episode_number\":1,\"location\":\"灯塔\",\"segment_id\":\"seg-2\",\"segment_number\":2,\"shots\":[{\"content\":\"守望者点亮灯塔。\",\"duration\":5,\"shot_number\":1,\"shot_type\":\"中景\",\"unknown\":{\"binding\":\"人工附加字段保留\"}}],\"total_duration\":5,\"visual_prompt\":\"灯塔与远处渡船。\"}],\"unknown\":\"人工章节附加字段\"}],\"extra\":{\"preserve\":\"原编辑不丢字段\"},\"session_id\":\"comparison-demo\"}\n\n===== 归档 v1 · 剧本 · 首次归档 =====\n版本编号：8d2237a660194834a32037fe9c90e2d1\n记录时间：2026-10-05T14:04:38.981465+00:00\n内容摘要：73a91072a174369655e60a1aabb0ec6670f11610dc60359339ac9ccb006b6424\n章节 · 1 · 附加字段 act_number\n1\n章节 · 1 · 附加字段 act_title\n渡口\n章节 · 1 · 正文\n阿舟说：“我会等最后一班渡船。”\n章节 · 1 · 章节编号\n1\n章节 · 2 · 附加字段 act_number\n2\n章节 · 2 · 附加字段 act_title\n灯塔\n章节 · 2 · 正文\n守望者点亮灯塔，远处的船缓缓靠岸。\n章节 · 2 · 章节编号\n2\n附加字段 extra · 附加字段 preserve\n人工附加字段\n附加字段 genre · 1\n剧情\n梗概\n青年与灯塔守望者在渡口相遇。\n附加字段 mood\n宁静\n附加字段 phase\ncompleted\n附加字段 session_id\ncomparison-demo\n标题\n最后一班渡船 · 人工样例\n附加字段 制作批次\n1\n附加字段 待补说明\nnull\n完整结构（保留附加字段与类型）\n{\"episodes\":[{\"act_number\":1,\"act_title\":\"渡口\",\"content\":\"阿舟说：“我会等最后一班渡船。”\",\"episode_number\":1},{\"act_number\":2,\"act_title\":\"灯塔\",\"content\":\"守望者点亮灯塔，远处的船缓缓靠岸。\",\"episode_number\":2}],\"extra\":{\"preserve\":\"人工附加字段\"},\"genre\":[\"剧情\"],\"logline\":\"青年与灯塔守望者在渡口相遇。\",\"mood\":\"宁静\",\"phase\":\"completed\",\"session_id\":\"comparison-demo\",\"title\":\"最后一班渡船 · 人工样例\",\"制作批次\":\"1\",\"待补说明\":null}\n记录的差异与影响（不表示媒体已更新）\n{\"changes\":[],\"impacts\":[]}\n\n===== 归档 v2 · 分镜 · 首次归档 =====\n版本编号：9f8c30ac4b3b4a97a25adeeea0068244\n记录时间：2026-10-05T14:04:38.981671+00:00\n内容摘要：6203a5a1e31302404cc1247411c422f8e65f144d3a1faba484a642ab53233154\n章节 · 1 · 章节编号\n1\n章节 · 1 · 章节标题\n最后的渡船\n章节 · 1 · 片段 · 1 · 角色 · 1\n阿舟\n章节 · 1 · 片段 · 1 · 章节编号\n1\n章节 · 1 · 片段 · 1 · 附加字段 location\n渡口\n章节 · 1 · 片段 · 1 · 片段编号\nseg-1\n章节 · 1 · 片段 · 1 · 附加字段 segment_number\n1\n章节 · 1 · 片段 · 1 · 镜头 · 1 · 正文\n阿舟望向河面。\n章节 · 1 · 片段 · 1 · 镜头 · 1 · 台词\n我会等最后一班渡船。\n章节 · 1 · 片段 · 1 · 镜头 · 1 · 时长\n5\n章节 · 1 · 片段 · 1 · 镜头 · 1 · 镜头编号\n1\n章节 · 1 · 片段 · 1 · 镜头 · 1 · 景别\n中景\n章节 · 1 · 片段 · 1 · 镜头 · 1 · 附加字段 unknown · 附加字段 binding\n人工附加字段保留\n章节 · 1 · 片段 · 1 · 镜头 · 2 · 正文\n岸边的灯亮起。\n章节 · 1 · 片段 · 1 · 镜头 · 2 · 时长\n5\n章节 · 1 · 片段 · 1 · 镜头 · 2 · 镜头编号\n2\n章节 · 1 · 片段 · 1 · 镜头 · 2 · 景别\n中景\n章节 · 1 · 片段 · 1 · 镜头 · 2 · 附加字段 unknown · 附加字段 binding\n人工附加字段保留\n章节 · 1 · 片段 · 1 · 总时长\n10\n章节 · 1 · 片段 · 1 · 画面提示词\n暮色渡口，青年站在木桥上。\n章节 · 1 · 片段 · 2 · 角色 · 1\n守望者\n章节 · 1 · 片段 · 2 · 章节编号\n1\n章节 · 1 · 片段 · 2 · 附加字段 location\n灯塔\n章节 · 1 · 片段 · 2 · 片段编号\nseg-2\n章节 · 1 · 片段 · 2 · 附加字段 segment_number\n2\n章节 · 1 · 片段 · 2 · 镜头 · 1 · 正文\n守望者点亮灯塔。\n章节 · 1 · 片段 · 2 · 镜头 · 1 · 时长\n5\n章节 · 1 · 片段 · 2 · 镜头 · 1 · 镜头编号\n1\n章节 · 1 · 片段 · 2 · 镜头 · 1 · 景别\n中景\n章节 · 1 · 片段 · 2 · 镜头 · 1 · 附加字段 unknown · 附加字段 binding\n人工附加字段保留\n章节 · 1 · 片段 · 2 · 总时长\n5\n章节 · 1 · 片段 · 2 · 画面提示词\n灯塔与远处渡船。\n章节 · 1 · 附加字段 unknown\n人工章节附加字段\n附加字段 extra · 附加字段 preserve\n原编辑不丢字段\n附加字段 session_id\ncomparison-demo\n完整结构（保留附加字段与类型）\n{\"episodes\":[{\"episode_number\":1,\"episode_title\":\"最后的渡船\",\"segments\":[{\"characters\":[\"阿舟\"],\"episode_number\":1,\"location\":\"渡口\",\"segment_id\":\"seg-1\",\"segment_number\":1,\"shots\":[{\"content\":\"阿舟望向河面。\",\"dialogue\":\"我会等最后一班渡船。\",\"duration\":5,\"shot_number\":1,\"shot_type\":\"中景\",\"unknown\":{\"binding\":\"人工附加字段保留\"}},{\"content\":\"岸边的灯亮起。\",\"duration\":5,\"shot_number\":2,\"shot_type\":\"中景\",\"unknown\":{\"binding\":\"人工附加字段保留\"}}],\"total_duration\":10,\"visual_prompt\":\"暮色渡口，青年站在木桥上。\"},{\"characters\":[\"守望者\"],\"episode_number\":1,\"location\":\"灯塔\",\"segment_id\":\"seg-2\",\"segment_number\":2,\"shots\":[{\"content\":\"守望者点亮灯塔。\",\"duration\":5,\"shot_number\":1,\"shot_type\":\"中景\",\"unknown\":{\"binding\":\"人工附加字段保留\"}}],\"total_duration\":5,\"visual_prompt\":\"灯塔与远处渡船。\"}],\"unknown\":\"人工章节附加字段\"}],\"extra\":{\"preserve\":\"原编辑不丢字段\"},\"session_id\":\"comparison-demo\"}\n记录的差异与影响（不表示媒体已更新）\n{\"changes\":[],\"impacts\":[]}\n\n===== 归档 v3 · 剧本 · 原入口更新归档 =====\n版本编号：d13c4cd6ad204cf7b14d9b633ca4fe15\n记录时间：2026-10-05T14:04:38.981864+00:00\n内容摘要：dce2f26361f4f2f989a65c43b45e7acfb005df9aa13b57a86cb5eb31ef1c9195\n章节 · 1 · 附加字段 act_number\n1\n章节 · 1 · 附加字段 act_title\n渡口\n章节 · 1 · 正文\n阿舟说：“我会等最后一班渡船。”\n章节 · 1 · 章节编号\n1\n章节 · 2 · 附加字段 act_number\n2\n章节 · 2 · 附加字段 act_title\n灯塔\n章节 · 2 · 正文\n守望者点亮灯塔，远处的船缓缓靠岸。\n章节 · 2 · 章节编号\n2\n附加字段 extra · 附加字段 preserve\n人工附加字段\n附加字段 genre · 1\n剧情\n梗概\n青年等待渡船，守望者独自守着灯塔。\n附加字段 mood\n宁静\n附加字段 phase\ncompleted\n附加字段 session_id\ncomparison-demo\n标题\n最后一班渡船 · 人工第一版\n附加字段 制作批次\n1\n附加字段 待补说明\nnull\n完整结构（保留附加字段与类型）\n{\"episodes\":[{\"act_number\":1,\"act_title\":\"渡口\",\"content\":\"阿舟说：“我会等最后一班渡船。”\",\"episode_number\":1},{\"act_number\":2,\"act_title\":\"灯塔\",\"content\":\"守望者点亮灯塔，远处的船缓缓靠岸。\",\"episode_number\":2}],\"extra\":{\"preserve\":\"人工附加字段\"},\"genre\":[\"剧情\"],\"logline\":\"青年等待渡船，守望者独自守着灯塔。\",\"mood\":\"宁静\",\"phase\":\"completed\",\"session_id\":\"comparison-demo\",\"title\":\"最后一班渡船 · 人工第一版\",\"制作批次\":\"1\",\"待补说明\":null}\n记录的差异与影响（不表示媒体已更新）\n{\"changes\":[{\"after\":\"青年等待渡船，守望者独自守着灯塔。\",\"after_present\":true,\"before\":\"青年与灯塔守望者在渡口相遇。\",\"before_present\":true,\"path\":[\"logline\"]},{\"after\":\"最后一班渡船 · 人工第一版\",\"after_present\":true,\"before\":\"最后一班渡船 · 人工样例\",\"before_present\":true,\"path\":[\"title\"]}],\"impacts\":[{\"reason\":\"剧本变化，现有分镜、参考图、视频及成片需人工核对\",\"segment_id\":\"seg-1\",\"shot_number\":1},{\"reason\":\"剧本变化，现有分镜、参考图、视频及成片需人工核对\",\"segment_id\":\"seg-1\",\"shot_number\":2},{\"reason\":\"剧本变化，现有分镜、参考图、视频及成片需人工核对\",\"segment_id\":\"seg-2\",\"shot_number\":1}]}\n\n===== 归档 v4 · 剧本 · 原入口更新归档 =====\n版本编号：974a584328bd44e996aaa6327e16a206\n记录时间：2026-10-05T14:04:38.984385+00:00\n内容摘要：07ea6992b24127f3142b7d4714c97de29b54cc1e3066412a5eb9590dfd2409fd\n章节 · 1 · 附加字段 act_number\n1\n章节 · 1 · 附加字段 act_title\n渡口\n章节 · 1 · 正文\n阿舟说：“我会等最后一班渡船。”\n章节 · 1 · 章节编号\n1\n章节 · 2 · 附加字段 act_number\n2\n章节 · 2 · 附加字段 act_title\n灯塔\n章节 · 2 · 正文\n守望者点亮灯塔，远处的船缓缓靠岸。\n章节 · 2 · 章节编号\n2\n附加字段 extra · 附加字段 preserve\n人工附加字段\n附加字段 genre · 1\n剧情\n梗概\n青年和守望者共同点亮灯塔，迎接最后一班渡船。\n附加字段 mood\n宁静\n附加字段 phase\ncompleted\n附加字段 session_id\ncomparison-demo\n标题\n最后一班渡船 · 人工第二版\n附加字段 制作批次\n1\n附加字段 新增说明\nnull\n完整结构（保留附加字段与类型）\n{\"episodes\":[{\"act_number\":1,\"act_title\":\"渡口\",\"content\":\"阿舟说：“我会等最后一班渡船。”\",\"episode_number\":1},{\"act_number\":2,\"act_title\":\"灯塔\",\"content\":\"守望者点亮灯塔，远处的船缓缓靠岸。\",\"episode_number\":2}],\"extra\":{\"preserve\":\"人工附加字段\"},\"genre\":[\"剧情\"],\"logline\":\"青年和守望者共同点亮灯塔，迎接最后一班渡船。\",\"mood\":\"宁静\",\"phase\":\"completed\",\"session_id\":\"comparison-demo\",\"title\":\"最后一班渡船 · 人工第二版\",\"制作批次\":1,\"新增说明\":null}\n记录的差异与影响（不表示媒体已更新）\n{\"changes\":[{\"after\":\"青年和守望者共同点亮灯塔，迎接最后一班渡船。\",\"after_present\":true,\"before\":\"青年等待渡船，守望者独自守着灯塔。\",\"before_present\":true,\"path\":[\"logline\"]},{\"after\":\"最后一班渡船 · 人工第二版\",\"after_present\":true,\"before\":\"最后一班渡船 · 人工第一版\",\"before_present\":true,\"path\":[\"title\"]},{\"after\":\"1\",\"after_present\":true,\"before\":\"1\",\"before_present\":true,\"path\":[\"制作批次\"]},{\"after\":\"null\",\"after_present\":false,\"before\":\"null\",\"before_present\":true,\"path\":[\"待补说明\"]},{\"after\":\"null\",\"after_present\":true,\"before\":\"null\",\"before_present\":false,\"path\":[\"新增说明\"]}],\"impacts\":[{\"reason\":\"剧本变化，现有分镜、参考图、视频及成片需人工核对\",\"segment_id\":\"seg-1\",\"shot_number\":1},{\"reason\":\"剧本变化，现有分镜、参考图、视频及成片需人工核对\",\"segment_id\":\"seg-1\",\"shot_number\":2},{\"reason\":\"剧本变化，现有分镜、参考图、视频及成片需人工核对\",\"segment_id\":\"seg-2\",\"shot_number\":1}]}\n\n===== 归档 v5 · 剧本 · 原入口更新归档 =====\n版本编号：b4aa3971af894478a7f8a02f0735ad5e\n记录时间：2026-10-05T14:04:38.987556+00:00\n内容摘要：dce2f26361f4f2f989a65c43b45e7acfb005df9aa13b57a86cb5eb31ef1c9195\n章节 · 1 · 附加字段 act_number\n1\n章节 · 1 · 附加字段 act_title\n渡口\n章节 · 1 · 正文\n阿舟说：“我会等最后一班渡船。”\n章节 · 1 · 章节编号\n1\n章节 · 2 · 附加字段 act_number\n2\n章节 · 2 · 附加字段 act_title\n灯塔\n章节 · 2 · 正文\n守望者点亮灯塔，远处的船缓缓靠岸。\n章节 · 2 · 章节编号\n2\n附加字段 extra · 附加字段 preserve\n人工附加字段\n附加字段 genre · 1\n剧情\n梗概\n青年等待渡船，守望者独自守着灯塔。\n附加字段 mood\n宁静\n附加字段 phase\ncompleted\n附加字段 session_id\ncomparison-demo\n标题\n最后一班渡船 · 人工第一版\n附加字段 制作批次\n1\n附加字段 待补说明\nnull\n完整结构（保留附加字段与类型）\n{\"episodes\":[{\"act_number\":1,\"act_title\":\"渡口\",\"content\":\"阿舟说：“我会等最后一班渡船。”\",\"episode_number\":1},{\"act_number\":2,\"act_title\":\"灯塔\",\"content\":\"守望者点亮灯塔，远处的船缓缓靠岸。\",\"episode_number\":2}],\"extra\":{\"preserve\":\"人工附加字段\"},\"genre\":[\"剧情\"],\"logline\":\"青年等待渡船，守望者独自守着灯塔。\",\"mood\":\"宁静\",\"phase\":\"completed\",\"session_id\":\"comparison-demo\",\"title\":\"最后一班渡船 · 人工第一版\",\"制作批次\":\"1\",\"待补说明\":null}\n记录的差异与影响（不表示媒体已更新）\n{\"changes\":[{\"after\":\"青年等待渡船，守望者独自守着灯塔。\",\"after_present\":true,\"before\":\"青年和守望者共同点亮灯塔，迎接最后一班渡船。\",\"before_present\":true,\"path\":[\"logline\"]},{\"after\":\"最后一班渡船 · 人工第一版\",\"after_present\":true,\"before\":\"最后一班渡船 · 人工第二版\",\"before_present\":true,\"path\":[\"title\"]},{\"after\":\"1\",\"after_present\":true,\"before\":\"1\",\"before_present\":true,\"path\":[\"制作批次\"]},{\"after\":\"null\",\"after_present\":true,\"before\":\"null\",\"before_present\":false,\"path\":[\"待补说明\"]},{\"after\":\"null\",\"after_present\":false,\"before\":\"null\",\"before_present\":true,\"path\":[\"新增说明\"]}],\"impacts\":[{\"reason\":\"剧本变化，现有分镜、参考图、视频及成片需人工核对\",\"segment_id\":\"seg-1\",\"shot_number\":1},{\"reason\":\"剧本变化，现有分镜、参考图、视频及成片需人工核对\",\"segment_id\":\"seg-1\",\"shot_number\":2},{\"reason\":\"剧本变化，现有分镜、参考图、视频及成片需人工核对\",\"segment_id\":\"seg-2\",\"shot_number\":1}]}\n\n===== 归档 v6 · 剧本 · 原入口更新归档 =====\n版本编号：15d4fa10922a4cecbe85cfbad264fbbf\n记录时间：2026-10-05T14:04:38.990616+00:00\n内容摘要：07ea6992b24127f3142b7d4714c97de29b54cc1e3066412a5eb9590dfd2409fd\n章节 · 1 · 附加字段 act_number\n1\n章节 · 1 · 附加字段 act_title\n渡口\n章节 · 1 · 正文\n阿舟说：“我会等最后一班渡船。”\n章节 · 1 · 章节编号\n1\n章节 · 2 · 附加字段 act_number\n2\n章节 · 2 · 附加字段 act_title\n灯塔\n章节 · 2 · 正文\n守望者点亮灯塔，远处的船缓缓靠岸。\n章节 · 2 · 章节编号\n2\n附加字段 extra · 附加字段 preserve\n人工附加字段\n附加字段 genre · 1\n剧情\n梗概\n青年和守望者共同点亮灯塔，迎接最后一班渡船。\n附加字段 mood\n宁静\n附加字段 phase\ncompleted\n附加字段 session_id\ncomparison-demo\n标题\n最后一班渡船 · 人工第二版\n附加字段 制作批次\n1\n附加字段 新增说明\nnull\n完整结构（保留附加字段与类型）\n{\"episodes\":[{\"act_number\":1,\"act_title\":\"渡口\",\"content\":\"阿舟说：“我会等最后一班渡船。”\",\"episode_number\":1},{\"act_number\":2,\"act_title\":\"灯塔\",\"content\":\"守望者点亮灯塔，远处的船缓缓靠岸。\",\"episode_number\":2}],\"extra\":{\"preserve\":\"人工附加字段\"},\"genre\":[\"剧情\"],\"logline\":\"青年和守望者共同点亮灯塔，迎接最后一班渡船。\",\"mood\":\"宁静\",\"phase\":\"completed\",\"session_id\":\"comparison-demo\",\"title\":\"最后一班渡船 · 人工第二版\",\"制作批次\":1,\"新增说明\":null}\n记录的差异与影响（不表示媒体已更新）\n{\"changes\":[{\"after\":\"青年和守望者共同点亮灯塔，迎接最后一班渡船。\",\"after_present\":true,\"before\":\"青年等待渡船，守望者独自守着灯塔。\",\"before_present\":true,\"path\":[\"logline\"]},{\"after\":\"最后一班渡船 · 人工第二版\",\"after_present\":true,\"before\":\"最后一班渡船 · 人工第一版\",\"before_present\":true,\"path\":[\"title\"]},{\"after\":\"1\",\"after_present\":true,\"before\":\"1\",\"before_present\":true,\"path\":[\"制作批次\"]},{\"after\":\"null\",\"after_present\":false,\"before\":\"null\",\"before_present\":true,\"path\":[\"待补说明\"]},{\"after\":\"null\",\"after_present\":true,\"before\":\"null\",\"before_present\":false,\"path\":[\"新增说明\"]}],\"impacts\":[{\"reason\":\"剧本变化，现有分镜、参考图、视频及成片需人工核对\",\"segment_id\":\"seg-1\",\"shot_number\":1},{\"reason\":\"剧本变化，现有分镜、参考图、视频及成片需人工核对\",\"segment_id\":\"seg-1\",\"shot_number\":2},{\"reason\":\"剧本变化，现有分镜、参考图、视频及成片需人工核对\",\"segment_id\":\"seg-2\",\"shot_number\":1}]}\n\n===== 归档 v7 · 分镜 · 原入口更新归档 =====\n版本编号：a6aad647da7147f58314891928df8736\n记录时间：2026-10-05T14:04:38.995295+00:00\n内容摘要：20fc79e3d2e94373e58b19ffc17046d85a59b717a2b4e7ca870fe35434cfaf4a\n章节 · 1 · 章节编号\n1\n章节 · 1 · 章节标题\n最后的渡船\n章节 · 1 · 片段 · 1 · 角色 · 1\n阿舟\n章节 · 1 · 片段 · 1 · 章节编号\n1\n章节 · 1 · 片段 · 1 · 附加字段 location\n渡口\n章节 · 1 · 片段 · 1 · 片段编号\nseg-1\n章节 · 1 · 片段 · 1 · 附加字段 segment_number\n1\n章节 · 1 · 片段 · 1 · 镜头 · 1 · 正文\n阿舟望向河面。\n章节 · 1 · 片段 · 1 · 镜头 · 1 · 台词\n和你一起等最后一班渡船。\n章节 · 1 · 片段 · 1 · 镜头 · 1 · 时长\n5\n章节 · 1 · 片段 · 1 · 镜头 · 1 · 镜头编号\n1\n章节 · 1 · 片段 · 1 · 镜头 · 1 · 景别\n中景\n章节 · 1 · 片段 · 1 · 镜头 · 1 · 附加字段 unknown · 附加字段 binding\n人工附加字段保留\n章节 · 1 · 片段 · 1 · 镜头 · 2 · 正文\n岸边的灯亮起。\n章节 · 1 · 片段 · 1 · 镜头 · 2 · 时长\n5\n章节 · 1 · 片段 · 1 · 镜头 · 2 · 镜头编号\n2\n章节 · 1 · 片段 · 1 · 镜头 · 2 · 景别\n中景\n章节 · 1 · 片段 · 1 · 镜头 · 2 · 附加字段 unknown · 附加字段 binding\n人工附加字段保留\n章节 · 1 · 片段 · 1 · 总时长\n10\n章节 · 1 · 片段 · 1 · 画面提示词\n暮色渡口，青年站在木桥上。\n章节 · 1 · 片段 · 2 · 角色 · 1\n守望者\n章节 · 1 · 片段 · 2 · 章节编号\n1\n章节 · 1 · 片段 · 2 · 附加字段 location\n灯塔\n章节 · 1 · 片段 · 2 · 片段编号\nseg-2\n章节 · 1 · 片段 · 2 · 附加字段 segment_number\n2\n章节 · 1 · 片段 · 2 · 镜头 · 1 · 正文\n守望者点亮灯塔。\n章节 · 1 · 片段 · 2 · 镜头 · 1 · 时长\n5\n章节 · 1 · 片段 · 2 · 镜头 · 1 · 镜头编号\n1\n章节 · 1 · 片段 · 2 · 镜头 · 1 · 景别\n中景\n章节 · 1 · 片段 · 2 · 镜头 · 1 · 附加字段 unknown · 附加字段 binding\n人工附加字段保留\n章节 · 1 · 片段 · 2 · 总时长\n5\n章节 · 1 · 片段 · 2 · 画面提示词\n灯塔与远处渡船。\n章节 · 1 · 附加字段 unknown\n人工章节附加字段\n附加字段 extra · 附加字段 preserve\n原编辑不丢字段\n附加字段 session_id\ncomparison-demo\n完整结构（保留附加字段与类型）\n{\"episodes\":[{\"episode_number\":1,\"episode_title\":\"最后的渡船\",\"segments\":[{\"characters\":[\"阿舟\"],\"episode_number\":1,\"location\":\"渡口\",\"segment_id\":\"seg-1\",\"segment_number\":1,\"shots\":[{\"content\":\"阿舟望向河面。\",\"dialogue\":\"和你一起等最后一班渡船。\",\"duration\":5,\"shot_number\":1,\"shot_type\":\"中景\",\"unknown\":{\"binding\":\"人工附加字段保留\"}},{\"content\":\"岸边的灯亮起。\",\"duration\":5,\"shot_number\":2,\"shot_type\":\"中景\",\"unknown\":{\"binding\":\"人工附加字段保留\"}}],\"total_duration\":10,\"visual_prompt\":\"暮色渡口，青年站在木桥上。\"},{\"characters\":[\"守望者\"],\"episode_number\":1,\"location\":\"灯塔\",\"segment_id\":\"seg-2\",\"segment_number\":2,\"shots\":[{\"content\":\"守望者点亮灯塔。\",\"duration\":5,\"shot_number\":1,\"shot_type\":\"中景\",\"unknown\":{\"binding\":\"人工附加字段保留\"}}],\"total_duration\":5,\"visual_prompt\":\"灯塔与远处渡船。\"}],\"unknown\":\"人工章节附加字段\"}],\"extra\":{\"preserve\":\"原编辑不丢字段\"},\"session_id\":\"comparison-demo\"}\n记录的差异与影响（不表示媒体已更新）\n{\"changes\":[{\"after\":\"和你一起等最后一班渡船。\",\"after_present\":true,\"before\":\"我会等最后一班渡船。\",\"before_present\":true,\"path\":[\"episodes\",0,\"segments\",0,\"shots\",0,\"dialogue\"]}],\"impacts\":[{\"reason\":\"该片段或镜头的参考图、视频及成片需人工核对\",\"segment_id\":\"seg-1\",\"shot_number\":1}]}\n\n===== 归档 v8 · 分镜 · 原入口更新归档 =====\n版本编号：3c7277f69fda44bead55aec1cb6d4b97\n记录时间：2026-10-05T14:04:39.000063+00:00\n内容摘要：24f673528e4ffc4ffbdee3ee9d8fa98f880e85e35948c451edf1d8ac74f6b1b3\n章节 · 1 · 章节编号\n1\n章节 · 1 · 章节标题\n最后的渡船\n章节 · 1 · 片段 · 1 · 片段编号\nseg-new\n章节 · 1 · 片段 · 1 · 镜头 · 1 · 正文\n青年把灯交给守望者。\n章节 · 1 · 片段 · 1 · 镜头 · 1 · 台词\n我们一起点灯。\n章节 · 1 · 片段 · 1 · 镜头 · 1 · 时长\n5\n章节 · 1 · 片段 · 1 · 镜头 · 1 · 镜头编号\n1\n章节 · 1 · 片段 · 1 · 画面提示词\n灯塔旁的新木桥。\n章节 · 1 · 片段 · 2 · 角色 · 1\n守望者\n章节 · 1 · 片段 · 2 · 章节编号\n1\n章节 · 1 · 片段 · 2 · 附加字段 location\n灯塔\n章节 · 1 · 片段 · 2 · 片段编号\nseg-2\n章节 · 1 · 片段 · 2 · 附加字段 segment_number\n2\n章节 · 1 · 片段 · 2 · 镜头 · 1 · 正文\n守望者点亮灯塔。\n章节 · 1 · 片段 · 2 · 镜头 · 1 · 时长\n5\n章节 · 1 · 片段 · 2 · 镜头 · 1 · 镜头编号\n1\n章节 · 1 · 片段 · 2 · 镜头 · 1 · 景别\n中景\n章节 · 1 · 片段 · 2 · 镜头 · 1 · 附加字段 unknown · 附加字段 binding\n人工附加字段保留\n章节 · 1 · 片段 · 2 · 总时长\n5\n章节 · 1 · 片段 · 2 · 画面提示词\n灯塔与远处渡船。\n章节 · 1 · 附加字段 unknown\n人工章节附加字段\n附加字段 extra · 附加字段 preserve\n原编辑不丢字段\n附加字段 session_id\ncomparison-demo\n完整结构（保留附加字段与类型）\n{\"episodes\":[{\"episode_number\":1,\"episode_title\":\"最后的渡船\",\"segments\":[{\"segment_id\":\"seg-new\",\"shots\":[{\"content\":\"青年把灯交给守望者。\",\"dialogue\":\"我们一起点灯。\",\"duration\":5,\"shot_number\":1}],\"visual_prompt\":\"灯塔旁的新木桥。\"},{\"characters\":[\"守望者\"],\"episode_number\":1,\"location\":\"灯塔\",\"segment_id\":\"seg-2\",\"segment_number\":2,\"shots\":[{\"content\":\"守望者点亮灯塔。\",\"duration\":5,\"shot_number\":1,\"shot_type\":\"中景\",\"unknown\":{\"binding\":\"人工附加字段保留\"}}],\"total_duration\":5,\"visual_prompt\":\"灯塔与远处渡船。\"}],\"unknown\":\"人工章节附加字段\"}],\"extra\":{\"preserve\":\"原编辑不丢字段\"},\"session_id\":\"comparison-demo\"}\n记录的差异与影响（不表示媒体已更新）\n{\"changes\":[{\"after\":\"null\",\"after_present\":false,\"before\":\"[\\\"阿舟\\\"]\",\"before_present\":true,\"path\":[\"episodes\",0,\"segments\",0,\"characters\"]},{\"after\":\"null\",\"after_present\":false,\"before\":\"1\",\"before_present\":true,\"path\":[\"episodes\",0,\"segments\",0,\"episode_number\"]},{\"after\":\"null\",\"after_present\":false,\"before\":\"渡口\",\"before_present\":true,\"path\":[\"episodes\",0,\"segments\",0,\"location\"]},{\"after\":\"seg-new\",\"after_present\":true,\"before\":\"seg-1\",\"before_present\":true,\"path\":[\"episodes\",0,\"segments\",0,\"segment_id\"]},{\"after\":\"null\",\"after_present\":false,\"before\":\"1\",\"before_present\":true,\"path\":[\"episodes\",0,\"segments\",0,\"segment_number\"]},{\"after\":\"[{\\\"content\\\":\\\"青年把灯交给守望者。\\\",\\\"dialogue\\\":\\\"我们一起点灯。\\\",\\\"duration\\\":5,\\\"shot_number\\\":1}]\",\"after_present\":true,\"before\":\"[{\\\"content\\\":\\\"阿舟望向河面。\\\",\\\"dialogue\\\":\\\"和你一起等最后一班渡船。\\\",\\\"duration\\\":5,\\\"shot_number\\\":1,\\\"shot_type\\\":\\\"中景\\\",\\\"unknown\\\":{\\\"binding\\\":\\\"人工附加字段保留\\\"}},{\\\"content\\\":\\\"岸边的灯亮起。\\\",\\\"duration\\\":5,\\\"shot_number\\\":2,\\\"shot_type\\\":\\\"中景\\\",\\\"unknown\\\":{\\\"binding\\\":\\\"人工附加字段保留\\\"}}]\",\"before_present\":true,\"path\":[\"episodes\",0,\"segments\",0,\"shots\"]},{\"after\":\"null\",\"after_present\":false,\"before\":\"10\",\"before_present\":true,\"path\":[\"episodes\",0,\"segments\",0,\"total_duration\"]},{\"after\":\"灯塔旁的新木桥。\",\"after_present\":true,\"before\":\"暮色渡口，青年站在木桥上。\",\"before_present\":true,\"path\":[\"episodes\",0,\"segments\",0,\"visual_prompt\"]}],\"impacts\":[{\"reason\":\"该片段或镜头的参考图、视频及成片需人工核对\",\"segment_id\":\"seg-1\",\"shot_number\":1},{\"reason\":\"该片段或镜头的参考图、视频及成片需人工核对\",\"segment_id\":\"seg-1\",\"shot_number\":2},{\"reason\":\"该片段或镜头的参考图、视频及成片需人工核对\",\"segment_id\":\"seg-new\",\"shot_number\":1}]}\n",
+    "headers": {
+      "content-disposition": "attachment; filename=\"text-versions-comparison-demo-d836fc97796e.txt\"",
+      "cache-control": "no-store",
+      "x-content-type-options": "nosniff",
+      "x-revision-token": "d836fc97796eb23fca871553ef5b875548ba31dd88b9ee99aa1ac3eb8f18e277",
+      "x-export-format": "text",
+      "x-export-versions": "8",
+      "x-export-sha256": "0d465b6de88de45bf24e778b6e252950eacd9fdd6a4649570d6c9325711c389e",
+      "content-length": "27731",
+      "content-type": "text/plain; charset=utf-8",
+      "x-export-bytes": "27731"
+    }
+  }
+}
