@@ -21,7 +21,7 @@ const nextConfig: NextConfig = {
         destination: `${backendApiUrl}/api/sessions/:path*`,
       },
       // 工作流 API
-      ...['/api/assets', '/api/assets/:path*', '/api/asset-references', '/api/asset-references/:path*', '/api/generation-tasks', '/api/generation-tasks/:path*'].map(source => ({
+      ...['/api/assets', '/api/assets/:path*', '/api/asset-references', '/api/asset-references/:path*', '/api/generation-tasks', '/api/generation-tasks/:path*', '/api/generation-plans', '/api/generation-plans/:path*'].map(source => ({
         source, destination: `${backendApiUrl}${source}`,
       })),
       {

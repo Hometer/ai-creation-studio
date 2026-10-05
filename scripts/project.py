@@ -82,7 +82,7 @@ def check() -> int:
 
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("command", choices=["doctor", "backend", "frontend", "media-demo", "plan-demo", "task-demo", "task-center-demo", "wan-replay", "check"])
+    parser.add_argument("command", choices=["doctor", "backend", "frontend", "media-demo", "plan-demo", "task-demo", "task-center-demo", "plan-center-demo", "wan-replay", "check"])
     parser.add_argument("--port", type=int, help="服务端口；默认后端 8000、前端 3000、人工媒体验收 8001")
     parser.add_argument("--scenario", choices=["success", "lost-submit", "query-timeout", "bad-video"], default="success")
     parser.add_argument("--action", choices=["step", "status"], default="status", help="万相离线演练：只读状态或推进一步")
@@ -94,7 +94,7 @@ def main() -> int:
     if arguments.command == "wan-replay":
         return run([str(PYTHON), "-m", "core.wan_replay", "--directory", str(ROOT / "data/wan-protocol-replay"),
                     "--scenario", arguments.scenario, "--action", arguments.action], BACKEND)
-    port = arguments.port or {"backend": 8000, "frontend": 3000, "media-demo": 8001, "plan-demo": 8001, "task-demo": 8001, "task-center-demo": 8001}[arguments.command]
+    port = arguments.port or {"backend": 8000, "frontend": 3000, "media-demo": 8001, "plan-demo": 8001, "task-demo": 8001, "task-center-demo": 8001, "plan-center-demo": 8001}[arguments.command]
     if not 1 <= port <= 65535:
         parser.error("端口必须在 1—65535 之间")
     if not port_available(port):
@@ -107,6 +107,8 @@ def main() -> int:
         ], BACKEND)
     if arguments.command == "task-center-demo":
         return run([str(PYTHON), "-m", "api.task_center_demo", "--directory", str(ROOT / "data/task-center-demo"), "--port", str(port)], BACKEND)
+    if arguments.command == "plan-center-demo":
+        return run([str(PYTHON), "-m", "api.plan_center_demo", "--directory", str(ROOT / "data/plan-center-demo"), "--port", str(port)], BACKEND)
     if arguments.command in {"media-demo", "plan-demo", "task-demo"}:
         directory = {"media-demo": "media-archive-demo", "plan-demo": "generation-plan-demo", "task-demo": "generation-task-demo"}[arguments.command]
         return run([str(PYTHON), "-m", "api.media_demo", "--directory", str(ROOT / "data" / directory),
