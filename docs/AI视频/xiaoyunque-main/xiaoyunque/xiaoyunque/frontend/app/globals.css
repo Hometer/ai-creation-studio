@@ -975,3 +975,6 @@ body {
 .creation-apply { margin-top: 1.4rem; padding-top: 1rem; border-top: 1px solid var(--border); min-width: 0; }
 .creation-apply-preview { margin-top: 1rem; }
 .creation-apply h4 { margin: 1rem 0 .4rem; font-size: .9rem; }
+
+.creation-draft-history { margin-top: 1rem; }
+.creation-draft-history > .revision-field { margin-top: .8rem; }

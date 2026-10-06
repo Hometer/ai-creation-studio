@@ -494,3 +494,17 @@ GET／POST `/api/project/{id}/content-revisions/reviews` 提供真实读取与�
 根 `python3.12 scripts/project.py check`；定向后端在 backend 运行 `.venv/bin/python -m pytest tests/test_co_creation_drafts.py -q`；frontend 运行 `npm test`、`npm run typecheck`、`npm run lint -- --max-warnings=0`、`npm run build`。全量后端 980/980（新增 42）、前端 413/413（新增 24），类型／零警告 Lint／生产构建通过；双窗口冲突、回执丢失、生产断网、操作锁、刷新／返回恢复、正式应用与六宽度通过。实际 HTTP 服务退出重启八组响应／四文件一致，原 208 保护文件保持、主库五项目可读。
 
 [先行文档](docs/阶段文档/阶段3-第15子阶段-共创修改草稿持久化开发文档.md) 与 [证据／闸门](docs/evidence/阶段3/共创修改草稿/验收报告.md) 已交付；本地提交、不推送。真实模型、业务、真机和整个阶段仍待验，既有 A07／依赖告警继续开放。
+
+## 历史草稿选择与恢复（阶段 3 第 16 子阶段）
+
+项目 → 对话共创 → 选择请求 → 展开“已保存草稿”。每个请求单独显示保存次数、日期和完整文字；选择只查看历史，当前输入保持。点“载入这份草稿到编辑框”才替换本页输入；若有不同的未保存文字，会先确认替换。取消保留输入与预览，确认载入清除旧预览和勾选，正式应用仍需重新预览、逐次确认。
+
+旧稿载入后，点“保存修改草稿”追加一份新记录，不覆盖旧稿、不改正文或文字版本。刷新／返回仍恢复最近保存草稿；同页重新读取或新增草稿保留已选历史及当前输入。旧依据、撤回、已应用或项目执行中的历史只供查看和复制。保存中锁定选择及载入；断网／409／不确定回执保留选择与输入，读取找回不自动重发。历史查看位置不持久化，未另存的载入内容只在本页。沿用原草稿接口／数据格式和上限，无迁移或新依赖。
+
+打开 [第三轮人工预览](http://127.0.0.1:3012/projects/comparison-demo/co-creation?intent=cfbc464f920845208b73f7a11a2265aa)，展开历史并选择第一份，可与编辑框的第二份区分。标题请求已经关联第九版，分镜请求为旧依据，均可逐份浏览草稿。三请求、十三草稿、一关联、九文字版本均为人工样例，不代表模型效果。
+
+后端停止后，从根运行 `python3.12 scripts/project.py co-creation-draft-history-demo`（默认 8012），数据独立在忽略的 `data/co-creation-draft-history-demo/`。独立前端副本 `/tmp/co-history-frontend` 已保留生产构建，在该目录运行 `BACKEND_API_URL=http://127.0.0.1:8012 npm run start -- --hostname 127.0.0.1 --port 3012`。临时目录被清理时，由开发者把主 frontend 复制到仓库外，排除 `.env*`／`.next`，安装或复用依赖，以 `BACKEND_API_URL=http://127.0.0.1:8012 npm run build -- --webpack` 构建后再启动。主服务仍用根 backend／frontend 入口，保持独立 `.next` 和数据目录。
+
+全量复验入口 `python3.12 scripts/project.py check`；定向后端在 backend 运行 `.venv/bin/python -m pytest tests/test_co_creation_draft_history.py -q`；frontend 运行 `npm test`、`npm run typecheck`、`npm run lint -- --max-warnings=0`、`npm run build`。本轮分别执行全量后端 982/982（新增 2）、前端 425/425（新增 12）、类型／零警告 Lint／生产构建，全部通过。真实浏览器查看、载入、另存／刷新、故障找回、操作锁及六宽度通过；HTTP 实际退出重启八组响应与四文件一致，原 212 个保护文件保持、主库五项目读取成功。
+
+[先行开发文档](docs/阶段文档/阶段3-第16子阶段-历史草稿选择与恢复开发文档.md) 与 [证据／闸门](docs/evidence/阶段3/历史草稿选择与恢复/验收报告.md) 已交付。本轮工程结果本地提交、不推送；真实模型、业务、真机和整个阶段仍待验，A07／依赖告警继续开放。下一轮优先文字版本备份导入的只读预检。

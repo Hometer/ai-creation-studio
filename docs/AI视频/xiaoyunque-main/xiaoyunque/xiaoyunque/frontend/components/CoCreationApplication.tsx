@@ -1,6 +1,8 @@
 'use client';
 import {useCallback,useEffect,useRef,useState} from 'react';
 import Link from 'next/link';
+import CoCreationDraftHistory from './CoCreationDraftHistory';
+import {draftRestoration} from '@/lib/coCreationDraftHistory';
 import {RevisionError} from '@/lib/contentRevisions';
 import {applyInput,previewApplication,saveApplication,type ApplicationWorkspace,type ApplyPreview,type ApplySave} from '@/lib/coCreationApplications';
 import {readDrafts,saveDraft,draftInput,latestDraft,type Draft,type DraftInput} from '@/lib/coCreationDrafts';
@@ -49,8 +51,16 @@ export default function CoCreationApplication({projectId,intentId,data,onChange,
     }catch(e){if(alive.current&&generation===serial.current){setError(e instanceof Error?e.message:'操作未完成');setPreview(null);setAck(false);if(!(e instanceof RevisionError)||e.uncertain||e.status===409||e.status===503)setBlocked(true);else {pending.current=null;pendingDraft.current=null;}}}
     finally{if(alive.current&&generation===serial.current){lock.current=false;setBusy(false);}}
   };
-  const loadDraft=()=>{if(!latest||lock.current||disabled)return;if(unsaved&&!window.confirm('载入已保存草稿会替换本页未保存的新文字。确认载入？'))return;setValue(latest.value);setPreview(null);setAck(false);setNotice('已载入最近保存的草稿；请基于当前正文重新预览，保存确认不会恢复。');};
   const unavailable=disabled||busy||blocked||data.workspace.running||intent.status!=='confirmed'||!!application;
+  const loadDraft=(draftId:string)=>{
+    if(lock.current||unavailable)return;
+    try{
+      const restored=draftRestoration(data,drafts,intentId,draftId,value);
+      if(restored.requiresConfirmation&&!window.confirm('载入已保存草稿会替换本页未保存的新文字。确认载入？'))return;
+      setValue(restored.value);setPreview(null);setAck(false);setError('');
+      setNotice(`已载入第 ${restored.ordinal} 次已保存草稿到本页。保存为新草稿后刷新可恢复；正式应用仍需重新预览确认。`);
+    }catch(e){setError(e instanceof Error?e.message:'所选草稿暂不可用，请重新读取核对');}
+  };
   return <section className="creation-apply">
     <h3>{application?'已保存为文字版本':'把已确认意图改成文字'}</h3>
     {application&&version?<><p className="revision-notice">第 {version.number} 版已留存{version.current?'，目前仍是当前正文':'，可到版本页查看历史'}。撤回请求不会回退已保存的正文。</p><Link href={`/projects/${encodeURIComponent(projectId)}/revisions?version=${version.version_id}`}>查看关联文字版本</Link></>:(intent.status==='confirmed'||!!latest||value!==intent.target.value)?<>
@@ -58,12 +68,12 @@ export default function CoCreationApplication({projectId,intentId,data,onChange,
       <label className="revision-field">修改后的文字<textarea rows={5} maxLength={10000} value={value} disabled={unavailable} onChange={e=>{setValue(e.target.value);setPreview(null);setAck(false);}}/></label>
       <p className="revision-muted">{value.length} / 10000 字 · 可以明确清空该字段</p>
       <p className="revision-muted creation-draft-status">{unsaved?'有未保存的修改':latest?'草稿已保存 · '+new Date(latest.created_at).toLocaleString('zh-CN'):'尚未保存修改草稿'}。草稿不会改正文，预览和勾选不会随草稿恢复。</p>
-      <div className="revision-actions"><button disabled={unavailable||!unsaved} onClick={()=>void run('draft')}>保存修改草稿</button><button disabled={busy||disabled||!latest} onClick={loadDraft}>载入已保存草稿</button></div>
+      <div className="revision-actions"><button disabled={unavailable||!unsaved} onClick={()=>void run('draft')}>保存修改草稿</button><button disabled={unavailable||!latest} onClick={()=>latest&&loadDraft(latest.draft_id)}>载入已保存草稿</button></div>
       {latest&&unsaved&&<p className="revision-muted">当前输入与最近草稿不同，重新读取不会替换输入；载入前请核对。</p>}
       <button disabled={unavailable||value===intent.target.value} onClick={()=>void run('preview')}>预览这次修改</button>
       {preview&&<div className="creation-apply-preview"><h3>修改预览</h3><h4>修改前</h4><pre className="revision-text">{preview.revision.changes[0].before||'（空白）'}</pre><h4>修改后</h4><pre className="revision-text">{preview.revision.changes[0].after||'（空白）'}</pre><h4>需要人工核对</h4>{preview.revision.impacts.length?preview.revision.impacts.map((i,n)=><p key={n}>{i.segment_id}{i.shot_number===null?'':` · 镜头 ${i.shot_number}`} · {i.reason}</p>):<p>没有识别到镜头影响，仍需核对项目整体。</p>}<label className="revision-check"><input type="checkbox" checked={ack} disabled={unavailable} onChange={e=>setAck(e.target.checked)}/>我已核对前后文字、必须保留的内容及影响，确认保存新版本</label><button className="revision-primary" disabled={unavailable||!ack} onClick={()=>void run('save')}>保存文字并关联请求</button></div>}
     </>:<p className="revision-muted">只有基于当前正文确认的请求可以应用。请先记录并确认修改意图。</p>}
-    {latest&&<details className="creation-saved-draft"><summary>已保存草稿 · 共 {drafts.filter(d=>d.intent_id===intentId).length} 次</summary><p className="revision-muted">{new Date(latest.created_at).toLocaleString('zh-CN')}{intent.status!=='confirmed'||application?' · 当前请求已应用、撤回或依据变化，草稿只供查看和复制':''}</p><pre className="revision-text">{latest.value||'（空白）'}</pre></details>}
+    <CoCreationDraftHistory drafts={drafts} intentId={intentId} disabled={busy||disabled||blocked} readOnly={data.workspace.running||intent.status!=='confirmed'||!!application} onLoad={loadDraft}/>
     {busy&&<p role="status">正在处理，请稍候…</p>}
     {error&&<div role="alert" className="revision-alert">{error}{blocked&&<p>输入保留，暂停保存；先重新读取草稿与关联核对。</p>}</div>}
     {notice&&<p role="status" className="revision-notice">{notice}</p>}

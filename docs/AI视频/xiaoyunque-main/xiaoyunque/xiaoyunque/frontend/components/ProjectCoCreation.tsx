@@ -29,7 +29,7 @@ export default function ProjectCoCreation({projectId}:{projectId:string}){
   useEffect(()=>{dirty.current=!!message||!!preserve;},[message,preserve]);
   const choose=useCallback((id:string,approved=false)=>{
     if(applicationLock.current)return;
-    if(!approved&&applicationDirty.current&&id!==new URL(location.href).searchParams.get('intent')&&!window.confirm('尚有未保存的修改文字或预览，切换请求会丢失输入。确认切换？'))return;
+    if(!approved&&applicationDirty.current&&id!==new URL(location.href).searchParams.get('intent')&&!window.confirm('尚有未保存的修改文字或未确认的保存结果，切换请求会丢失输入。确认切换？'))return;
     selectedRef.current=id;setSelected(id);setAck(false);
     const url=new URL(location.href);if(id)url.searchParams.set('intent',id);else url.searchParams.delete('intent');
     history.pushState(null,'',url);
