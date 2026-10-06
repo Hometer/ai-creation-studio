@@ -5,7 +5,8 @@ import Link from 'next/link';
 import { ArrowLeft, MessageSquare, RefreshCw, ShieldCheck } from 'lucide-react';
 import BrandHeader from './BrandHeader';
 import CoCreationApplication from './CoCreationApplication';
-import {readApplications,type ApplicationWorkspace} from '@/lib/coCreationApplications';
+import {type ApplicationWorkspace} from '@/lib/coCreationApplications';
+import {readDrafts,type Draft} from '@/lib/coCreationDrafts';
 import { STAGES, pathKey, RevisionError, type Stage } from '@/lib/contentRevisions';
 import { requestInput, saveCreation, recoverRequest, type CreationWorkspace, type RequestInput, type DecisionInput } from '@/lib/coCreation';
 
@@ -14,6 +15,7 @@ const date=(s:string)=>new Date(s).toLocaleString('zh-CN');
 export default function ProjectCoCreation({projectId}:{projectId:string}){
   const [data,setData]=useState<CreationWorkspace|null>(null);
   const [bundle,setBundle]=useState<ApplicationWorkspace|null>(null),[applicationBusy,setApplicationBusy]=useState(false),[readEpoch,setReadEpoch]=useState(0);
+  const [drafts,setDrafts]=useState<Draft[]>([]);
   const selectedRef=useRef('');
   const applicationDirty=useRef(false),applicationLock=useRef(false);
   const activity=useCallback((busy:boolean,dirty:boolean)=>{applicationLock.current=busy;applicationDirty.current=dirty;setApplicationBusy(busy);},[]);
@@ -21,7 +23,7 @@ export default function ProjectCoCreation({projectId}:{projectId:string}){
   const [error,setError]=useState(''),[notice,setNotice]=useState(''),[status,setStatus]=useState(0);
   const [stage,setStage]=useState<Stage>('script_generation'),[key,setKey]=useState('');
   const [message,setMessage]=useState(''),[preserve,setPreserve]=useState(''),[selected,setSelected]=useState(''),[ack,setAck]=useState(false);
-  const applied=useCallback((next:ApplicationWorkspace)=>{setBundle(next);setData(next.workspace);setAck(false);},[]);
+  const applied=useCallback((next:ApplicationWorkspace,nextDrafts?:Draft[])=>{setBundle(next);setData(next.workspace);if(nextDrafts)setDrafts(nextDrafts);setAck(false);},[]);
   const lock=useRef(false),mounted=useRef(true),generation=useRef(0),dirty=useRef(false),pending=useRef<RequestInput|DecisionInput|null>(null);
   const invalidate=useCallback(()=>{mounted.current=false;++generation.current;lock.current=false;},[]);
   useEffect(()=>{dirty.current=!!message||!!preserve;},[message,preserve]);
@@ -38,9 +40,9 @@ export default function ProjectCoCreation({projectId}:{projectId:string}){
     lock.current=true;setReading(true);setError('');setNotice('');setAck(false);
     const serial=++generation.current;
     try{
-      const nextBundle=await readApplications(projectId),next=nextBundle.workspace;
+      const read=await readDrafts(projectId),nextBundle=read.data,next=nextBundle.workspace;
       if(!mounted.current||serial!==generation.current)return;
-      setReadEpoch(n=>n+1);setBundle(nextBundle);setData(next);setBlocked(false);setStatus(0);
+      setDrafts(read.drafts);setReadEpoch(n=>n+1);setBundle(nextBundle);setData(next);setBlocked(false);setStatus(0);
       const waiting=pending.current;
       if(waiting){
         const found=recoverRequest(next,waiting.request_id);
@@ -145,7 +147,7 @@ export default function ProjectCoCreation({projectId}:{projectId:string}){
           {intent.status==='stale'&&!bundle?.applications.some(a=>a.intent_id===intent.intent_id)&&<p className="revision-alert">正文或历史已经变化。旧请求保留，请基于当前文字重新记录和核对，不能继续确认旧依据。</p>}
           {intent.status==='pending'&&<label className="revision-check"><input type="checkbox" checked={ack} disabled={createDisabled} onChange={e=>setAck(e.target.checked)}/>我已核对修改对象和保留要求，确认这条修改意图；正文尚未改写</label>}
           <div className="revision-actions">{intent.status==='pending'&&<button className="revision-primary" disabled={createDisabled||!ack} onClick={()=>decide('confirm')}>确认修改意图</button>}{intent.status!=='withdrawn'&&<button disabled={disabled} onClick={()=>decide('withdraw')}>撤回这条请求</button>}</div>
-          {bundle&&<CoCreationApplication key={intent.intent_id} projectId={projectId} intentId={intent.intent_id} readEpoch={readEpoch} data={{...bundle,workspace:data}} onChange={applied} onActivity={activity} disabled={reading||busy||blocked}/>}
+          {bundle&&<CoCreationApplication key={intent.intent_id} projectId={projectId} intentId={intent.intent_id} drafts={drafts} readEpoch={readEpoch} data={{...bundle,workspace:data}} onChange={applied} onActivity={activity} disabled={reading||busy||blocked}/>}
           {data.decisions.filter(d=>d.intent_id===intent.intent_id).map(d=><p key={d.decision_id} className="revision-muted">{d.decision==='confirm'?'确认意图':'撤回请求'} · {date(d.created_at)}</p>)}
         </article>}
       </section></div>

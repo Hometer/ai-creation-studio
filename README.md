@@ -480,3 +480,17 @@ GET／POST `/api/project/{id}/content-revisions/reviews` 提供真实读取与�
 独立人工后端：根目录 `python3.12 scripts/project.py co-creation-apply-demo`，默认 8010，独立数据 `data/co-creation-apply-demo/`。独立前端可把 frontend 复制到仓库外临时目录，排除 `.env*`、`.next`，安装／复用依赖后，在该目录运行 `BACKEND_API_URL=http://127.0.0.1:8010 npm run dev -- --webpack --port 3010 --hostname 127.0.0.1`；或先以相同 BACKEND_API_URL 运行 `npm run build -- --webpack`，再 `npm run start -- --port 3010 --hostname 127.0.0.1`。勿改主服务代理。当前独立生产预览 [共创页](http://127.0.0.1:3010/projects/comparison-demo/co-creation) 保留五轮请求、三条应用、十一条文字版本，均为人工样例。模型仍后置，不调用供应商，不收费。
 
 验证仍用根目录 `python3.12 scripts/project.py check`；定向后端在 backend 运行 `.venv/bin/python -m pytest tests/test_co_creation_applications.py -q`；frontend 运行 `npm test`、`npm run typecheck`、`npm run lint -- --max-warnings=0`、`npm run build`。后端全量 938/938（新增 37）、前端 389/389（新增 30），类型／零警告 Lint／生产构建通过；实际浏览器、四宽度、生产断网／回复丢失／409／操作锁、HTTP 重启通过。原 204 个保护文件保持，主库五项目可读。详见 [先行文档](docs/阶段文档/阶段3-第14子阶段-共创意图应用与版本保存开发文档.md) 和 [证据与闸门](docs/evidence/阶段3/共创意图应用/验收报告.md)。本轮本地提交、不推送；真实模型、业务、真机及整个阶段仍待验。
+
+## 共创修改草稿持久化与恢复（阶段 3 第 15 子阶段）
+
+已确认且依据有效的请求可点“保存修改草稿”，只保存人工新文字。刷新、重新选择或返回页面会恢复最近草稿；正文／文字版本保持，预览与确认勾选不会恢复。正式应用仍需重新预览、逐次确认和保存关联版本。旧依据、撤回、已应用请求的草稿留存查看，不允许新存。最多每项目 200 条、每条 10,000 字，计入 2 MiB 共创账本，达到上限会提示保留数据。
+
+当前输入与已存草稿不同时，重新读取保留当前输入；“载入已保存草稿”需确认替换。保存中锁定其他操作，冲突／断网／不确定回执保留输入并暂停写入，点“重新读取草稿与版本”按请求编号核对，不自动重发。每次保存追加独立记录，本轮页面只载入最近草稿，逐份选择历史草稿待后续。
+
+主入口沿用项目 → 素材与版本 → 对话共创。独立无模型后端从根启动 `python3.12 scripts/project.py co-creation-draft-demo`（默认 8011），仅创建忽略的 `data/co-creation-draft-demo/`；前端绑定 `BACKEND_API_URL=http://127.0.0.1:8011` 并使用另一份构建／端口 3011，避免与 3000／8000 主数据混用。生产演练地址 http://127.0.0.1:3011/projects/comparison-demo/co-creation?intent=e336e6e43a0c4f47ac9e4965072733ca 。三轮请求、九草稿、一应用关联和九文字版本均为人工样例；第三轮仍可保存草稿，第一轮第九版已关联，第二轮旧依据草稿保留只读。
+
+新增 GET／POST `/api/project/{project_id}/co-creation/drafts`：GET `{data,drafts}`，POST `{expected_token,intent_id,value,request_id}` → `{draft_id,result}`；旧无 drafts 文件只读兼容，不迁移写回，原接口结构保持。保存比较正文、文字历史和共创账本，失败回滚；相同请求／内容幂等查回，编号跨操作复用拒绝。接口与界面均不调用模型。
+
+根 `python3.12 scripts/project.py check`；定向后端在 backend 运行 `.venv/bin/python -m pytest tests/test_co_creation_drafts.py -q`；frontend 运行 `npm test`、`npm run typecheck`、`npm run lint -- --max-warnings=0`、`npm run build`。全量后端 980/980（新增 42）、前端 413/413（新增 24），类型／零警告 Lint／生产构建通过；双窗口冲突、回执丢失、生产断网、操作锁、刷新／返回恢复、正式应用与六宽度通过。实际 HTTP 服务退出重启八组响应／四文件一致，原 208 保护文件保持、主库五项目可读。
+
+[先行文档](docs/阶段文档/阶段3-第15子阶段-共创修改草稿持久化开发文档.md) 与 [证据／闸门](docs/evidence/阶段3/共创修改草稿/验收报告.md) 已交付；本地提交、不推送。真实模型、业务、真机和整个阶段仍待验，既有 A07／依赖告警继续开放。

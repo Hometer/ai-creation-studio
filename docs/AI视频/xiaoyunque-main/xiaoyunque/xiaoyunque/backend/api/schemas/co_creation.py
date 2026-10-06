@@ -65,11 +65,22 @@ class Application(Contract):
     request_id: Id
     request_digest: Hash
 
+class Draft(Contract):
+    draft_id: Id
+    number: int = Field(ge=1)
+    intent_id: Id
+    value: str = Field(max_length=10000)
+    text_token: Hash
+    created_at: str
+    request_id: Id
+    request_digest: Hash
+
 class Ledger(Contract):
     schema_version: Literal[1] = 1
     records: list[Intent] = Field(default_factory=list, max_length=100)
     decisions: list[Decision] = Field(default_factory=list, max_length=200)
     applications: list[Application] = Field(default_factory=list, max_length=100)
+    drafts: list[Draft] = Field(default_factory=list, max_length=200)
 
 class IntentView(Contract):
     intent_id: Id
@@ -145,3 +156,23 @@ class Applied(Contract):
     application_id: Id
     version_id: Id
     data: ApplicationWorkspace
+
+class DraftInput(ApplyInput):
+    request_id: Id
+
+class DraftView(Contract):
+    draft_id: Id
+    number: int
+    intent_id: Id
+    value: str
+    text_token: Hash
+    created_at: str
+    request_id: Id
+
+class DraftWorkspace(Contract):
+    data: ApplicationWorkspace
+    drafts: list[DraftView]
+
+class DraftSaved(Contract):
+    draft_id: Id
+    result: DraftWorkspace

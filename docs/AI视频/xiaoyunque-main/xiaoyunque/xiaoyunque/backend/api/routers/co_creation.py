@@ -2,7 +2,7 @@
 from fastapi import APIRouter, Depends
 from api.dependencies import get_workflow_engine
 from api.schemas.assets import ProjectId
-from api.schemas.co_creation import RequestInput, DecisionInput, CreationWorkspace, CreationSaved, ApplyInput, ApplySave, ApplicationWorkspace, ApplyPreview, Applied
+from api.schemas.co_creation import RequestInput, DecisionInput, CreationWorkspace, CreationSaved, ApplyInput, ApplySave, ApplicationWorkspace, ApplyPreview, Applied, DraftInput, DraftWorkspace, DraftSaved
 from core.co_creation import CoCreation
 
 router = APIRouter(tags=['对话共创意图（本地，不调用模型）'])
@@ -33,3 +33,11 @@ def preview_application(project_id: ProjectId, payload: ApplyInput, creation=Dep
 @router.post('/api/project/{project_id}/co-creation/applications', response_model=Applied, status_code=201)
 def apply(project_id: ProjectId, payload: ApplySave, creation=Depends(service)):
     return creation.apply(project_id, payload)
+
+@router.get('/api/project/{project_id}/co-creation/drafts', response_model=DraftWorkspace)
+def drafts(project_id: ProjectId, creation=Depends(service)):
+    return creation.drafts(project_id)
+
+@router.post('/api/project/{project_id}/co-creation/drafts', response_model=DraftSaved, status_code=201)
+def save_draft(project_id: ProjectId, payload: DraftInput, creation=Depends(service)):
+    return creation.save_draft(project_id, payload)

@@ -2,7 +2,7 @@
 import copy
 import uuid
 from datetime import datetime, timezone
-from api.schemas.co_creation import Ledger, Intent, Decision, CreationWorkspace, CreationSaved, Application, ApplicationWorkspace, ApplyPreview, Applied
+from api.schemas.co_creation import Ledger, Intent, Decision, CreationWorkspace, CreationSaved, Application, ApplicationWorkspace, ApplyPreview, Applied, Draft, DraftWorkspace, DraftSaved
 from core.content_revisions import ContentRevisions, digest, encoded, fail, fields, differences
 from api.schemas.content_revisions import RevisionInput
 from core.persistence import read_session, session_path
@@ -37,6 +37,15 @@ def validate_ledger(raw):
             raise ValueError('Invalid application association')
         datetime.fromisoformat(a.created_at.replace('Z', '+00:00'))
         applications.add(a.application_id); applied_intents.add(a.intent_id); versions.add(a.version_id); requests.add(a.request_id)
+    draft_ids = set()
+    for n, draft in enumerate(ledger.drafts, 1):
+        intent = next((r for r in ledger.records if r.intent_id == draft.intent_id), None)
+        stamp = datetime.fromisoformat(draft.created_at.replace('Z', '+00:00'))
+        if draft.number != n or draft.draft_id in draft_ids or draft.request_id in requests or intent is None or draft.text_token != intent.text_token:
+            raise ValueError('Invalid draft identity or basis')
+        if not any(d.intent_id == draft.intent_id and d.decision == 'confirm' and datetime.fromisoformat(d.created_at) <= stamp for d in ledger.decisions) or any(d.intent_id == draft.intent_id and d.decision == 'withdraw' and datetime.fromisoformat(d.created_at) < stamp for d in ledger.decisions) or any(a.intent_id == draft.intent_id and datetime.fromisoformat(a.created_at) < stamp for a in ledger.applications):
+            raise ValueError('Invalid draft chronology')
+        draft_ids.add(draft.draft_id); requests.add(draft.request_id)
     if len(encoded(ledger.model_dump())) > MAX_LEDGER_BYTES:
         raise ValueError('Intent ledger too large')
     return ledger
@@ -92,9 +101,9 @@ class CoCreation:
         with self.engine._state_lock:
             state, ledger, workspace = self._read(project_id)
             request_digest = digest(payload.model_dump())
-            prior = next((r for r in [*ledger.records, *ledger.decisions, *ledger.applications] if r.request_id == payload.request_id), None)
+            prior = next((r for r in [*ledger.records, *ledger.decisions, *ledger.applications, *ledger.drafts] if r.request_id == payload.request_id), None)
             if prior:
-                if isinstance(prior, Application) or prior.request_digest != request_digest:
+                if not isinstance(prior, (Intent, Decision)) or prior.request_digest != request_digest:
                     fail(409, 'INTENT_REQUEST_REUSED', '请求编号已用于其他操作，请重新读取')
                 return CreationSaved(intent_id=prior.intent_id, workspace=workspace)
             if payload.expected_token != workspace.token:
@@ -174,7 +183,7 @@ class CoCreation:
         with self.engine._state_lock:
             state, ledger, workspace = self._read(project_id)
             request_digest = digest(payload.model_dump())
-            prior = next((r for r in [*ledger.records, *ledger.decisions, *ledger.applications] if r.request_id == payload.request_id), None)
+            prior = next((r for r in [*ledger.records, *ledger.decisions, *ledger.applications, *ledger.drafts] if r.request_id == payload.request_id), None)
             if prior:
                 if not isinstance(prior, Application) or prior.request_digest != request_digest:
                     fail(409, 'INTENT_REQUEST_REUSED', '请求编号已用于其他操作，请重新读取')
@@ -206,3 +215,51 @@ class CoCreation:
                 state.artifacts, state.content_history, state.co_creation, state.updated_at = old_artifacts, old_history, old_ledger, old_time
                 fail(503, 'INTENT_APPLY_FAILED', '保存结果尚未确认，请重新读取关联和版本；原记录保留')
             return Applied(application_id=application.application_id, version_id=version.version_id, data=self._application_workspace(project_id))
+
+    def _draft_workspace(self, project_id):
+        _, ledger, _ = self._read(project_id)
+        return DraftWorkspace(data=self._application_workspace(project_id),
+            drafts=[{k:v for k,v in d.model_dump().items() if k != 'request_digest'} for d in ledger.drafts])
+
+    def drafts(self, project_id):
+        with self.engine._state_lock:
+            return self._draft_workspace(project_id)
+
+    def save_draft(self, project_id, payload):
+        with self.engine._state_lock:
+            state, ledger, workspace = self._read(project_id)
+            request_digest = digest(payload.model_dump())
+            prior = next((r for r in [*ledger.records, *ledger.decisions, *ledger.applications, *ledger.drafts] if r.request_id == payload.request_id), None)
+            if prior:
+                if not isinstance(prior, Draft) or prior.request_digest != request_digest:
+                    fail(409, 'INTENT_REQUEST_REUSED', '请求编号已用于其他操作，请重新读取')
+                return DraftSaved(draft_id=prior.draft_id, result=self._draft_workspace(project_id))
+            if payload.expected_token != workspace.token:
+                fail(409, 'INTENT_CHANGED', '正文、记录或草稿已变化，请重新读取核对')
+            intent = next((r for r in workspace.records if r.intent_id == payload.intent_id), None)
+            if intent is None:
+                fail(404, 'INTENT_NOT_FOUND', '这条共创请求不存在')
+            if workspace.running:
+                fail(409, 'PROJECT_RUNNING', '项目正在执行，请结束后再保存草稿')
+            if intent.status != 'confirmed' or any(a.intent_id == intent.intent_id for a in ledger.applications):
+                fail(422, 'DRAFT_NOT_AVAILABLE', '只有依据有效且尚未应用的已确认请求可以新存草稿，旧草稿仍保留')
+            _, history, current = self.revisions._read(project_id)
+            if any(v.request_id == payload.request_id for v in history.versions):
+                fail(409, 'INTENT_REQUEST_REUSED', '请求编号已用于其他文字修改，请重新读取')
+            draft = Draft(draft_id=uuid.uuid4().hex, number=len(ledger.drafts)+1, intent_id=intent.intent_id,
+                value=payload.value, text_token=workspace.text_token, created_at=datetime.now(timezone.utc).isoformat(),
+                request_id=payload.request_id, request_digest=request_digest)
+            next_ledger = ledger.model_copy(deep=True)
+            next_ledger.drafts.append(draft)
+            if len(next_ledger.drafts) > 200 or len(encoded(next_ledger.model_dump())) > MAX_LEDGER_BYTES:
+                fail(422, 'DRAFT_LIMIT', '草稿记录达到本轮上限，请保留数据，不会截断旧草稿')
+            old, old_time = copy.deepcopy(getattr(state, 'co_creation', None)), state.updated_at
+            try:
+                state.co_creation = next_ledger.model_dump()
+                state.updated_at = datetime.now()
+                self.engine.save_session_to_disk(project_id, expected_co_creation=old,
+                    expected_revision=(copy.deepcopy(state.artifacts), copy.deepcopy(getattr(state, 'content_history', None))))
+            except Exception:
+                state.co_creation, state.updated_at = old, old_time
+                fail(503, 'DRAFT_SAVE_FAILED', '草稿保存结果尚未确认，请重新读取核对，原草稿保留')
+            return DraftSaved(draft_id=draft.draft_id, result=self._draft_workspace(project_id))
