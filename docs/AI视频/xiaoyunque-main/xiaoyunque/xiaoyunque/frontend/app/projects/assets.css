@@ -1,6 +1,7 @@
 .asset-workspace { max-width: 1260px; padding: 26px 32px 32px; margin: 0 auto; color: var(--lp-text-default); }
 .asset-workspace * { min-width: 0; }
-.asset-breadcrumb { display: flex; align-items: center; gap: 12px; font-size: 11px; color: var(--lp-text-muted); margin-bottom: 36px; }
+.asset-breadcrumb { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; font-size: 11px; color: var(--lp-text-muted); margin-bottom: 36px; }
+.asset-breadcrumb > a, .asset-breadcrumb > button { flex-shrink: 0; white-space: nowrap; }
 .asset-breadcrumb a, .asset-workspace .studio-footer a { display: flex; align-items: center; gap: 6px; }
 .asset-breadcrumb > span:first-of-type { color: var(--lp-text-subtle); }
 .asset-refresh { margin-left: auto; }

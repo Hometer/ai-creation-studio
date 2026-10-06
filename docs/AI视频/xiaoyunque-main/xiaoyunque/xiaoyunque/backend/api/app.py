@@ -71,6 +71,8 @@ async def lifespan(app: FastAPI):
     from core.generation_plans import GenerationPlans
     from core.release_media import ReleaseMedia
     from core.release_media_worker import MediaWorker
+    from core.compositions import Compositions
+    from core.composition_worker import CompositionWorker
     async def resolve(factory, *args):
         # Background recovery must use the same data stores as the HTTP routes.
         override = app.dependency_overrides.get(factory)
@@ -81,11 +83,14 @@ async def lifespan(app: FastAPI):
     library = await resolve(get_asset_library)
     archive = await resolve(get_media_archive, library)
     worker = MediaWorker(ReleaseMedia(engine,library,archive,GenerationPlans(engine,library,archive)))
+    films = CompositionWorker(Compositions(engine,library,archive))
     worker.start()
+    films.start()
     try:
         yield
     finally:
         worker.stop()
+        films.stop()
     logger.info("XiaoYunQue API shutdown complete")
 
 
@@ -110,6 +115,8 @@ app.mount("/code", ResultStaticFiles(directory=settings.CODE_DIR), name="code")
 
 from api.routers.project_goals import router as project_goals_router
 app.include_router(project_goals_router)
+from api.routers.compositions import router as compositions_router
+app.include_router(compositions_router)
 
 app.include_router(health_router)
 app.include_router(files_router)

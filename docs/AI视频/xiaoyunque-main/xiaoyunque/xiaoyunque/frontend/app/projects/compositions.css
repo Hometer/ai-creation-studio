@@ -1,0 +1,8 @@
+.composition-workspace .composition-clip {padding:18px 0;border-bottom:1px solid var(--border-color);margin-bottom:18px;}
+.composition-workspace .composition-order {display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;}
+.composition-workspace .composition-order h3 {margin:0;overflow-wrap:anywhere;}
+.composition-workspace .composition-order>div {display:flex;gap:8px;}
+.composition-workspace video {display:block;width:100%;max-height:360px;border-radius:12px;background:#090b0c;margin:14px 0;}
+.composition-workspace .composition-manifest {padding-left:24px;line-height:1.9;overflow-wrap:anywhere;}
+.composition-workspace .composition-output {margin:20px 0;}
+.composition-workspace select {max-width:100%;}

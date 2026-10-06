@@ -1,0 +1,248 @@
+[
+  {
+    "width": 1440,
+    "scrollWidth": 1434,
+    "links": [
+      {
+        "label": "返回项目",
+        "width": 65,
+        "height": 16.5
+      },
+      {
+        "label": "项目名称与目标",
+        "width": 126,
+        "height": 44
+      },
+      {
+        "label": "合成与导出",
+        "width": 104,
+        "height": 44
+      },
+      {
+        "label": "生成计划",
+        "width": 93,
+        "height": 44
+      },
+      {
+        "label": "文字修改与版本",
+        "width": 126,
+        "height": 44
+      },
+      {
+        "label": "对话共创",
+        "width": 93,
+        "height": 44
+      },
+      {
+        "label": "媒体修改与候选",
+        "width": 126,
+        "height": 44
+      }
+    ]
+  },
+  {
+    "width": 1280,
+    "scrollWidth": 1280,
+    "links": [
+      {
+        "label": "返回项目",
+        "width": 65,
+        "height": 16.5
+      },
+      {
+        "label": "项目名称与目标",
+        "width": 126,
+        "height": 44
+      },
+      {
+        "label": "合成与导出",
+        "width": 104,
+        "height": 44
+      },
+      {
+        "label": "生成计划",
+        "width": 93,
+        "height": 44
+      },
+      {
+        "label": "文字修改与版本",
+        "width": 126,
+        "height": 44
+      },
+      {
+        "label": "对话共创",
+        "width": 93,
+        "height": 44
+      },
+      {
+        "label": "媒体修改与候选",
+        "width": 126,
+        "height": 44
+      }
+    ]
+  },
+  {
+    "width": 1024,
+    "scrollWidth": 1018,
+    "links": [
+      {
+        "label": "返回项目",
+        "width": 65,
+        "height": 16.5
+      },
+      {
+        "label": "项目名称与目标",
+        "width": 126,
+        "height": 44
+      },
+      {
+        "label": "合成与导出",
+        "width": 104,
+        "height": 44
+      },
+      {
+        "label": "生成计划",
+        "width": 93,
+        "height": 44
+      },
+      {
+        "label": "文字修改与版本",
+        "width": 126,
+        "height": 44
+      },
+      {
+        "label": "对话共创",
+        "width": 93,
+        "height": 44
+      },
+      {
+        "label": "媒体修改与候选",
+        "width": 126,
+        "height": 44
+      }
+    ]
+  },
+  {
+    "width": 768,
+    "scrollWidth": 762,
+    "links": [
+      {
+        "label": "返回项目",
+        "width": 65,
+        "height": 16.5
+      },
+      {
+        "label": "项目名称与目标",
+        "width": 126,
+        "height": 44
+      },
+      {
+        "label": "合成与导出",
+        "width": 104,
+        "height": 44
+      },
+      {
+        "label": "生成计划",
+        "width": 93,
+        "height": 44
+      },
+      {
+        "label": "文字修改与版本",
+        "width": 126,
+        "height": 44
+      },
+      {
+        "label": "对话共创",
+        "width": 93,
+        "height": 44
+      },
+      {
+        "label": "媒体修改与候选",
+        "width": 126,
+        "height": 44
+      }
+    ]
+  },
+  {
+    "width": 390,
+    "scrollWidth": 384,
+    "links": [
+      {
+        "label": "返回项目",
+        "width": 61,
+        "height": 15
+      },
+      {
+        "label": "项目名称与目标",
+        "width": 126,
+        "height": 44
+      },
+      {
+        "label": "合成与导出",
+        "width": 104,
+        "height": 44
+      },
+      {
+        "label": "生成计划",
+        "width": 93,
+        "height": 44
+      },
+      {
+        "label": "文字修改与版本",
+        "width": 126,
+        "height": 44
+      },
+      {
+        "label": "对话共创",
+        "width": 93,
+        "height": 44
+      },
+      {
+        "label": "媒体修改与候选",
+        "width": 126,
+        "height": 44
+      }
+    ]
+  },
+  {
+    "width": 360,
+    "scrollWidth": 354,
+    "links": [
+      {
+        "label": "返回项目",
+        "width": 61,
+        "height": 15
+      },
+      {
+        "label": "项目名称与目标",
+        "width": 126,
+        "height": 44
+      },
+      {
+        "label": "合成与导出",
+        "width": 104,
+        "height": 44
+      },
+      {
+        "label": "生成计划",
+        "width": 93,
+        "height": 44
+      },
+      {
+        "label": "文字修改与版本",
+        "width": 126,
+        "height": 44
+      },
+      {
+        "label": "对话共创",
+        "width": 93,
+        "height": 44
+      },
+      {
+        "label": "媒体修改与候选",
+        "width": 126,
+        "height": 44
+      }
+    ]
+  }
+]

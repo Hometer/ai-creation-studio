@@ -611,3 +611,11 @@ GET／POST `/api/project/{id}/content-revisions/reviews` 提供真实读取与�
 首页故事输入上方填写可选名称与1—600秒整片目标（默认60），点击“保存创作草稿”只保存项目。项目列表优先独立名称；旧项目继续使用原标题。项目“素材与版本”内点“项目名称与目标”，核对名称、时长、故事、风格和比例，明确保存后可刷新、重启恢复；不改变原剧本、分镜、素材或费用。
 
 接口为 `GET/POST /api/project/{project_id}/goal`，POST带当前expected_token、唯一request_id、名称与时长。冲突、运行中或回复不确定时先读取；同编号重试不回退后续命名。沿用根目录backend/frontend启动命令与check；定向测试 `tests/test_project_goals.py`、`tests/projectGoals.test.mjs`。证据在 `docs/evidence/阶段3/项目命名与目标时长/验收报告.md`。本段不调用模型，整体首版真实模型验收继续待验。
+
+## 选用片段合成与成片版本（阶段3第25子阶段）
+
+项目“素材与版本”或“媒体修改与候选”点“合成与导出”。每个分镜片段选一个明确归档MP4版本，上移／下移确认顺序，核对总时长与项目目标；上游已改变的候选逐段确认保留旧版本。点“准备合成计划（不执行）”，核对右侧固定清单、720P／30帧／项目比例，勾选本次确认后点“确认并在本机合成”。完成后播放、下载当前成片，合成历史继续保留旧版。缺段、文件异常或依据变化阻止执行；输出不自动拉伸为目标时长。
+
+仅本机ffmpeg，模型费用0元，无素材外发。保留原视频声音，无声音补静音；最多20段／600秒／500MB输入，成片最多100MB。无覆盖归档、无自动重复渲染；排队任务重启恢复，渲染结果不明保留任务核对。接口 `GET/POST /api/project/{id}/compositions`、逐任务确认／读取／停止、受控media播放与下载；沿用backend/frontend启动，需ffmpeg和ffprobe（doctor核对）。
+
+独立人工核对：根运行 `python3.12 scripts/project.py composition-demo`，默认8019；忽略的数据目录 `data/composition-demo`，蓝色2秒440Hz音调＋黄色1秒静音。生产人工页面 http://127.0.0.1:3019/projects/composition-demo/compose ，由独立前端使用 `BACKEND_API_URL=http://127.0.0.1:8019` 构建。无模型结果。定向后端 `tests/test_compositions.py`，前端 `tests/compositions.test.mjs`；证据、操作步骤与人工3秒MP4在 `docs/evidence/阶段3/选用片段合成与成片版本/`。真实模型／业务打分／真机和整体首版仍待验。
