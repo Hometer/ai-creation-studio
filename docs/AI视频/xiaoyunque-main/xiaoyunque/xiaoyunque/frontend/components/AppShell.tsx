@@ -212,13 +212,13 @@ function TaskPanel({
   onTaskClick: (task: RunningTaskItem) => void;
 }) {
   return (
-    <section className="xyq-task-panel h-[20vh] min-h-32 border-t border-gray-100 p-3">
-      <div className="mb-2 flex items-center gap-2 px-1">
+    <section className="xyq-task-panel flex flex-col h-[20vh] min-h-32 border-t border-gray-100 p-3">
+      <div className="mb-2 flex shrink-0 items-center gap-2 px-1">
         {icon}
         <span className="text-xs font-medium text-gray-500">{title}</span>
         {loading && <Loader2 className="ml-auto h-3 w-3 animate-spin text-gray-300" />}
       </div>
-      <div className="h-[calc(100%-26px)] overflow-y-auto pr-1">
+      <div className="min-h-0 flex-1 overflow-y-auto pr-1">
         {tasks.length ? (
           <div className="space-y-1.5">
             {tasks.map(task => {
@@ -300,7 +300,7 @@ function SidebarTaskPanels({ currentPath }: { currentPath: string }) {
 
   return (
     <>
-      {sourceFailure&&<Link className="px-4 py-2 text-xs text-amber-700" href="/tasks">部分来源未读到，已保留上次任务；打开任务中心核对</Link>}
+      {sourceFailure&&<Link className="px-4 py-2 text-xs text-amber-300" href="/tasks">部分来源未读到，已保留上次任务；打开任务中心核对</Link>}
       <TaskPanel
         title="进行中任务"
         icon={<Clock className="h-3.5 w-3.5 text-gray-400" />}
