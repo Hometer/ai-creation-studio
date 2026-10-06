@@ -28,11 +28,11 @@ function renderedTypeMayDiffer(value: string): boolean {
   // restores the types; identical ordinary text still cannot represent a change.
   try { const parsed = JSON.parse(value); return parsed === null || (typeof parsed !== 'string' && (typeof parsed !== 'number' || Number.isFinite(parsed))); } catch { return false; }
 }
-function parseChanges(x: unknown): Change[] {
+export function parseChanges(x: unknown): Change[] {
   if (!Array.isArray(x) || !x.every(c => isRecord(c) && path(c.path) && text(c.before) && text(c.after) && (c.before_present === undefined || bool(c.before_present)) && (c.after_present === undefined || bool(c.after_present)) && (c.before !== c.after || (c.before_present ?? true) !== (c.after_present ?? true) || renderedTypeMayDiffer(c.before))) || new Set(x.map(c => pathKey(c.path))).size !== x.length) return invalid();
   return x as Change[];
 }
-function parseImpacts(x: unknown): Impact[] {
+export function parseImpacts(x: unknown): Impact[] {
   if (!Array.isArray(x) || !x.every(i => isRecord(i) && text(i.segment_id) && i.segment_id.length > 0 && (i.shot_number === null || (typeof i.shot_number === 'number' && Number.isSafeInteger(i.shot_number) && i.shot_number > 0)) && text(i.reason))) return invalid();
   return x as Impact[];
 }

@@ -38,7 +38,7 @@ class CandidateProvider:
             raise ValueError('Provider unavailable')
         return WanHttpTransport(Config.DASHSCOPE_API_KEY, Config.DASHSCOPE_BASE_URL)
 
-    def generate(self, job, transport):
+    def generate_raw(self, job, transport):
         body = {'model': job.plan.model, 'input': {'messages': job.messages},
                 'parameters': {'result_format': 'message', 'response_format': {'type': 'json_object'},
                                'max_tokens': 4096, 'enable_thinking': False}}
@@ -55,12 +55,15 @@ class CandidateProvider:
         content = choices[0]['message']['content']
         if not isinstance(content, str) or len(content.encode('utf-8')) > 64 * 1024:
             raise ValueError('Invalid text')
-        result = CandidateResult.model_validate(json.loads(content))
         usage = payload['usage']
         before, after = usage['input_tokens'], usage['output_tokens']
         if type(before) is not int or type(after) is not int or not 0 < before <= job.plan.input_byte_size + 512 or not 0 < after <= 4096:
             raise ValueError('Invalid usage')
-        return result, token_estimate(before, after)
+        return content, token_estimate(before, after)
+
+    def generate(self, job, transport):
+        content, cost = self.generate_raw(job, transport)
+        return CandidateResult.model_validate(json.loads(content)), cost
 
 
 class CreationCandidates:

@@ -4,6 +4,7 @@ from pydantic import Field, field_validator, model_validator
 from api.schemas.assets import Contract, Id, ProjectId
 from api.schemas.co_creation import Hash
 from api.schemas.release_media import MediaJob, MediaSelection
+from api.schemas.initial_drafts import InitialJob
 
 
 class CandidateResult(Contract):
@@ -99,14 +100,15 @@ class CandidateLedger(Contract):
     round_limit_fen: Literal[2000] = 2000
     jobs: list[CandidateJob] = Field(default_factory=list, max_length=200)
     media_jobs: list[MediaJob] = Field(default_factory=list, max_length=100)
+    initial_jobs: list[InitialJob] = Field(default_factory=list, max_length=100)
     media_selections: list[MediaSelection] = Field(default_factory=list, max_length=500)
 
     def occupied(self):
-        return sum(j.reserved_fen for j in self.jobs+self.media_jobs)
+        return sum(j.reserved_fen for j in self.jobs+self.media_jobs+self.initial_jobs)
 
     def used_requests(self):
-        values={j.prepare_request_id for j in self.jobs}|{j.prepare.request_id for j in self.media_jobs}|{s.request_id for s in self.media_selections}
-        return values|{j.confirm_request_id for j in self.jobs+self.media_jobs if j.confirm_request_id}
+        values={j.prepare_request_id for j in self.jobs+self.initial_jobs}|{j.prepare.request_id for j in self.media_jobs}|{s.request_id for s in self.media_selections}
+        return values|{j.confirm_request_id for j in self.jobs+self.media_jobs+self.initial_jobs if j.confirm_request_id}
 
     @model_validator(mode='after')
     def graph(self):
@@ -125,6 +127,12 @@ class CandidateLedger(Contract):
             ids.add(job.job_id);requests.add(job.prepare.request_id)
             if job.confirm_request_id:
                 if job.confirm_request_id in requests:raise ValueError('Duplicate media approval')
+                requests.add(job.confirm_request_id)
+        for n, job in enumerate(self.initial_jobs, 1):
+            if job.number != n or job.job_id in ids or job.prepare_request_id in requests:raise ValueError('Duplicate initial draft')
+            ids.add(job.job_id);requests.add(job.prepare_request_id)
+            if job.confirm_request_id:
+                if job.confirm_request_id in requests:raise ValueError('Duplicate initial approval')
                 requests.add(job.confirm_request_id)
         selected=set()
         for selection in self.media_selections:

@@ -41,6 +41,16 @@ def find_segment(snapshot, segment_id):
     return matches[0] if len(matches) == 1 else None
 
 
+def shot_content(shot):
+    """Pin all saved cinematic directions into the actual provider input."""
+    content=shot['content']
+    if not isinstance(content,str):raise TypeError('Invalid shot content')
+    for key,label in [('action','动作'),('dialogue','对白'),('sound','声音')]:
+        value=shot.get(key,'')
+        if not isinstance(value,str):raise TypeError('Invalid cinematic direction')
+        if value.strip():content+='\n'+label+'：'+value.strip()
+    return content
+
 class GenerationPlans:
     def __init__(self, engine, library, archive):
         self.engine, self.library, self.archive = engine, library, archive
@@ -122,7 +132,7 @@ class GenerationPlans:
                 if segment is None:
                     raise AssetLibraryError(404, "PLAN_TARGET_NOT_FOUND", "项目或分镜片段不存在或不唯一")
                 try:
-                    shots = [Shot(shot_number=s["shot_number"], duration=s.get("duration", 5), content=s["content"])
+                    shots = [Shot(shot_number=s["shot_number"], duration=s.get("duration", 5), content=shot_content(s))
                              for s in segment["shots"]]
                 except (KeyError, TypeError, ValidationError):
                     raise conflict("PLAN_INVALID_STORYBOARD", "分镜需有效镜头编号、时长和可读内容") from None

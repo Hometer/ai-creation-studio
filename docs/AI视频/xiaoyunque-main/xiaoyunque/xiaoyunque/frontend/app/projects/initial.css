@@ -1,0 +1,5 @@
+.initial-workspace textarea{width:100%;resize:vertical;min-height:90px;line-height:1.7;padding:12px;border:1px solid var(--lp-border-divider);border-radius:10px;background:var(--lp-surface-subtle);color:inherit}
+.initial-workspace pre{white-space:pre-wrap;overflow-wrap:anywhere;font-size:12px;max-height:500px;overflow:auto;padding:12px;background:var(--lp-surface-subtle);border-radius:10px}
+.initial-workspace details{margin:14px 0;min-width:0}.initial-workspace summary{cursor:pointer;line-height:1.6;padding:6px 0}
+.initial-workspace p{white-space:pre-wrap;overflow-wrap:anywhere;line-height:1.8}.initial-story{max-height:350px;overflow:auto}.initial-document h3,.initial-document h4{margin:14px 0 6px}
+.initial-segment,.initial-difference{padding:12px;border:1px solid var(--lp-border-divider);border-radius:10px;margin:12px 0}.initial-document{min-width:0}

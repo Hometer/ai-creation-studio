@@ -619,3 +619,14 @@ GET／POST `/api/project/{id}/content-revisions/reviews` 提供真实读取与�
 仅本机ffmpeg，模型费用0元，无素材外发。保留原视频声音，无声音补静音；最多20段／600秒／500MB输入，成片最多100MB。无覆盖归档、无自动重复渲染；排队任务重启恢复，渲染结果不明保留任务核对。接口 `GET/POST /api/project/{id}/compositions`、逐任务确认／读取／停止、受控media播放与下载；沿用backend/frontend启动，需ffmpeg和ffprobe（doctor核对）。
 
 独立人工核对：根运行 `python3.12 scripts/project.py composition-demo`，默认8019；忽略的数据目录 `data/composition-demo`，蓝色2秒440Hz音调＋黄色1秒静音。生产人工页面 http://127.0.0.1:3019/projects/composition-demo/compose ，由独立前端使用 `BACKEND_API_URL=http://127.0.0.1:8019` 构建。无模型结果。定向后端 `tests/test_compositions.py`，前端 `tests/compositions.test.mjs`；证据、操作步骤与人工3秒MP4在 `docs/evidence/阶段3/选用片段合成与成片版本/`。真实模型／业务打分／真机和整体首版仍待验。
+
+
+## 从零剧本与分镜候选（阶段3第26子阶段）
+
+打开项目“素材与版本”，点“剧本与分镜草稿”。填写本次创作要求与保留要素，点“准备候选计划（不执行）”。核对模型、目标、发送文字范围与保守估算，分别勾选素材声明和费用确认，点“确认费用并生成候选”。生成结果仅保存为候选；核对全文、全部差异与受影响镜头，另勾选本次选用后保存对应正文，文字版本同步追加。选用剧本后继续准备分镜，动作、对白、声音随分镜进入实际视频计划。刷新后从候选历史找回，未知回复不会自动再次收费。
+
+无Key可准备计划，收费按钮保持关闭。项目集数1—10；本次简短分镜最多20段、每段不超过15秒，已设总时长须匹配，目标超过300秒时保留原目标并拒绝本次短稿生成；未擅自缩短项目时长。共享已有单次5元／整轮20元账本，估算与实际账单分开。
+
+人工验收：根目录运行 `python3.12 scripts/project.py initial-draft-demo`，后端8020，资料在忽略的 `data/initial-draft-demo/`，全部候选为预写合同样例。隔离前端3020以 `BACKEND_API_URL=http://127.0.0.1:8020` 构建，打开 http://127.0.0.1:3020/projects/initial-demo/drafts 。不含真实模型效果或费用。生产使用的同名入口调用原生境内百炼，仍须真实Key与逐次确认；目前真实冒烟待验。
+
+验证：后端 `.venv/bin/python -m pytest tests/test_initial_drafts.py tests/test_generation_plans.py -q`；前端 `npm test`、`npm run typecheck`、`npm run lint -- --max-warnings=0`、`npm run build`。证据在 `docs/evidence/阶段3/从零剧本与分镜候选/验收报告.md`。整体首版、模型效果、样例打分及真机不按人工演练宣布完成。

@@ -1,0 +1,248 @@
+[
+  {
+    "width": 1440,
+    "overflow": false,
+    "controls": [
+      {
+        "text": "重新读取候选",
+        "width": 94,
+        "height": 44
+      },
+      {
+        "text": "剧本草稿分镜草稿",
+        "width": 503,
+        "height": 44
+      },
+      {
+        "text": "依据故事和项目目标，生成可核对的简短剧本。",
+        "width": 503,
+        "height": 114.375
+      },
+      {
+        "text": "TEXTAREA",
+        "width": 503,
+        "height": 92.28125
+      },
+      {
+        "text": "准备候选计划（不执行）",
+        "width": 149,
+        "height": 44
+      },
+      {
+        "text": "请选择一份计划或候选#1 · 剧本 · 候选已保存",
+        "width": 503,
+        "height": 44
+      },
+      {
+        "text": "选用并保存剧本正文",
+        "width": 127,
+        "height": 44
+      }
+    ]
+  },
+  {
+    "width": 1280,
+    "overflow": false,
+    "controls": [
+      {
+        "text": "重新读取候选",
+        "width": 94,
+        "height": 44
+      },
+      {
+        "text": "剧本草稿分镜草稿",
+        "width": 423,
+        "height": 44
+      },
+      {
+        "text": "依据故事和项目目标，生成可核对的简短剧本。",
+        "width": 423,
+        "height": 114.375
+      },
+      {
+        "text": "TEXTAREA",
+        "width": 423,
+        "height": 92.28125
+      },
+      {
+        "text": "准备候选计划（不执行）",
+        "width": 149,
+        "height": 44
+      },
+      {
+        "text": "请选择一份计划或候选#1 · 剧本 · 候选已保存",
+        "width": 423,
+        "height": 44
+      },
+      {
+        "text": "选用并保存剧本正文",
+        "width": 127,
+        "height": 44
+      }
+    ]
+  },
+  {
+    "width": 1024,
+    "overflow": false,
+    "controls": [
+      {
+        "text": "重新读取候选",
+        "width": 94,
+        "height": 44
+      },
+      {
+        "text": "剧本草稿分镜草稿",
+        "width": 427,
+        "height": 44
+      },
+      {
+        "text": "依据故事和项目目标，生成可核对的简短剧本。",
+        "width": 427,
+        "height": 114.375
+      },
+      {
+        "text": "TEXTAREA",
+        "width": 427,
+        "height": 92.28125
+      },
+      {
+        "text": "准备候选计划（不执行）",
+        "width": 149,
+        "height": 44
+      },
+      {
+        "text": "请选择一份计划或候选#1 · 剧本 · 候选已保存",
+        "width": 427,
+        "height": 44
+      },
+      {
+        "text": "选用并保存剧本正文",
+        "width": 127,
+        "height": 44
+      }
+    ]
+  },
+  {
+    "width": 768,
+    "overflow": false,
+    "controls": [
+      {
+        "text": "重新读取候选",
+        "width": 94,
+        "height": 44
+      },
+      {
+        "text": "剧本草稿分镜草稿",
+        "width": 668,
+        "height": 44
+      },
+      {
+        "text": "依据故事和项目目标，生成可核对的简短剧本。",
+        "width": 668,
+        "height": 114.375
+      },
+      {
+        "text": "TEXTAREA",
+        "width": 668,
+        "height": 92.28125
+      },
+      {
+        "text": "准备候选计划（不执行）",
+        "width": 149,
+        "height": 44
+      },
+      {
+        "text": "请选择一份计划或候选#1 · 剧本 · 候选已保存",
+        "width": 668,
+        "height": 44
+      },
+      {
+        "text": "选用并保存剧本正文",
+        "width": 127,
+        "height": 44
+      }
+    ]
+  },
+  {
+    "width": 390,
+    "overflow": false,
+    "controls": [
+      {
+        "text": "重新读取候选",
+        "width": 94,
+        "height": 44
+      },
+      {
+        "text": "剧本草稿分镜草稿",
+        "width": 316,
+        "height": 44
+      },
+      {
+        "text": "依据故事和项目目标，生成可核对的简短剧本。",
+        "width": 316,
+        "height": 114.375
+      },
+      {
+        "text": "TEXTAREA",
+        "width": 316,
+        "height": 92.28125
+      },
+      {
+        "text": "准备候选计划（不执行）",
+        "width": 149,
+        "height": 44
+      },
+      {
+        "text": "请选择一份计划或候选#1 · 剧本 · 候选已保存",
+        "width": 316,
+        "height": 44
+      },
+      {
+        "text": "选用并保存剧本正文",
+        "width": 127,
+        "height": 44
+      }
+    ]
+  },
+  {
+    "width": 360,
+    "overflow": false,
+    "controls": [
+      {
+        "text": "重新读取候选",
+        "width": 94,
+        "height": 44
+      },
+      {
+        "text": "剧本草稿分镜草稿",
+        "width": 286,
+        "height": 44
+      },
+      {
+        "text": "依据故事和项目目标，生成可核对的简短剧本。",
+        "width": 286,
+        "height": 114.375
+      },
+      {
+        "text": "TEXTAREA",
+        "width": 286,
+        "height": 92.28125
+      },
+      {
+        "text": "准备候选计划（不执行）",
+        "width": 149,
+        "height": 44
+      },
+      {
+        "text": "请选择一份计划或候选#1 · 剧本 · 候选已保存",
+        "width": 286,
+        "height": 44
+      },
+      {
+        "text": "选用并保存剧本正文",
+        "width": 127,
+        "height": 44
+      }
+    ]
+  }
+]

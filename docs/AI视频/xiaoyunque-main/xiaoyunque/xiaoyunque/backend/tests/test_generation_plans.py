@@ -467,3 +467,13 @@ def test_missing_targets_and_plan_ids_are_safe(fixture):
     payload["targets"][0]["segment_id"] = "missing-segment"
     assert_error(client.post("/api/generation-plans", json=payload), 404)
     assert_error(client.get("/api/generation-plans/" + "0" * 32), 404, "PLAN_NOT_FOUND")
+
+
+def test_actual_planned_prompt_pins_actions_dialogue_and_sound(fixture):
+    c,e,*_=fixture
+    shot=e.get_state('media-demo').artifacts['storyboard']['episodes'][0]['segments'][0]['shots'][0]
+    shot.update(action='朋友挥手',dialogue='好久不见',sound='海浪声')
+    e.save_session_to_disk('media-demo')
+    plan=create_plan(fixture);target=plan['content']['targets'][0]
+    for text in ['动作：朋友挥手','对白：好久不见','声音：海浪声']:assert text in target['prompt'] and text in target['shots'][0]['content']
+    assert c.get('/api/generation-plans/'+plan['plan_id']).json()==plan

@@ -86,11 +86,16 @@ async def lifespan(app: FastAPI):
     films = CompositionWorker(Compositions(engine,library,archive))
     worker.start()
     films.start()
+    from core.initial_drafts import InitialDrafts
+    from core.initial_draft_worker import InitialWorker
+    drafts = InitialWorker(InitialDrafts(engine))
+    drafts.start()
     try:
         yield
     finally:
         worker.stop()
         films.stop()
+        drafts.stop()
     logger.info("XiaoYunQue API shutdown complete")
 
 
@@ -115,6 +120,8 @@ app.mount("/code", ResultStaticFiles(directory=settings.CODE_DIR), name="code")
 
 from api.routers.project_goals import router as project_goals_router
 app.include_router(project_goals_router)
+from api.routers.initial_drafts import router as initial_drafts_router
+app.include_router(initial_drafts_router)
 from api.routers.compositions import router as compositions_router
 app.include_router(compositions_router)
 

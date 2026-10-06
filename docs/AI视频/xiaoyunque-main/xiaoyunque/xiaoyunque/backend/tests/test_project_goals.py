@@ -91,12 +91,17 @@ def test_lifespan_worker_uses_route_dependency_stores(setup, monkeypatch, tmp_pa
     captured = []
     monkeypatch.setattr(MediaWorker, 'start', lambda worker: captured.append(worker.media))
     monkeypatch.setattr(MediaWorker, 'stop', lambda worker: None)
+    from core.initial_draft_worker import InitialWorker
+    initial=[]
+    monkeypatch.setattr(InitialWorker, 'start', lambda worker: initial.append(worker.drafts))
+    monkeypatch.setattr(InitialWorker, 'stop', lambda worker: None)
     previous = dict(app.dependency_overrides)
     try:
         app.dependency_overrides.update({get_workflow_engine: lambda: engine,
             get_asset_library: lambda: library, get_media_archive: lambda: archive})
         with TestClient(app):
             assert len(captured) == 1
+            assert len(initial) == 1 and initial[0].engine is engine
             service = captured[0]
             assert service.engine is engine and service.library is library and service.archive is archive
     finally:
