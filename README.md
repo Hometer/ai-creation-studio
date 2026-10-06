@@ -605,3 +605,9 @@ GET／POST `/api/project/{id}/content-revisions/reviews` 提供真实读取与�
 真实Key稍后配置，主入口仍为3000／8000。独立人工演练从根运行 `python3.12 scripts/project.py release-media-demo`（8018）；另份前端用 `BACKEND_API_URL=http://127.0.0.1:8018` 构建并启动3018，打开 http://127.0.0.1:3018/projects/media-demo/media 。演练文件和提供方均为人工，页面标明无真实模型调用。正式与人工数据分开，不用演练结果证明真实效果。
 
 验证沿用根check以及后端pytest、前端test／typecheck／零警告Lint／生产build；定向后端 `tests/test_release_media.py`、前端 `tests/releaseMedia.test.mjs`。先行文档与证据在 `docs/阶段文档/阶段3-第23子阶段-真实媒体修订与任务恢复开发文档.md`、`docs/evidence/阶段3/真实媒体修订与任务恢复/验收报告.md`。真实模型／业务／手机真机与整体首版验收继续待验。
+
+## 项目名称与目标时长（阶段3第24子阶段）
+
+首页故事输入上方填写可选名称与1—600秒整片目标（默认60），点击“保存创作草稿”只保存项目。项目列表优先独立名称；旧项目继续使用原标题。项目“素材与版本”内点“项目名称与目标”，核对名称、时长、故事、风格和比例，明确保存后可刷新、重启恢复；不改变原剧本、分镜、素材或费用。
+
+接口为 `GET/POST /api/project/{project_id}/goal`，POST带当前expected_token、唯一request_id、名称与时长。冲突、运行中或回复不确定时先读取；同编号重试不回退后续命名。沿用根目录backend/frontend启动命令与check；定向测试 `tests/test_project_goals.py`、`tests/projectGoals.test.mjs`。证据在 `docs/evidence/阶段3/项目命名与目标时长/验收报告.md`。本段不调用模型，整体首版真实模型验收继续待验。

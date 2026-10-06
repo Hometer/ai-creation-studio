@@ -2,6 +2,8 @@ import type { VideoGenerationMode } from '@/config/models';
 
 export interface GenerationParams {
   idea?: string;
+  project_name?: string | null;
+  target_duration?: number | null;
   user_textbox_input?: string;
   style?: string;
   video_ratio?: string;
@@ -145,6 +147,8 @@ export function parseProjectSnapshot(value: unknown): ProjectSnapshot {
     for (const key of ['idea', 'user_textbox_input', 'style', 'video_ratio', 'video_resolution', 'llm_model', 'vlm_model', 'image_t2i_model', 'image_it2i_model', 'video_model', 'video_first_frame_model', 'video_start_end_model', 'video_reference_model']) {
       if (value.meta[key] !== undefined && typeof value.meta[key] !== 'string') throw new Error('项目配置格式异常');
     }
+    if (value.meta.project_name != null && (typeof value.meta.project_name !== 'string' || !value.meta.project_name.trim() || [...value.meta.project_name].length > 100)) throw new Error('项目名称格式异常');
+    if (value.meta.target_duration != null && (typeof value.meta.target_duration !== 'number' || !Number.isInteger(value.meta.target_duration) || value.meta.target_duration < 1 || value.meta.target_duration > 600)) throw new Error('项目目标时长格式异常');
     for (const key of ['expand_idea', 'enable_concurrency', 'web_search']) {
       if (value.meta[key] !== undefined && typeof value.meta[key] !== 'boolean') throw new Error('项目配置格式异常');
     }

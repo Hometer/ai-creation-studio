@@ -62,6 +62,8 @@ class ArtificialMediaProvider:
 
 def create_release_demo(directory):
     directory=Path(directory);app=create_demo(directory)
+    from api.routers.project_goals import router as goal_router
+    app.include_router(goal_router)
     app.title='首版媒体修订 · 人工接口样例，无模型调用'
     engine=app.dependency_overrides[get_workflow_engine]();library=app.dependency_overrides[get_asset_library]();archive=app.dependency_overrides[get_media_archive]();plans=GenerationPlans(engine,library,archive)
     # Add, never overwrite, the dedicated artificial files.

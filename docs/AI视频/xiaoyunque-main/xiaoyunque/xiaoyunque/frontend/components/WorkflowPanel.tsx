@@ -317,7 +317,7 @@ export default function WorkflowPanel() {
       const result = await saveStudioDraft(params);
       historyRequestRef.current += 1;
       setHistoryLoading(false); setHistoryError('');
-      setHistory(previous => [{ id: result.session_id, idea: params.idea.slice(0, 60) || '上传的故事',
+      setHistory(previous => [{ id: result.session_id, idea: (params.project_name || params.idea).slice(0, 60) || '上传的故事',
         style: params.style, date: new Date().toLocaleDateString('zh-CN'), status: 'new', stages: result.status }, ...previous]);
     } finally { savingDraftRef.current = false; }
   };
@@ -545,6 +545,8 @@ export default function WorkflowPanel() {
     try {
       const result = await startProject({
         idea: params.idea,
+        project_name: params.project_name,
+        target_duration: params.target_duration,
         file_path: params.file_path, // 修复：将上传的文件路径传给后端
         style: params.style,
         video_ratio: params.video_ratio,
@@ -569,7 +571,7 @@ export default function WorkflowPanel() {
       setHistory(prev => [
         {
           id: result.session_id,
-          idea: params.idea.slice(0, 60),
+          idea: (params.project_name || params.idea).slice(0, 60),
           style: params.style,
           date: new Date().toLocaleDateString('zh-CN'),
           status: 'running',
@@ -1193,6 +1195,8 @@ export default function WorkflowPanel() {
           const restoredFirstFrameVideoModel = s.video_first_frame_model || s.video_model || '';
           setProjectParams({
             idea: s.idea || s.user_textbox_input || '',
+            project_name: s.project_name || undefined,
+            target_duration: s.target_duration ?? undefined,
             style: s.style || '',
             video_ratio: s.video_ratio || '16:9',
             video_resolution: s.video_resolution || '720P',

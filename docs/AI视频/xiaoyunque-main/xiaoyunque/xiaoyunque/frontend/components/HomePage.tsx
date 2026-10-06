@@ -21,6 +21,8 @@ import { fetchModelGroupsByType, fetchVideoModelGroupsByAbility } from '@/lib/mo
 
 export interface ProjectParams {
   idea: string;
+  project_name?: string;
+  target_duration?: number;
   file_path?: string; // 上传的文件路径 (由后端返回的文件名)
   style: string;
   video_ratio: string;
@@ -62,6 +64,8 @@ interface HomePageProps {
 
 export default function HomePage({ onStartProject, onResumeProject, onDeleteSession, history, onSaveDraft, historyLoading, historyError, onRefreshHistory }: HomePageProps) {
   const [idea, setIdea] = useState('');
+  const [projectName,setProjectName]=useState('');
+  const [targetDuration,setTargetDuration]=useState('60');
   const [category, setCategory] = useState<InspirationCategory>('全部');
   const [query, setQuery] = useState('');
   const [savingDraft, setSavingDraft] = useState(false);
@@ -116,7 +120,7 @@ export default function HomePage({ onStartProject, onResumeProject, onDeleteSess
         ? selectedReferenceVideo
         : selectedFirstFrameVideo;
   const modelConfigReady = Boolean(selectedLLM && selectedVLM && selectedT2I && selectedI2I && activeVideoModel && selectedRatio && selectedResolution);
-  const canStart = Boolean((idea.trim() || uploadedFile) && modelConfigReady && !configLoading && !savingDraft && !uploading);
+  const canStart = Boolean((idea.trim() || uploadedFile) && modelConfigReady && !configLoading && !savingDraft && !uploading && /^\d+$/.test(targetDuration) && Number(targetDuration)>=1 && Number(targetDuration)<=600);
 
   useEffect(() => {
     let cancelled = false;
@@ -221,6 +225,8 @@ export default function HomePage({ onStartProject, onResumeProject, onDeleteSess
 
   const projectPayload = (): ProjectParams => ({
       idea,
+      project_name: projectName.trim() || undefined,
+      target_duration: Number(targetDuration),
       file_path: uploadedFile?.path, // 如果上传了文件，传给后端
       style: selectedStyle,
       video_ratio: selectedRatio,
@@ -355,6 +361,7 @@ export default function HomePage({ onStartProject, onResumeProject, onDeleteSess
         {/* 输入区域 */}
         <div id="create" className="xyq-composer bg-white rounded-2xl shadow-sm border border-gray-200 p-5 mb-6">
           <div className="studio-composer-heading"><span><Sparkles size={16} /> 故事从这里开始</span><span>先留住灵感，再细雕每个镜头</span></div>
+          <div className="studio-goal-fields"><label>项目名称（可选）<input value={projectName} maxLength={100} disabled={savingDraft} onChange={e=>setProjectName(e.target.value)} placeholder="为这部作品命名"/></label><label>整片目标时长（秒）<input value={targetDuration} inputMode="numeric" maxLength={3} disabled={savingDraft} onChange={e=>setTargetDuration(e.target.value)}/></label></div>
           <label className="sr-only" htmlFor="studio-idea">创作想法</label>
           <textarea
             id="studio-idea"

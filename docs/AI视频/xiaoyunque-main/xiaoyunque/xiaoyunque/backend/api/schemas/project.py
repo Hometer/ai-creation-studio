@@ -1,10 +1,12 @@
 from typing import Any, Dict, Optional, Literal
 
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 
 class ProjectStartRequest(BaseModel):
     idea: str
+    project_name: str | None = Field(default=None,min_length=1,max_length=100,strict=True)
+    target_duration: int | None = Field(default=None,ge=1,le=600,strict=True)
     file_path: Optional[str] = None
     style: Optional[str] = None
     video_ratio: Optional[str] = "9:16"
@@ -23,6 +25,13 @@ class ProjectStartRequest(BaseModel):
     web_search: Optional[bool] = False
     episodes: Optional[int] = None
 
+    @field_validator('project_name')
+    @classmethod
+    def name(cls,value):
+        if value is None:return value
+        value=value.strip()
+        if not value:raise ValueError('Empty project name')
+        return value
 
 class InterventionRequest(BaseModel):
     stage: str

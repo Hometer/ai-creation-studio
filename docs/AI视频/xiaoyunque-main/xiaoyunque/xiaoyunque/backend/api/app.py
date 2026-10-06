@@ -1,4 +1,5 @@
 import logging
+import inspect
 import os
 import sys
 from contextlib import asynccontextmanager
@@ -70,8 +71,15 @@ async def lifespan(app: FastAPI):
     from core.generation_plans import GenerationPlans
     from core.release_media import ReleaseMedia
     from core.release_media_worker import MediaWorker
-    engine, library = get_workflow_engine(), get_asset_library()
-    archive = get_media_archive(library)
+    async def resolve(factory, *args):
+        # Background recovery must use the same data stores as the HTTP routes.
+        override = app.dependency_overrides.get(factory)
+        value = override() if override else factory(*args)
+        return await value if inspect.isawaitable(value) else value
+
+    engine = await resolve(get_workflow_engine)
+    library = await resolve(get_asset_library)
+    archive = await resolve(get_media_archive, library)
     worker = MediaWorker(ReleaseMedia(engine,library,archive,GenerationPlans(engine,library,archive)))
     worker.start()
     try:
@@ -99,6 +107,9 @@ logger.info("CORS enabled for origins: %s", cors_origins)
 
 os.makedirs(settings.CODE_DIR, exist_ok=True)
 app.mount("/code", ResultStaticFiles(directory=settings.CODE_DIR), name="code")
+
+from api.routers.project_goals import router as project_goals_router
+app.include_router(project_goals_router)
 
 app.include_router(health_router)
 app.include_router(files_router)

@@ -1716,7 +1716,8 @@ class WorkflowEngine:
                     artifacts = copy.deepcopy(state.artifacts)
                     script_artifact = artifacts.get("script_generation", {})
                     title = (
-                        script_artifact.get("title")
+                        meta.get("project_name")
+                        or script_artifact.get("title")
                         or meta.get("idea")
                         or meta.get("user_textbox_input")
                         or ""

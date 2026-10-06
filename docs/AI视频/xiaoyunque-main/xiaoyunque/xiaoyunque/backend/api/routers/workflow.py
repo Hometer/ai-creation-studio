@@ -86,6 +86,8 @@ async def start_project(req: ProjectStartRequest):
         "web_search": req.web_search if req.web_search is not None else False,
         "episodes": req.episodes if req.episodes is not None else 4,
     }
+    if req.project_name is not None:meta["project_name"] = req.project_name
+    if req.target_duration is not None:meta["target_duration"] = req.target_duration
     meta["video_model"] = _active_video_model(meta)
     session = workflow_engine.create_session(session_id, meta)
 
@@ -93,6 +95,8 @@ async def start_project(req: ProjectStartRequest):
         "session_id": session_id,
         "status": session["status"],
         "params": {
+            "project_name": req.project_name,
+            "target_duration": req.target_duration,
             "idea": final_idea,
             "file_path": req.file_path,
             "style": req.style,

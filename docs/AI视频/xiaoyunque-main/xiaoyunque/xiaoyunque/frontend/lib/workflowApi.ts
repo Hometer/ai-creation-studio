@@ -267,6 +267,8 @@ export function subscribePipelineTask(
 
 export async function startProject(params: {
   idea: string;
+  project_name?: string;
+  target_duration?: number;
   file_path?: string;
   style?: string;
   video_ratio?: string;
