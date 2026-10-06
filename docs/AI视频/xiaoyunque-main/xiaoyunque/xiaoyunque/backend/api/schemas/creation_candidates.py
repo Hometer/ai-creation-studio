@@ -3,6 +3,7 @@ from typing import Literal
 from pydantic import Field, field_validator, model_validator
 from api.schemas.assets import Contract, Id, ProjectId
 from api.schemas.co_creation import Hash
+from api.schemas.release_media import MediaJob, MediaSelection
 
 
 class CandidateResult(Contract):
@@ -97,6 +98,15 @@ class CandidateLedger(Contract):
     single_limit_fen: Literal[500] = 500
     round_limit_fen: Literal[2000] = 2000
     jobs: list[CandidateJob] = Field(default_factory=list, max_length=200)
+    media_jobs: list[MediaJob] = Field(default_factory=list, max_length=100)
+    media_selections: list[MediaSelection] = Field(default_factory=list, max_length=500)
+
+    def occupied(self):
+        return sum(j.reserved_fen for j in self.jobs+self.media_jobs)
+
+    def used_requests(self):
+        values={j.prepare_request_id for j in self.jobs}|{j.prepare.request_id for j in self.media_jobs}|{s.request_id for s in self.media_selections}
+        return values|{j.confirm_request_id for j in self.jobs+self.media_jobs if j.confirm_request_id}
 
     @model_validator(mode='after')
     def graph(self):
@@ -110,7 +120,18 @@ class CandidateLedger(Contract):
                 if job.confirm_request_id in requests:
                     raise ValueError('Duplicate confirmation')
                 requests.add(job.confirm_request_id)
-        if sum(j.reserved_fen for j in self.jobs) > self.round_limit_fen:
+        for n, job in enumerate(self.media_jobs, 1):
+            if job.number!=n or job.job_id in ids or job.prepare.request_id in requests:raise ValueError('Duplicate media task')
+            ids.add(job.job_id);requests.add(job.prepare.request_id)
+            if job.confirm_request_id:
+                if job.confirm_request_id in requests:raise ValueError('Duplicate media approval')
+                requests.add(job.confirm_request_id)
+        selected=set()
+        for selection in self.media_selections:
+            job=next((j for j in self.media_jobs if j.job_id==selection.job_id),None)
+            if job is None or job.status!='succeeded' or selection.project_id!=job.plan.project_id or selection.kind!=job.plan.kind or selection.target!=(job.plan.segment_id if job.plan.kind=='video' else job.plan.source_id) or selection.asset_id!=job.asset_id or selection.version_id!=job.version_id or selection.request_id in requests or selection.request_id in selected:raise ValueError('Invalid media selection')
+            selected.add(selection.request_id)
+        if self.occupied() > self.round_limit_fen:
             raise ValueError('Round budget exceeded')
         return self
 

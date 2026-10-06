@@ -1,0 +1,181 @@
+{
+  "project_id": "media-demo",
+  "expected_workspace": "38e922a0cc88562e108e5986c6904c093c9484686aa4f88c2b3b83e53543dd64",
+  "credential_present": true,
+  "endpoint_allowed": true,
+  "price_current": true,
+  "single_limit_fen": 500,
+  "round_limit_fen": 2000,
+  "occupied_fen": 14,
+  "available_fen": 1986,
+  "images": [
+    {
+      "reference": {
+        "project_id": "media-demo",
+        "segment_id": "seg-1",
+        "shot_number": 1,
+        "asset_id": "722561bbbb12467aa748acad814c5165",
+        "version_id": "f3962d2db79042c59fd69dfad69c220c",
+        "reference_id": "f70294aac82847789caa6f729e59f73c",
+        "revision": 2,
+        "history": [
+          {
+            "version_id": "c74a1b0f428e479d83440efaed502693",
+            "selected_at": "2026-10-06T06:45:54.699463+00:00"
+          },
+          {
+            "version_id": "f3962d2db79042c59fd69dfad69c220c",
+            "selected_at": "2026-10-06T06:45:54.714652+00:00"
+          }
+        ]
+      },
+      "asset": {
+        "asset_id": "722561bbbb12467aa748acad814c5165",
+        "kind": "image",
+        "versions": [
+          {
+            "name": "人工图片输入",
+            "definition": "本机人工色块，验证确定性流程，不代表模型结果",
+            "version_id": "c74a1b0f428e479d83440efaed502693",
+            "number": 1,
+            "created_at": "2026-10-06T06:45:54.698385+00:00",
+            "source": {
+              "type": "upload",
+              "project_id": "media-demo",
+              "upload_id": "334c721a7e6f400a9d99fbeb64b92bfb"
+            },
+            "media": {
+              "file_id": "c74a1b0f428e479d83440efaed502693",
+              "mime_type": "image/png",
+              "sha256": "92e27aa41254afc38c23ac9d4f6588f9117f9a88004f4c43db4e49e43d37cf39",
+              "byte_size": 2569,
+              "width": 640,
+              "height": 640,
+              "duration": null
+            }
+          },
+          {
+            "name": "图片候选 1",
+            "definition": "按明确计划生成的候选；人工接口样例，不代表模型结果。",
+            "version_id": "f3962d2db79042c59fd69dfad69c220c",
+            "number": 2,
+            "created_at": "2026-10-06T06:45:54.712157+00:00",
+            "source": {
+              "type": "media_task",
+              "project_id": "media-demo",
+              "stage": "reference_generation",
+              "item_type": "scenes",
+              "item_id": "f70294aac82847789caa6f729e59f73c",
+              "task_id": "ea014919175947ab9c626793462e3af3",
+              "plan_hash": "fb043da38f90ad8350aa51d1510053391e691da47f3af24f2a9e7c1c26900156",
+              "provider_task_id": "artificial-ea014919175947ab9c626793462e3af3",
+              "simulation_only": true
+            },
+            "media": {
+              "file_id": "f3962d2db79042c59fd69dfad69c220c",
+              "mime_type": "image/png",
+              "sha256": "6ef10461693ef76603408fd0aeef6677554f201dc360a099ae3db1006361c745",
+              "byte_size": 2571,
+              "width": 640,
+              "height": 640,
+              "duration": null
+            }
+          }
+        ],
+        "import_key": null
+      },
+      "version": {
+        "name": "图片候选 1",
+        "definition": "按明确计划生成的候选；人工接口样例，不代表模型结果。",
+        "version_id": "f3962d2db79042c59fd69dfad69c220c",
+        "number": 2,
+        "created_at": "2026-10-06T06:45:54.712157+00:00",
+        "source": {
+          "type": "media_task",
+          "project_id": "media-demo",
+          "stage": "reference_generation",
+          "item_type": "scenes",
+          "item_id": "f70294aac82847789caa6f729e59f73c",
+          "task_id": "ea014919175947ab9c626793462e3af3",
+          "plan_hash": "fb043da38f90ad8350aa51d1510053391e691da47f3af24f2a9e7c1c26900156",
+          "provider_task_id": "artificial-ea014919175947ab9c626793462e3af3",
+          "simulation_only": true
+        },
+        "media": {
+          "file_id": "f3962d2db79042c59fd69dfad69c220c",
+          "mime_type": "image/png",
+          "sha256": "6ef10461693ef76603408fd0aeef6677554f201dc360a099ae3db1006361c745",
+          "byte_size": 2571,
+          "width": 640,
+          "height": 640,
+          "duration": null
+        }
+      }
+    }
+  ],
+  "jobs": [
+    {
+      "job_id": "ea014919175947ab9c626793462e3af3",
+      "number": 1,
+      "plan": {
+        "project_id": "media-demo",
+        "kind": "image",
+        "source_id": "f70294aac82847789caa6f729e59f73c",
+        "segment_id": "seg-1",
+        "expected_token": "1d7a7f8f389428a1d71af2e10b63a4c3fc146902e14c698cfdb1d8f2d305a95a",
+        "reference_revision": 1,
+        "request_digest": "78e5f1b230b7ddab99656b1e0cfe983b5bad756bb9ad5e52e49c76b9db501aef",
+        "model": "wanx2.1-imageedit",
+        "execution_prompt": "改为蓝色\n必须保留：保留方形",
+        "preserve": "保留方形",
+        "duration": null,
+        "resolution": null,
+        "input_refs": [
+          {
+            "reference_id": "f70294aac82847789caa6f729e59f73c",
+            "asset_id": "722561bbbb12467aa748acad814c5165",
+            "version_id": "c74a1b0f428e479d83440efaed502693",
+            "role": "reference_image",
+            "width": 640,
+            "height": 640,
+            "byte_size": 2569,
+            "sha256": "92e27aa41254afc38c23ac9d4f6588f9117f9a88004f4c43db4e49e43d37cf39"
+          }
+        ],
+        "estimate_fen": 14,
+        "quantity": 1,
+        "price_version": "aliyun-beijing-media-20261006",
+        "expires_at": 1791270354
+      },
+      "plan_hash": "fb043da38f90ad8350aa51d1510053391e691da47f3af24f2a9e7c1c26900156",
+      "created_at": "2026-10-06T06:45:54.703979+00:00",
+      "status": "succeeded",
+      "reserved_fen": 14,
+      "submit_attempts": 1,
+      "provider_task_id": "artificial-ea014919175947ab9c626793462e3af3",
+      "query_attempts": 1,
+      "usage_estimate_fen": 14,
+      "actual_billed_fen": null,
+      "asset_id": "722561bbbb12467aa748acad814c5165",
+      "version_id": "f3962d2db79042c59fd69dfad69c220c",
+      "error": null,
+      "simulation_only": true,
+      "current": false,
+      "selected": true,
+      "selection_token": "3012dce4c2a610f84a87dfe54fd4d147300a87db21a3f09998944acbe48a76f3"
+    }
+  ],
+  "selections": [
+    {
+      "request_id": "f8b93dc10d8d44cabf0703e9eeb1cfc9",
+      "job_id": "ea014919175947ab9c626793462e3af3",
+      "project_id": "media-demo",
+      "kind": "image",
+      "target": "f70294aac82847789caa6f729e59f73c",
+      "asset_id": "722561bbbb12467aa748acad814c5165",
+      "version_id": "f3962d2db79042c59fd69dfad69c220c",
+      "selected_at": "2026-10-06T06:45:54.714962+00:00",
+      "previous_token": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    }
+  ]
+}

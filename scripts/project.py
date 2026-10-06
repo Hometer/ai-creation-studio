@@ -82,7 +82,7 @@ def check() -> int:
 
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("command", choices=["doctor", "backend", "frontend", "media-demo", "plan-demo", "task-demo", "task-center-demo", "plan-center-demo", "readiness-center-demo", "revision-demo", "manual-edit-demo", "impact-review-demo", "automatic-revision-demo", "comparison-demo", "export-demo", "co-creation-demo", "co-creation-apply-demo", "co-creation-draft-demo", "co-creation-draft-history-demo", "revision-import-precheck-demo", "revision-import-preview-demo", "revision-import-restore-demo", "revision-restore-history-demo", "creation-candidate-demo", "wan-replay", "check"])
+    parser.add_argument("command", choices=["doctor", "backend", "frontend", "media-demo", "plan-demo", "task-demo", "task-center-demo", "plan-center-demo", "readiness-center-demo", "revision-demo", "manual-edit-demo", "impact-review-demo", "automatic-revision-demo", "comparison-demo", "export-demo", "co-creation-demo", "co-creation-apply-demo", "co-creation-draft-demo", "co-creation-draft-history-demo", "revision-import-precheck-demo", "revision-import-preview-demo", "revision-import-restore-demo", "revision-restore-history-demo", "creation-candidate-demo", "release-media-demo", "wan-replay", "check"])
     parser.add_argument("--port", type=int, help="服务端口；默认后端 8000、前端 3000、人工媒体验收 8001")
     parser.add_argument("--scenario", choices=["success", "lost-submit", "query-timeout", "bad-video"], default="success")
     parser.add_argument("--action", choices=["step", "status"], default="status", help="万相离线演练：只读状态或推进一步")
@@ -94,7 +94,7 @@ def main() -> int:
     if arguments.command == "wan-replay":
         return run([str(PYTHON), "-m", "core.wan_replay", "--directory", str(ROOT / "data/wan-protocol-replay"),
                     "--scenario", arguments.scenario, "--action", arguments.action], BACKEND)
-    port = arguments.port or {"backend": 8000, "frontend": 3000, "media-demo": 8001, "plan-demo": 8001, "task-demo": 8001, "task-center-demo": 8001, "plan-center-demo": 8001, "readiness-center-demo": 8002, "revision-demo": 8003, "manual-edit-demo": 8004, "impact-review-demo": 8005, "automatic-revision-demo": 8006, "comparison-demo": 8007, "export-demo": 8008, "co-creation-demo": 8009, "co-creation-apply-demo": 8010, "co-creation-draft-demo": 8011, "co-creation-draft-history-demo": 8012, "revision-import-precheck-demo": 8013, "revision-import-preview-demo": 8014, "revision-import-restore-demo": 8015, "revision-restore-history-demo": 8016, "creation-candidate-demo": 8017}[arguments.command]
+    port = arguments.port or {"backend": 8000, "frontend": 3000, "media-demo": 8001, "plan-demo": 8001, "task-demo": 8001, "task-center-demo": 8001, "plan-center-demo": 8001, "readiness-center-demo": 8002, "revision-demo": 8003, "manual-edit-demo": 8004, "impact-review-demo": 8005, "automatic-revision-demo": 8006, "comparison-demo": 8007, "export-demo": 8008, "co-creation-demo": 8009, "co-creation-apply-demo": 8010, "co-creation-draft-demo": 8011, "co-creation-draft-history-demo": 8012, "revision-import-precheck-demo": 8013, "revision-import-preview-demo": 8014, "revision-import-restore-demo": 8015, "revision-restore-history-demo": 8016, "creation-candidate-demo": 8017, "release-media-demo": 8018}[arguments.command]
     if not 1 <= port <= 65535:
         parser.error("端口必须在 1—65535 之间")
     if not port_available(port):
@@ -111,6 +111,8 @@ def main() -> int:
         return run([str(PYTHON), "-m", "api.plan_center_demo", "--directory", str(ROOT / "data/plan-center-demo"), "--port", str(port)], BACKEND)
     if arguments.command == "automatic-revision-demo":
         return run([str(PYTHON), "-m", "api.automatic_revision_demo", "--directory", str(ROOT / "data/automatic-revision-demo"), "--port", str(port)], BACKEND)
+    if arguments.command == "release-media-demo":
+        return run([str(PYTHON), "-m", "api.release_media_demo", "--directory", str(ROOT / "data/release-media-demo"), "--port", str(port)], BACKEND)
     if arguments.command == "creation-candidate-demo":
         return run([str(PYTHON), "-m", "api.creation_candidate_demo", "--directory", str(ROOT / "data/creation-candidate-demo"), "--port", str(port)], BACKEND)
     if arguments.command == "revision-restore-history-demo":

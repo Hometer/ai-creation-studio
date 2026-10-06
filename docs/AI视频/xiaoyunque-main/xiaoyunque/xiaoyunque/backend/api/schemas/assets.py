@@ -104,6 +104,22 @@ class TaskSource(Contract):
         return self
 
 
+class MediaTaskSource(Contract):
+    type: Literal["media_task"] = "media_task"
+    project_id: ProjectId
+    stage: Literal["reference_generation", "video_generation"]
+    item_type: Literal["scenes", "clips"]
+    item_id: ProjectId
+    task_id: Id
+    plan_hash: Annotated[str, StringConstraints(pattern=r"^[a-f0-9]{64}$")]
+    provider_task_id: Annotated[str, StringConstraints(pattern=r"^[A-Za-z0-9][A-Za-z0-9_-]{0,127}$")]
+    simulation_only: bool
+    @model_validator(mode="after")
+    def target(self):
+        if (self.stage=="reference_generation")!=(self.item_type=="scenes"):raise ValueError("Invalid media task scope")
+        return self
+
+
 class MediaInfo(Contract):
     file_id: Id
     mime_type: Literal["image/jpeg", "image/png", "image/webp", "image/bmp", "video/mp4"]
@@ -127,7 +143,7 @@ class AssetVersion(VersionInput):
     version_id: Id
     number: int = Field(ge=1)
     created_at: str
-    source: Source | ArtifactSource | TaskSource | UploadSource
+    source: Source | ArtifactSource | TaskSource | UploadSource | MediaTaskSource
     media: MediaInfo | None = None
 
 
@@ -196,7 +212,7 @@ class Library(Contract):
                     if version.source.upload_id in upload_ids:
                         raise ValueError("Duplicate upload")
                     upload_ids.add(version.source.upload_id)
-                if isinstance(version.source, TaskSource):
+                if isinstance(version.source, (TaskSource, MediaTaskSource)):
                     if version.source.task_id in task_ids:
                         raise ValueError("Duplicate task output")
                     task_ids.add(version.source.task_id)
@@ -205,13 +221,14 @@ class Library(Contract):
                 version_ids.add(version.version_id)
                 if asset.kind in {"image", "video"}:
                     media = version.media
-                    if (media is None or not isinstance(version.source, (ArtifactSource, TaskSource, UploadSource))
+                    if (media is None or not isinstance(version.source, (ArtifactSource, TaskSource, UploadSource, MediaTaskSource))
                             or media.file_id in file_ids
                             or isinstance(version.source, TaskSource) and asset.kind != "video"
+                            or isinstance(version.source, MediaTaskSource) and version.source.stage != ("video_generation" if asset.kind == "video" else "reference_generation")
                             or (asset.kind == "video") != (media.mime_type == "video/mp4")):
                         raise ValueError("Invalid media version")
                     file_ids.add(media.file_id)
-                elif version.media is not None or isinstance(version.source, (ArtifactSource, TaskSource, UploadSource)):
+                elif version.media is not None or isinstance(version.source, (ArtifactSource, TaskSource, UploadSource, MediaTaskSource)):
                     raise ValueError("Text assets cannot contain media")
         for key, ref in self.references.items():
             asset = self.assets.get(ref.asset_id)

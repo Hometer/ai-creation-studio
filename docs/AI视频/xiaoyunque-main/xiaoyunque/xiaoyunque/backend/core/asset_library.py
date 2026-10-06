@@ -11,7 +11,7 @@ from uuid import uuid4
 
 from api.schemas.assets import (
     ArtifactSource, Asset, AssetInput, AssetVersion, Library, MediaInfo, Reference, ReferenceInput,
-    ReferenceUpdate, Selection, Source, TaskSource, UploadSource, VersionInput,
+    ReferenceUpdate, Selection, Source, TaskSource, UploadSource, MediaTaskSource, VersionInput,
 )
 from core.persistence import atomic_write_session
 
@@ -128,7 +128,7 @@ class AssetLibrary:
         return self._change(operation)
 
     def import_media(self, source: ArtifactSource | TaskSource, kind: str, payload: VersionInput,
-                     archive, temporary, details) -> Asset:
+                     archive, temporary, details, asset_id: str | None = None) -> Asset:
         from core.media_archive import sync_directory
 
         key = hashlib.sha256(json.dumps(["media", source.project_id, source.stage,
@@ -137,13 +137,15 @@ class AssetLibrary:
 
         def operation(library):
             nonlocal published, file_id
-            asset = next((a for a in library.assets.values() if a.import_key == key), None)
+            if asset_id is not None and not isinstance(source, MediaTaskSource):
+                raise AssetLibraryError(409, "MEDIA_TARGET_UNSUPPORTED", "仅明确媒体候选可以追加指定素材版本")
+            asset = self.get_asset(library,asset_id) if asset_id is not None else next((a for a in library.assets.values() if a.import_key == key), None)
             if asset is not None:
                 if asset.kind != kind:
                     raise AssetLibraryError(409, "MEDIA_KIND_CONFLICT", "归档来源类型已变化，请核对原素材")
                 latest = asset.versions[-1]
-                if isinstance(source, TaskSource):
-                    prior = next((v for v in asset.versions if isinstance(v.source, TaskSource)
+                if isinstance(source, (TaskSource, MediaTaskSource)):
+                    prior = next((v for v in asset.versions if isinstance(v.source, (TaskSource, MediaTaskSource))
                                   and v.source.task_id == source.task_id), None)
                     if prior is not None:
                         if prior.source != source or prior.media.sha256 != details["sha256"]:

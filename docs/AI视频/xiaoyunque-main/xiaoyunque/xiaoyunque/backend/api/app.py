@@ -16,6 +16,7 @@ from api.logging_config import setup_concurrent_logging
 from api.routers.content_revisions import router as content_revisions_router
 from api.routers.co_creation import router as co_creation_router
 from api.routers.creation_candidates import router as creation_candidates_router
+from api.routers.release_media import router as release_media_router
 from api.routers.generation_plans import router as generation_plans_router
 from api.routers.generation_tasks import router as generation_tasks_router
 from api.routers.generation_readiness import router as generation_readiness_router
@@ -64,7 +65,19 @@ def _cors_origins() -> list[str]:
 async def lifespan(app: FastAPI):
     logger.info("Starting XiaoYunQue API")
     logger.info("Code directory mounted at /code: %s", settings.CODE_DIR)
-    yield
+    from api.dependencies import get_workflow_engine
+    from api.routers.assets import get_asset_library, get_media_archive
+    from core.generation_plans import GenerationPlans
+    from core.release_media import ReleaseMedia
+    from core.release_media_worker import MediaWorker
+    engine, library = get_workflow_engine(), get_asset_library()
+    archive = get_media_archive(library)
+    worker = MediaWorker(ReleaseMedia(engine,library,archive,GenerationPlans(engine,library,archive)))
+    worker.start()
+    try:
+        yield
+    finally:
+        worker.stop()
     logger.info("XiaoYunQue API shutdown complete")
 
 
@@ -104,6 +117,7 @@ app.include_router(execution_checks_router)
 app.include_router(content_revisions_router)
 app.include_router(co_creation_router)
 app.include_router(creation_candidates_router)
+app.include_router(release_media_router)
 logger.info("API routers registered")
 
 

@@ -16,7 +16,7 @@ export function displayDefinition(version: AssetVersion): string {
 }
 export type AssetKind = keyof typeof ASSET_KINDS;
 export type TextKind = 'character' | 'setting' | 'prop';
-export interface AssetSource { type: 'manual' | 'script' | 'artifact' | 'generation_task' | 'upload'; project_id?: string; item_id?: string; stage?: string; item_type?: string; upload_id?: string }
+export interface AssetSource { type: 'manual' | 'script' | 'artifact' | 'generation_task' | 'media_task' | 'upload'; project_id?: string; item_id?: string; stage?: string; item_type?: string; upload_id?: string; task_id?: string; plan_hash?: string; provider_task_id?: string; simulation_only?: boolean }
 export interface AssetMedia { file_id: string; mime_type: string; sha256: string; byte_size: number; width: number; height: number; duration: number | null }
 export interface AssetVersion { version_id: string; number: number; name: string; definition: string; created_at: string; source: AssetSource; media: AssetMedia | null }
 export interface Asset { asset_id: string; kind: AssetKind; versions: AssetVersion[] }
@@ -46,6 +46,9 @@ function parseSource(value: unknown): AssetSource {
   if (typeof value.stage !== 'string' || typeof value.item_type !== 'string' || !pairs[value.stage]?.includes(value.item_type)) return invalid();
   if (value.type === 'generation_task') {
     if (value.stage !== 'video_generation' || !id(value.task_id) || !id(value.plan_id) || typeof value.content_hash !== 'string' || !/^[a-f0-9]{64}$/.test(value.content_hash) || value.simulation_only !== true) return invalid();
+  } else if (value.type === 'media_task') {
+    if (!['reference_generation', 'video_generation'].includes(value.stage) || !id(value.task_id) || typeof value.plan_hash !== 'string' || !/^[a-f0-9]{64}$/.test(value.plan_hash) || typeof value.provider_task_id !== 'string' || !/^[A-Za-z0-9][A-Za-z0-9_-]{0,127}$/.test(value.provider_task_id) || typeof value.simulation_only !== 'boolean') return invalid();
+    return { type: 'media_task', project_id: value.project_id, stage: value.stage, item_type: value.item_type, item_id: value.item_id, task_id: value.task_id, plan_hash: value.plan_hash, provider_task_id: value.provider_task_id, simulation_only: value.simulation_only };
   } else if (value.type !== 'artifact') return invalid();
   return { type: value.type, project_id: value.project_id, stage: value.stage, item_type: value.item_type, item_id: value.item_id };
 }
@@ -58,8 +61,9 @@ export function parseAsset(value: unknown): Asset {
     const source = parseSource(v.source);
     let media: AssetMedia | null = null;
     if (kind === 'image' || kind === 'video') {
+      if (source.type === 'media_task' && source.stage !== (kind === 'video' ? 'video_generation' : 'reference_generation')) return invalid();
       const m = v.media;
-      if (!isRecord(m) || !id(m.file_id) || typeof m.sha256 !== 'string' || !/^[a-f0-9]{64}$/.test(m.sha256) || !positive(m.byte_size) || !positive(m.width) || !positive(m.height) || !['artifact', 'generation_task', 'upload'].includes(source.type)) return invalid();
+      if (!isRecord(m) || !id(m.file_id) || typeof m.sha256 !== 'string' || !/^[a-f0-9]{64}$/.test(m.sha256) || !positive(m.byte_size) || !positive(m.width) || !positive(m.height) || !['artifact', 'generation_task', 'media_task', 'upload'].includes(source.type)) return invalid();
       if (kind === 'video' ? m.mime_type !== 'video/mp4' || m.byte_size > 100 * 1024 * 1024 || typeof m.duration !== 'number' || !Number.isFinite(m.duration) || m.duration <= 0 : !['image/jpeg', 'image/png', 'image/webp', 'image/bmp'].includes(String(m.mime_type)) || m.byte_size > 10 * 1024 * 1024 || m.duration != null || source.type === 'generation_task') return invalid();
       media = { file_id: m.file_id, mime_type: String(m.mime_type), sha256: m.sha256, byte_size: m.byte_size, width: m.width, height: m.height, duration: typeof m.duration === 'number' ? m.duration : null };
     } else if (v.media != null || !['manual', 'script'].includes(source.type)) return invalid();
@@ -142,7 +146,7 @@ export function importOptions(snapshot: ProjectSnapshot): ImportOption[] {
   return result;
 }
 export const mediaUrl = (asset: string, version: string) => `/api/assets/${encodeURIComponent(asset)}/versions/${encodeURIComponent(version)}/media`;
-export function sourceLabel(source: AssetSource): string { return { manual: '手动创建', script: '剧本导入', artifact: '项目产物', generation_task: '人工任务样例', upload: '本地上传' }[source.type]; }
+export function sourceLabel(source: AssetSource): string { if (source.type === 'media_task') return source.simulation_only ? '人工媒体任务样例' : '模型媒体任务'; return { manual: '手动创建', script: '剧本导入', artifact: '项目产物', generation_task: '人工任务样例', media_task: '模型媒体任务', upload: '本地上传' }[source.type]; }
 
 export class AssetApiError extends Error {
   constructor(message: string, public code: string, public status: number, public uncertain = false) { super(message); }

@@ -17,7 +17,7 @@ from core.media_archive import sync_directory
 from core.persistence import atomic_write_session
 
 
-def read_document(path: Path, model):
+def read_document(path: Path, model, *, required_fields=None):
     try:
         descriptor = os.open(path, os.O_RDONLY | os.O_NOFOLLOW | os.O_NONBLOCK)
     except FileNotFoundError:
@@ -27,7 +27,7 @@ def read_document(path: Path, model):
             raise ValueError("Not a regular store")
         data = json.load(stream, object_pairs_hook=unique_fields)
     if (not isinstance(data, dict) or type(data.get("schema_version")) is not int or data["schema_version"] != 1
-            or not set(model.model_fields).issubset(data)):
+            or not (set(model.model_fields) if required_fields is None else set(required_fields)).issubset(data)):
         raise ValueError("Unsupported store")
     return model.model_validate(data)
 
