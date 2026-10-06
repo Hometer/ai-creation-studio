@@ -4,6 +4,7 @@ import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { errorMessage, isRecord, stringMap, type MediaItem, type ProjectSnapshot, type StageArtifact } from '@/lib/workflowTypes';
 import type { StageViewProps } from './stages/types';
 import { useRouter, useSearchParams } from 'next/navigation';
+import Link from 'next/link';
 import {
   startProject,
   executeStage,
@@ -1389,6 +1390,7 @@ export default function WorkflowPanel() {
         projectStatus={projectStatus}
       />
 
+      {!showHome&&sessionId&&<div className="workflow-cost-entry" role="note"><p>生成前先核对计划与费用。旧自动执行暂未具备完整费用上界，请从以下入口逐次确认。</p><nav><Link href={`/projects/${encodeURIComponent(sessionId)}/drafts`}>剧本与分镜草稿</Link><Link href={`/projects/${encodeURIComponent(sessionId)}/media`}>媒体修改与候选</Link><Link href={`/projects/${encodeURIComponent(sessionId)}/compose`}>选用片段合成</Link></nav></div>}
       <main className="flex-1 min-w-0 overflow-hidden">
         {showHome ? (
           <HomePage

@@ -996,3 +996,5 @@ body {
 .studio-goal-fields label {display:grid;gap:8px;min-width:0;}
 .studio-goal-fields input {width:100%;min-width:0;min-height:44px;padding:10px 12px;border-radius:9px;border:1px solid var(--lp-border-subtle);color:var(--lp-text-default);background:var(--lp-surface-subtle);}
 @media(max-width:540px){.studio-goal-fields {grid-template-columns:minmax(0,1fr);gap:12px;}}
+
+.workflow-cost-entry{flex-shrink:0;padding:10px 20px;border-bottom:1px solid var(--lp-border-divider);background:var(--lp-surface-subtle);color:var(--lp-text-muted);font-size:12px;line-height:1.7}.workflow-cost-entry nav{display:flex;flex-wrap:wrap;gap:8px 16px}.workflow-cost-entry a{color:var(--lp-accent);min-height:32px;display:inline-flex;align-items:center}@media(max-width:780px){.workflow-cost-entry{padding:8px 12px;font-size:11px}.workflow-cost-entry nav{gap:4px 12px}}

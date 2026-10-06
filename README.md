@@ -630,3 +630,11 @@ GET／POST `/api/project/{id}/content-revisions/reviews` 提供真实读取与�
 人工验收：根目录运行 `python3.12 scripts/project.py initial-draft-demo`，后端8020，资料在忽略的 `data/initial-draft-demo/`，全部候选为预写合同样例。隔离前端3020以 `BACKEND_API_URL=http://127.0.0.1:8020` 构建，打开 http://127.0.0.1:3020/projects/initial-demo/drafts 。不含真实模型效果或费用。生产使用的同名入口调用原生境内百炼，仍须真实Key与逐次确认；目前真实冒烟待验。
 
 验证：后端 `.venv/bin/python -m pytest tests/test_initial_drafts.py tests/test_generation_plans.py -q`；前端 `npm test`、`npm run typecheck`、`npm run lint -- --max-warnings=0`、`npm run build`。证据在 `docs/evidence/阶段3/从零剧本与分镜候选/验收报告.md`。整体首版、模型效果、样例打分及真机不按人工演练宣布完成。
+
+## 旧入口费用约束（阶段3第27子阶段）
+
+生产API的旧六阶段execute／intervene、临时工具与专项任务创建没有完整价格、固定调用次数或共享额度确认，执行返回409 `LEGACY_COST_PLAN_REQUIRED`，不会创建任务或初始化模型。已配置Key也不能绕过。页面和历史、上传、手工编辑、读取和本地continue保持；原六阶段页面提示可进入“剧本与分镜草稿”“媒体修改与候选”“选用片段合成”，各入口分别执行当前计划确认或免费本机合成。完整旧模型价格适配仍需核对，未知费用不会写为零。
+
+`GET /api/cost-policy` 为只读策略，单次500分／整轮2000分，明确旧执行不可用、真实账单未知。新剧本、文字与媒体候选继续共享原人民币账本，自身确认与材料审核不省略。后端生产ASGI中间件覆盖旧POST别名与尾斜线；离线独立路由测试继续验证原功能逻辑，不把人工测试当收费许可。
+
+验证 `.venv/bin/python -m pytest tests/test_legacy_cost_gate.py -q`，原测试保留；证据在 `docs/evidence/阶段3/旧入口费用约束/验收报告.md`。历史人工前端预览3001—3018已收起以释放本机资源，资料与重启命令保留；主3000与最新3019／3020预览保持。

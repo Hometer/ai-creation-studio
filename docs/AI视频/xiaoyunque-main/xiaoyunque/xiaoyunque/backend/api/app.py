@@ -104,6 +104,9 @@ app = FastAPI(
     responses={status: {"model": ErrorResponse} for status in HTTP_ERRORS},
 )
 register_error_handlers(app)
+from api.services.legacy_cost_gate import LegacyCostGate,router as cost_policy_router
+app.add_middleware(LegacyCostGate)
+app.include_router(cost_policy_router)
 
 cors_origins = _cors_origins()
 app.add_middleware(

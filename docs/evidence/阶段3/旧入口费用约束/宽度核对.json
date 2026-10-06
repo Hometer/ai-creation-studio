@@ -1,0 +1,128 @@
+[
+  {
+    "width": 1440,
+    "overflow": false,
+    "links": [
+      {
+        "text": "剧本与分镜草稿",
+        "width": 84,
+        "height": 32
+      },
+      {
+        "text": "媒体修改与候选",
+        "width": 84,
+        "height": 32
+      },
+      {
+        "text": "选用片段合成",
+        "width": 72,
+        "height": 32
+      }
+    ]
+  },
+  {
+    "width": 1280,
+    "overflow": false,
+    "links": [
+      {
+        "text": "剧本与分镜草稿",
+        "width": 84,
+        "height": 32
+      },
+      {
+        "text": "媒体修改与候选",
+        "width": 84,
+        "height": 32
+      },
+      {
+        "text": "选用片段合成",
+        "width": 72,
+        "height": 32
+      }
+    ]
+  },
+  {
+    "width": 1024,
+    "overflow": false,
+    "links": [
+      {
+        "text": "剧本与分镜草稿",
+        "width": 84,
+        "height": 32
+      },
+      {
+        "text": "媒体修改与候选",
+        "width": 84,
+        "height": 32
+      },
+      {
+        "text": "选用片段合成",
+        "width": 72,
+        "height": 32
+      }
+    ]
+  },
+  {
+    "width": 768,
+    "overflow": false,
+    "links": [
+      {
+        "text": "剧本与分镜草稿",
+        "width": 77,
+        "height": 32
+      },
+      {
+        "text": "媒体修改与候选",
+        "width": 77,
+        "height": 32
+      },
+      {
+        "text": "选用片段合成",
+        "width": 66,
+        "height": 32
+      }
+    ]
+  },
+  {
+    "width": 390,
+    "overflow": false,
+    "links": [
+      {
+        "text": "剧本与分镜草稿",
+        "width": 77,
+        "height": 32
+      },
+      {
+        "text": "媒体修改与候选",
+        "width": 77,
+        "height": 32
+      },
+      {
+        "text": "选用片段合成",
+        "width": 66,
+        "height": 32
+      }
+    ]
+  },
+  {
+    "width": 360,
+    "overflow": false,
+    "links": [
+      {
+        "text": "剧本与分镜草稿",
+        "width": 77,
+        "height": 32
+      },
+      {
+        "text": "媒体修改与候选",
+        "width": 77,
+        "height": 32
+      },
+      {
+        "text": "选用片段合成",
+        "width": 66,
+        "height": 32
+      }
+    ]
+  }
+]
