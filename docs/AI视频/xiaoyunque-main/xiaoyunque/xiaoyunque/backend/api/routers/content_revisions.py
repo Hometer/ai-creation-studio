@@ -72,7 +72,12 @@ from api.schemas.revision_import_precheck import PrecheckReport
                         422:{'description':'Invalid backup'},503:{'description':'Target storage unavailable'}})
 async def import_precheck(project_id:ProjectId,request:Request,
         expected_token:str=Query(pattern=r'^[a-f0-9]{64}$'),filename:str=Query(min_length=1,max_length=128),revisions=Depends(service)):
-    from core.revision_import_precheck import RevisionImportPrecheck,check_filename
+    from core.revision_import_precheck import RevisionImportPrecheck
+    body = await read_backup_body(request, filename)
+    return await run_in_threadpool(RevisionImportPrecheck(revisions.engine).inspect,project_id,expected_token,filename,body)
+
+async def read_backup_body(request: Request, filename: str):
+    from core.revision_import_precheck import check_filename
     from core.revision_exports import MAX_EXPORT_BYTES
     from core.content_revisions import fail
     check_filename(filename)
@@ -82,4 +87,16 @@ async def import_precheck(project_id:ProjectId,request:Request,
     async for chunk in request.stream():
         if len(body)+len(chunk)>MAX_EXPORT_BYTES:fail(413,'BACKUP_SIZE','文字备份不能超过 64 MiB')
         body.extend(chunk)
-    return await run_in_threadpool(RevisionImportPrecheck(revisions.engine).inspect,project_id,expected_token,filename,bytes(body))
+    return bytes(body)
+
+from api.schemas.revision_import_preview import RestoreBackupPreview
+
+@router.post('/api/project/{project_id}/content-revisions/import-preview', response_model=RestoreBackupPreview,
+             responses={404:{'description':'Project missing'},409:{'description':'Target changed or running'},
+                        413:{'description':'Backup size limit'},415:{'description':'Unsupported file type'},
+                        422:{'description':'Invalid backup, source project or preview limit'},503:{'description':'Target storage unavailable'}})
+async def import_preview(project_id:ProjectId, request:Request,
+        expected_token:str=Query(pattern=r'^[a-f0-9]{64}$'),filename:str=Query(min_length=1,max_length=128),revisions=Depends(service)):
+    from core.revision_import_preview import RevisionImportPreview
+    body = await read_backup_body(request, filename)
+    return await run_in_threadpool(RevisionImportPreview(revisions.engine).inspect,project_id,expected_token,filename,body)

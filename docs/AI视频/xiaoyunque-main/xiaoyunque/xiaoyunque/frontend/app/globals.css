@@ -984,3 +984,9 @@ body {
 .revision-precheck-stage { padding: .8rem 0; border-bottom: 1px solid var(--border); }
 .revision-precheck-versions { padding-left: 1.4rem; }
 .revision-precheck-versions li { margin: .65rem 0; }
+
+.revision-backup-preview { scroll-margin-top: 84px; margin-top: 1rem; padding-top: 1rem; border-top: 1px solid var(--border); overflow-wrap: anywhere; }
+.revision-backup-preview-stage { margin-top: 1rem; }
+.revision-backup-preview-stage .revision-comparison-change { margin-top: .8rem; }
+
+.revision-backup-preview summary { cursor: pointer; padding: .5rem 0; line-height: 1.7; }

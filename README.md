@@ -524,3 +524,19 @@ GET／POST `/api/project/{id}/content-revisions/reviews` 提供真实读取与�
 复验入口：根 `python3.12 scripts/project.py check`；定向后端在 backend 运行 `.venv/bin/python -m pytest tests/test_revision_import_precheck.py -q`；frontend 运行 `npm test`、`npm run typecheck`、`npm run lint -- --max-warnings=0`、`npm run build`。本轮分别运行后端全量 1020/1020（新增 38）、前端 464/464（新增 39）、类型／零警告 Lint／主与独立生产构建，全部通过；根 check 未另行执行。真实下载检查、编辑保护、故障／操作锁／迟到回执、空项目、六宽度与 HTTP 实际退出重启通过；六组响应／四文件一致，原 211 个保护文件保持，主库五项目实际导出／预检通过。
 
 [先行开发文档](docs/阶段文档/阶段3-第17子阶段-文字备份只读预检开发文档.md) 与 [证据／闸门及人工下载样例](docs/evidence/阶段3/文字备份只读预检/验收报告.md) 已交付。本轮工程结果本地提交、不推送；真实模型、业务、真机和整个阶段仍待验，A07／依赖告警继续开放。下一轮优先同项目文字备份恢复预览。
+
+## 同项目文字备份恢复预览（阶段 3 第 18 子阶段）
+
+项目 → 素材与版本 → 文字修改与版本 → 选择 JSON → “检查这份备份” → “预览恢复当前文字”。只有同项目且项目未执行时可预览，后端也重新检查来源、运行状态和目标摘要。预览比较项目当前正式正文与备份 current 剧本／分镜，显示两阶段全部结构差异（新增／移除／空值／类型变化）、字段数量及当前／备份分镜影响并集；左为当前，右为备份。相同／空备份明确无需恢复。历史仅供检查范围，本轮没有恢复写入或授权，不改正文、版本、共创、媒体、任务或费用。
+
+沿用 v1 JSON、安全文件名、实际 JSON 类型、64 MiB 流式上限及严格格式／摘要／关系校验；两阶段合计最多 2000 差异，完整响应最多 8 MiB，超限拒绝而不截断。摘要只保证内部一致，不能证明来源可信。检查／预览共用单次锁；20 秒超时、失败清掉旧恢复预览，保留文件、检查范围和编辑输入，手动重试，无自动重发。换文件／重检查／重读／刷新需重做预览，迟到响应忽略。预览不替换本页未保存编辑、原修改预览或勾选；文件和报告不保存到磁盘／LocalStorage，刷新重选。
+
+新增 POST `/api/project/{id}/content-revisions/import-preview?expected_token=当前目标摘要&filename=安全文件名`，JSON 原始请求体、Content-Type application/json。返回 mode=read_only、scope=backup_current、文件 SHA-256／大小、来源／目标绑定、两阶段完整差异及影响；无写入 token。前端再次严格核对文件、预检报告和当前工作区。错误结构 error.code/message；404 不存在、409 目标已变／执行中、413 文件超限、415 类型／文件名不支持、422 内容／来源／差异容量错误、503 目标存储不可读。原预检接口行为保留。
+
+[独立人工生产预览](http://127.0.0.1:3014/projects/comparison-demo/revisions#revision-import-precheck) 保留实际下载后再人工保存形成的十条版本；选择 [八版本人工旧备份](docs/evidence/阶段3/同项目文字备份恢复预览/人工旧文字备份.json)，检查后预览应有标题／镜头两处差异。自己的当前下载应零差异。空项目地址 `http://127.0.0.1:3014/projects/revision-empty/revisions#revision-import-precheck`。样例均人工，不代表模型效果；额外人工持久执行中状态仅用于本轮限制验收，无真实 worker 任务。
+
+后端停止后从根运行 `python3.12 scripts/project.py revision-import-preview-demo`（默认 8014）；只使用忽略的 `data/revision-import-preview-demo/`，无供应商执行入口。已保留 `/tmp/import-preview-frontend` 独立生产构建，在该目录运行 `BACKEND_API_URL=http://127.0.0.1:8014 npm run start -- --hostname 127.0.0.1 --port 3014`。若副本清理，由开发者复制主 frontend 到仓库外，排除 `.env*`／`.next`／`node_modules`，安装或复用依赖，再以 `BACKEND_API_URL=http://127.0.0.1:8014 npm run build -- --webpack` 构建后启动；不要与主服务共用 `.next` 或数据。演练工厂仅初次创建人工基础样例，本轮后续保存与额外运行状态保存在演练数据目录；全新目录不会自动重放本轮编辑。主服务仍沿用根 backend／frontend 入口。
+
+复验入口为根 `python3.12 scripts/project.py check`；定向后端在 backend 运行 `.venv/bin/python -m pytest tests/test_revision_import_precheck.py tests/test_revision_import_preview.py -q`；frontend 运行 `npm test`、`npm run typecheck`、`npm run lint -- --max-warnings=0`、`npm run build`。本轮分别运行后端全量 1042/1042（新增 22）、前端 509/509（新增 45）、类型／零警告 Lint／主与独立生产构建，全部通过；根 check 未另行执行。真实浏览器及六宽度通过；实际 HTTP 退出重启十二组响应一致（含运行中预期 409）、五个演练文件一致，原 216 个保护文件保持；主库五项目自己的实际导出／预检／恢复预览均零差异。
+
+[先行开发文档](docs/阶段文档/阶段3-第18子阶段-同项目文字备份恢复预览开发文档.md) 和 [证据／闸门及真实下载人工样例](docs/evidence/阶段3/同项目文字备份恢复预览/验收报告.md) 已交付。本轮本地提交、不推送；真实模型、业务、手机真机及整个阶段继续待验，A07／依赖告警保留。下一轮优先同项目文字备份逐次确认与原子恢复。
