@@ -113,8 +113,8 @@ export default function ProjectCoCreation({projectId}:{projectId:string}){
   const createDisabled=disabled||!!data?.running;
   return <div><BrandHeader/><main className="revision-shell">
     <nav className="revision-nav"><Link href={`/projects/${encodeURIComponent(projectId)}/assets`}><ArrowLeft size={16}/>素材与版本</Link><Link href={`/projects/${encodeURIComponent(projectId)}/revisions`}>文字修改与版本</Link><Link href={`/?session=${encodeURIComponent(projectId)}`}>返回项目</Link><button onClick={reload} disabled={reading||busy||applicationBusy}><RefreshCw size={16}/>重新读取共创记录</button></nav>
-    <div className="revision-heading"><div><span className="revision-eyebrow">创作工作室 · 对话共创</span><h1>先说清楚，再一起修改</h1><p>留下修改原话，核对对象与必须保留的内容。</p></div><span className="revision-local"><ShieldCheck size={18}/>本地记录 · 模型尚未接入</span></div>
-    <p className="revision-boundary">记录并确认修改意图后，可人工填写新文字，预览差异再保存关联版本。尚未调用模型；确认意图本身不会改写正文或授权费用。</p>
+    <div className="revision-heading"><div><span className="revision-eyebrow">创作工作室 · 对话共创</span><h1>先说清楚，再一起修改</h1><p>留下修改原话，核对对象与必须保留的内容。</p></div><span className="revision-local"><ShieldCheck size={18}/>正文保存需确认</span></div>
+    <p className="revision-boundary">记录并确认意图后，可人工修改或单独确认费用生成 AI 候选，预览差异再保存关联版本。确认意图本身不会改写正文或授权费用；真实模型效果需另行验收。</p>
     {error&&<div role="alert" className="revision-alert">{error}{blocked&&<p>输入与已显示记录保留，暂停提交。请重新读取，核对上次操作是否已保存。</p>}</div>}
     {notice&&<p role="status" className="revision-notice">{notice}</p>}
     {reading&&<p role="status">正在读取项目内共创记录与文字…</p>}

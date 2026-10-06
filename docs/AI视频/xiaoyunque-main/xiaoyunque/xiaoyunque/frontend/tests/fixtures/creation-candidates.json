@@ -1,0 +1,45 @@
+{
+  "project_id": "comparison-demo",
+  "expected_token": "9c01c054286cec3d38d8779490267c1b15b1065415c5bd2373cc5e8a7fa376cc",
+  "credential_present": true,
+  "endpoint_allowed": true,
+  "single_limit_fen": 500,
+  "round_limit_fen": 2000,
+  "occupied_fen": 2,
+  "available_fen": 1998,
+  "price_current": true,
+  "jobs": [
+    {
+      "job_id": "f32a8297509f43c9a553cef294db4c6d",
+      "number": 1,
+      "plan": {
+        "project_id": "comparison-demo",
+        "intent_id": "a54f3f0dc1ab4671903647c774e7712d",
+        "expected_token": "9c01c054286cec3d38d8779490267c1b15b1065415c5bd2373cc5e8a7fa376cc",
+        "model": "qwen-plus-2025-12-01",
+        "input_digest": "8481afcf3962fe8b6f0bbf923318348c165dd61f3ee6c5512d4ab987ee9077a7",
+        "input_byte_size": 2249,
+        "max_output_tokens": 4096,
+        "estimate_fen": 2,
+        "price_version": "aliyun-beijing-qwen-plus-2025-12-01-20261006",
+        "expires_at": 1791267434,
+        "scope": "只生成所选字段候选；会发送当前剧本与分镜文字上下文，不发送媒体"
+      },
+      "plan_hash": "a7e37bd5690d4c12741a09e18bc43c2df361640b4ed667acfaeb89e188eeb28b",
+      "created_at": "2026-10-06T05:57:14.070035+00:00",
+      "status": "succeeded",
+      "reserved_fen": 2,
+      "attempts": 1,
+      "result": {
+        "value": "灯塔与最后一班渡船 · 人工接口候选",
+        "explanation": "这是人工接口样例，用于验证确认、载入和版本保存，不代表模型理解。",
+        "preservation": "保留渡船与灯塔；文字含义仍需人工核对。"
+      },
+      "usage_estimate_fen": 1,
+      "actual_billed_fen": null,
+      "error": null,
+      "current": true,
+      "simulation_only": true
+    }
+  ]
+}

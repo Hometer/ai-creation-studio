@@ -2,6 +2,7 @@
 import {useCallback,useEffect,useRef,useState} from 'react';
 import Link from 'next/link';
 import CoCreationDraftHistory from './CoCreationDraftHistory';
+import CreationCandidates from './CreationCandidates';
 import {draftRestoration} from '@/lib/coCreationDraftHistory';
 import {RevisionError} from '@/lib/contentRevisions';
 import {applyInput,previewApplication,saveApplication,type ApplicationWorkspace,type ApplyPreview,type ApplySave} from '@/lib/coCreationApplications';
@@ -12,12 +13,13 @@ export default function CoCreationApplication({projectId,intentId,data,onChange,
   const latest=latestDraft(drafts,intentId);
   const [value,setValue]=useState(latest?.value??intent.target.value),[preview,setPreview]=useState<ApplyPreview|null>(null),[ack,setAck]=useState(false);
   const [busy,setBusy]=useState(false),[blocked,setBlocked]=useState(false),[error,setError]=useState(''),[notice,setNotice]=useState('');
+  const [modelBusy,setModelBusy]=useState(false);
   const pendingDraft=useRef<DraftInput|null>(null);
   const unsaved=value!==(latest?.value??intent.target.value);
   const lock=useRef(false),alive=useRef(true),serial=useRef(0),pending=useRef<ApplySave|null>(null);
   const invalidate=useCallback(()=>{alive.current=false;++serial.current;onActivity(false,false);},[onActivity]);
   useEffect(()=>{alive.current=true;return invalidate;},[invalidate]);
-  useEffect(()=>{onActivity(busy,!application&&(unsaved||!!pending.current||!!pendingDraft.current));},[busy,unsaved,application,onActivity]);
+  useEffect(()=>{onActivity(busy||modelBusy,!application&&(unsaved||!!pending.current||!!pendingDraft.current));},[busy,modelBusy,unsaved,application,onActivity]);
   useEffect(()=>{const timer=window.setTimeout(()=>{setPreview(null);setAck(false);},0);return()=>window.clearTimeout(timer);},[data.workspace.token,readEpoch]);
   const run=async(kind:'preview'|'save'|'read'|'draft')=>{
     if(lock.current||disabled)return;
@@ -51,7 +53,7 @@ export default function CoCreationApplication({projectId,intentId,data,onChange,
     }catch(e){if(alive.current&&generation===serial.current){setError(e instanceof Error?e.message:'操作未完成');setPreview(null);setAck(false);if(!(e instanceof RevisionError)||e.uncertain||e.status===409||e.status===503)setBlocked(true);else {pending.current=null;pendingDraft.current=null;}}}
     finally{if(alive.current&&generation===serial.current){lock.current=false;setBusy(false);}}
   };
-  const unavailable=disabled||busy||blocked||data.workspace.running||intent.status!=='confirmed'||!!application;
+  const unavailable=disabled||busy||modelBusy||blocked||data.workspace.running||intent.status!=='confirmed'||!!application;
   const loadDraft=(draftId:string)=>{
     if(lock.current||unavailable)return;
     try{
@@ -63,8 +65,9 @@ export default function CoCreationApplication({projectId,intentId,data,onChange,
   };
   return <section className="creation-apply">
     <h3>{application?'已保存为文字版本':'把已确认意图改成文字'}</h3>
-    {application&&version?<><p className="revision-notice">第 {version.number} 版已留存{version.current?'，目前仍是当前正文':'，可到版本页查看历史'}。撤回请求不会回退已保存的正文。</p><Link href={`/projects/${encodeURIComponent(projectId)}/revisions?version=${version.version_id}`}>查看关联文字版本</Link></>:(intent.status==='confirmed'||!!latest||value!==intent.target.value)?<>
-      <p className="revision-muted">人工填写选定对象的新内容，预览后再次确认保存。必须保留的文字含义请自行核对。</p>
+    {application&&version?<><p className="revision-notice">第 {version.number} 版已留存{version.current?'，目前仍是当前正文':'，可到版本页查看历史'}。撤回请求不会回退已保存的正文。</p><Link href={`/projects/${encodeURIComponent(projectId)}/revisions?version=${version.version_id}`}>查看关联文字版本</Link><CreationCandidates projectId={projectId} intentId={intentId} expectedToken={data.workspace.token} disabled={disabled||busy} readOnly onLoad={()=>{}} onBusy={setModelBusy}/></>:(intent.status==='confirmed'||!!latest||value!==intent.target.value)?<>
+      <p className="revision-muted">可人工填写新内容，或明确生成并载入 AI 候选；预览后再次确认保存。必须保留的文字含义请自行核对。</p>
+      <CreationCandidates projectId={projectId} intentId={intentId} expectedToken={data.workspace.token} disabled={disabled||busy||blocked||data.workspace.running||intent.status!=='confirmed'||!!application} onBusy={setModelBusy} onLoad={candidate=>{if(unavailable)return;if(unsaved&&candidate!==value&&!window.confirm('载入 AI 候选会替换本页未保存的修改文字。确认载入？'))return;setValue(candidate);setPreview(null);setAck(false);setNotice('候选已载入本页，请预览完整差异并核对保留要求后保存；原正文仍保留。');}}/>
       <label className="revision-field">修改后的文字<textarea rows={5} maxLength={10000} value={value} disabled={unavailable} onChange={e=>{setValue(e.target.value);setPreview(null);setAck(false);}}/></label>
       <p className="revision-muted">{value.length} / 10000 字 · 可以明确清空该字段</p>
       <p className="revision-muted creation-draft-status">{unsaved?'有未保存的修改':latest?'草稿已保存 · '+new Date(latest.created_at).toLocaleString('zh-CN'):'尚未保存修改草稿'}。草稿不会改正文，预览和勾选不会随草稿恢复。</p>
