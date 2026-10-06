@@ -5,6 +5,8 @@ from pydantic import BaseModel, Field
 
 from api.logging_config import apply_access_log_setting, apply_log_level_setting
 from config import Config
+from core.content_revisions import fail
+from api.errors import ErrorResponse
 
 router = APIRouter(tags=["Configuration"])
 
@@ -21,9 +23,12 @@ async def get_config():
     }
 
 
-@router.put("/api/config")
+@router.put("/api/config", responses={503: {"model": ErrorResponse}})
 async def update_config(req: ConfigUpdateRequest):
-    Config.update_config(req.values)
+    try:
+        Config.update_config(req.values)
+    except Exception:
+        fail(503, "CONFIG_SAVE_UNCONFIRMED", "配置保存未确认，请重新读取；密钥不会显示在错误中")
     apply_log_level_setting()
     apply_access_log_setting()
     return {

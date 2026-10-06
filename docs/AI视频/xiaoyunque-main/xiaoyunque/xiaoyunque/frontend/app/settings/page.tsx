@@ -299,7 +299,7 @@ export default function SettingsPage() {
             <h1 className="text-2xl font-bold text-gray-800">设置</h1>
           </div>
           <p className="text-sm text-gray-500">
-            修改后端配置并保存到 <span className="font-mono">{formatConfigPath(path)}</span>
+            普通参数保存到 <span className="font-mono">{formatConfigPath(path)}</span>；密钥只保存在本机受保护的 .env，读取时仅显示遮罩。
           </p>
         </div>
 

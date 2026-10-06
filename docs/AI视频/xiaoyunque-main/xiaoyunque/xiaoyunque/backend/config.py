@@ -1,11 +1,12 @@
 import copy
 import logging
 import os
-import tempfile
 from pathlib import Path
 from typing import Any, Dict, Optional
 
 import yaml
+
+from config_secrets import overlay, save_pair, secret_lock
 
 logger = logging.getLogger(__name__)
 
@@ -216,33 +217,29 @@ def _normalize_log_level(value: Any, legacy_debug: Any = None) -> str:
 
 
 def load_config() -> Dict[str, Any]:
-    if not CONFIG_PATH.exists():
-        source = CONFIG_EXAMPLE_PATH if CONFIG_EXAMPLE_PATH.exists() else None
-        if source:
-            with source.open("r", encoding="utf-8") as f:
-                loaded = yaml.safe_load(f) or {}
-            return _coerce_config(loaded)
-        return copy.deepcopy(DEFAULT_CONFIG)
-
-    with CONFIG_PATH.open("r", encoding="utf-8") as f:
-        loaded = yaml.safe_load(f) or {}
-    if not isinstance(loaded, dict):
-        raise ValueError("backend/config.yaml must contain a YAML mapping.")
-    return _coerce_config(loaded)
+    if CONFIG_PATH.is_symlink():
+        raise ValueError("Configuration store is unavailable.")
+    source = CONFIG_PATH if CONFIG_PATH.exists() else CONFIG_EXAMPLE_PATH
+    with secret_lock(CONFIG_PATH.parent):
+        if source.exists():
+            if source.is_symlink():
+                raise ValueError("Configuration store is unavailable.")
+            with source.open("r", encoding="utf-8") as stream:
+                try:
+                    loaded = yaml.safe_load(stream) or {}
+                except Exception:
+                    raise ValueError("Configuration cannot be read.") from None
+            if not isinstance(loaded, dict):
+                raise ValueError("Configuration must contain a mapping.")
+        else:
+            loaded = copy.deepcopy(DEFAULT_CONFIG)
+        return overlay(_coerce_config(loaded), CONFIG_PATH.parent / ".env", _get, _set)
 
 
 def save_config(values: Dict[str, Any]) -> Dict[str, Any]:
     clean = _coerce_config(values)
-    fd, temp_path = tempfile.mkstemp(dir=CONFIG_PATH.parent, prefix="config.", suffix=".yaml.tmp")
-    try:
-        with os.fdopen(fd, "w", encoding="utf-8") as f:
-            yaml.safe_dump(clean, f, allow_unicode=True, sort_keys=False)
-        os.replace(temp_path, CONFIG_PATH)
-    except Exception:
-        if os.path.exists(temp_path):
-            os.remove(temp_path)
-        raise
-    return clean
+    return save_pair(CONFIG_PATH, clean, _get, _set,
+        lambda public: yaml.safe_dump(public, allow_unicode=True, sort_keys=False))
 
 
 CONFIG_VALUES = load_config()
