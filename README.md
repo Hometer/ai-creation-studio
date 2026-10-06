@@ -508,3 +508,19 @@ GET／POST `/api/project/{id}/content-revisions/reviews` 提供真实读取与�
 全量复验入口 `python3.12 scripts/project.py check`；定向后端在 backend 运行 `.venv/bin/python -m pytest tests/test_co_creation_draft_history.py -q`；frontend 运行 `npm test`、`npm run typecheck`、`npm run lint -- --max-warnings=0`、`npm run build`。本轮分别执行全量后端 982/982（新增 2）、前端 425/425（新增 12）、类型／零警告 Lint／生产构建，全部通过。真实浏览器查看、载入、另存／刷新、故障找回、操作锁及六宽度通过；HTTP 实际退出重启八组响应与四文件一致，原 212 个保护文件保持、主库五项目读取成功。
 
 [先行开发文档](docs/阶段文档/阶段3-第16子阶段-历史草稿选择与恢复开发文档.md) 与 [证据／闸门](docs/evidence/阶段3/历史草稿选择与恢复/验收报告.md) 已交付。本轮工程结果本地提交、不推送；真实模型、业务、真机和整个阶段仍待验，A07／依赖告警继续开放。下一轮优先文字版本备份导入的只读预检。
+
+## 文字备份导入的只读预检（阶段 3 第 17 子阶段）
+
+项目 → 素材与版本 → 文字修改与版本 → “检查文字备份”。先下载上方的 JSON 文字备份，再选择文件，明确点“检查这份备份”。选择不自动上传；结果显示来源项目、文件大小、剧本／分镜字段数、与当前正文是否相同、未归档状态及全部版本的时间／来源／恢复关系。不同来源仅提示，不能恢复或覆盖项目；检查保留本页未保存文字、预览和确认勾选。
+
+仅支持现有 v1 JSON 文字备份、安全文件名和最多 64 MiB。严格校验实际 JSON、必填格式标签、重复键、摘要、版本顺序和恢复／当前引用；深度最多 64、节点最多 500000，沿用每阶段 500 字段、每快照 2 MiB、历史 32 MiB 上限。TXT／原会话／媒体不能检查，超限拒绝。摘要不是签名，校验通过不能证明来源可信，也不是恢复授权；完整项目仍需保留原会话与资产库。
+
+文件原始字节只送到本机后端检查，不保存到磁盘／LocalStorage，不改变正文／版本／媒体／任务，不调用模型。失败清掉旧报告、保留文件选择；20 秒超时，手动重试，无自动重发。目标变化需重新读取版本再检查；读取变化会忽略迟到回执。刷新或返回页面需重新选择文件，报告不持久化。
+
+独立人工生产预览：[检查八条历史](http://127.0.0.1:3013/projects/comparison-demo/revisions#revision-import-precheck) 和 [空文字备份](http://127.0.0.1:3013/projects/revision-empty/revisions#revision-import-precheck)。样例都是人工文字，不代表模型效果。后端停止后，从根运行 `python3.12 scripts/project.py revision-import-precheck-demo`（默认 8013），数据仅在忽略的 `data/revision-import-precheck-demo/`；无供应商执行入口。已保留 `/tmp/import-precheck-frontend` 独立构建，进入该目录运行 `BACKEND_API_URL=http://127.0.0.1:8013 npm run start -- --hostname 127.0.0.1 --port 3013`。副本清理后由开发者把主 frontend 复制到仓库外，排除 `.env*`／`.next`，安装或复用依赖，再以 `BACKEND_API_URL=http://127.0.0.1:8013 npm run build -- --webpack` 构建后启动；保持独立 `.next` 和数据，不改主服务代理。主应用仍用根 backend／frontend 启动入口。
+
+新接口 POST `/api/project/{id}/content-revisions/import-precheck?expected_token=当前摘要&filename=安全文件名`，正文为 JSON 原始字节、Content-Type 为 application/json；返回只读摘要，前端核对所选文件 SHA-256 与目标项目／token。后端流式限长，不信任 Content-Length。错误沿用 error.code/message；404 项目不存在、409 目标变化、413 大小超限、415 类型／文件名不支持、422 内容／关系／格式错误、503 原存储不可读。上传文件和检查报告不生成持久记录。
+
+复验入口：根 `python3.12 scripts/project.py check`；定向后端在 backend 运行 `.venv/bin/python -m pytest tests/test_revision_import_precheck.py -q`；frontend 运行 `npm test`、`npm run typecheck`、`npm run lint -- --max-warnings=0`、`npm run build`。本轮分别运行后端全量 1020/1020（新增 38）、前端 464/464（新增 39）、类型／零警告 Lint／主与独立生产构建，全部通过；根 check 未另行执行。真实下载检查、编辑保护、故障／操作锁／迟到回执、空项目、六宽度与 HTTP 实际退出重启通过；六组响应／四文件一致，原 211 个保护文件保持，主库五项目实际导出／预检通过。
+
+[先行开发文档](docs/阶段文档/阶段3-第17子阶段-文字备份只读预检开发文档.md) 与 [证据／闸门及人工下载样例](docs/evidence/阶段3/文字备份只读预检/验收报告.md) 已交付。本轮工程结果本地提交、不推送；真实模型、业务、真机和整个阶段仍待验，A07／依赖告警继续开放。下一轮优先同项目文字备份恢复预览。

@@ -60,3 +60,26 @@ def read_reviews(project_id: ProjectId, reviews=Depends(reviews_service)):
 @router.post('/api/project/{project_id}/content-revisions/reviews', response_model=ReviewSaved, status_code=201)
 def save_review(project_id: ProjectId, payload: ReviewInput, reviews=Depends(reviews_service)):
     return reviews.save(project_id, payload)
+
+
+from fastapi import Request
+from starlette.concurrency import run_in_threadpool
+from api.schemas.revision_import_precheck import PrecheckReport
+
+@router.post('/api/project/{project_id}/content-revisions/import-precheck', response_model=PrecheckReport,
+             responses={404:{'description':'Project missing'},409:{'description':'Target changed'},
+                        413:{'description':'Backup size limit'},415:{'description':'Unsupported file type'},
+                        422:{'description':'Invalid backup'},503:{'description':'Target storage unavailable'}})
+async def import_precheck(project_id:ProjectId,request:Request,
+        expected_token:str=Query(pattern=r'^[a-f0-9]{64}$'),filename:str=Query(min_length=1,max_length=128),revisions=Depends(service)):
+    from core.revision_import_precheck import RevisionImportPrecheck,check_filename
+    from core.revision_exports import MAX_EXPORT_BYTES
+    from core.content_revisions import fail
+    check_filename(filename)
+    if request.headers.get('content-type','').split(';')[0].lower()!='application/json' or request.headers.get('content-encoding') not in (None,'identity'):
+        fail(415,'BACKUP_TYPE','只支持未压缩的 JSON 文字备份')
+    body=bytearray()
+    async for chunk in request.stream():
+        if len(body)+len(chunk)>MAX_EXPORT_BYTES:fail(413,'BACKUP_SIZE','文字备份不能超过 64 MiB')
+        body.extend(chunk)
+    return await run_in_threadpool(RevisionImportPrecheck(revisions.engine).inspect,project_id,expected_token,filename,bytes(body))

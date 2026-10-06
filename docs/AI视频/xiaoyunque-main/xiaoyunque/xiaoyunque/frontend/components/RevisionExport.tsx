@@ -32,7 +32,7 @@ export default function RevisionExport({workspace,disabled}:{workspace:Workspace
     <h2><Download size={20}/>文字版本导出与备份</h2>
     <p>当前剧本、当前分镜与全部 {workspace.versions.length} 条已归档文字版本，一次下载留存。</p>
     <p className="revision-muted">JSON 保留完整结构和版本信息；TXT 方便离线阅读。未保存的编辑草稿不进入文件，下载后仍留在本页。</p>
-    <p className="revision-muted">文件只备份文字，不含图片、视频、计划、任务、费用或人工核对记录。本轮没有导入恢复功能；完整项目备份还需保留会话目录和整个资产库。</p>
+    <p className="revision-muted">文件只备份文字，不含图片、视频、计划、任务、费用或人工核对记录。可在下方检查 JSON 备份，尚不提供恢复写入；完整项目备份还需保留会话目录和整个资产库。</p>
     {!!workspace.untracked_stages.length&&<p className="revision-alert">{workspace.untracked_stages.map(s=>STAGES[s]).join('、')}当前正文尚未归档，文件会将当前内容与历史分别保留。</p>}
     {empty&&<p className="revision-empty">没有归档版本或可编辑文字；文件仍保留两阶段的当前结构，下载不会创建版本。</p>}
     <div className="revision-actions"><button className="revision-primary" disabled={disabled||busy} onClick={()=>void download('json')}><Download size={16}/>下载 JSON 备份</button><button disabled={disabled||busy} onClick={()=>void download('text')}><Download size={16}/>下载可读 TXT</button></div>
