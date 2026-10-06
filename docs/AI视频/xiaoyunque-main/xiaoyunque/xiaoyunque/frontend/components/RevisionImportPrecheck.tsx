@@ -3,10 +3,11 @@ import {useCallback,useEffect,useRef,useState} from 'react';
 import {FileCheck} from 'lucide-react';
 import {STAGES,type Workspace,type Stage} from '@/lib/contentRevisions';
 import {checkBackup,type PrecheckReport} from '@/lib/revisionImportPrecheck';
-import {prepareBackup,restoreBackup,readBackupRestores,type PreparedBackup,type RestoreReceipt} from '@/lib/revisionImportRestore';
+import {prepareBackup,restoreBackup,readBackupRestores,type PreparedBackup,type RestoreReceipt,type RestoreWorkspace} from '@/lib/revisionImportRestore';
+import RestoreHistory from './RestoreHistory';
 import RevisionBackupPreview from './RevisionBackupPreview';
 const sources={baseline:'首次归档',external:'原入口更新归档',edit:'手动修改',restore:'恢复旧版'};
-export default function RevisionImportPrecheck({workspace,disabled,onSaving,onRestored,onBeforeRestore,onBeforeRead,onBlocked}:{workspace:Workspace;disabled:boolean;onSaving:(saving:boolean)=>void;onRestored:(workspace:Workspace)=>void;onBeforeRestore:()=>boolean;onBeforeRead:()=>boolean;onBlocked:()=>void}){
+export default function RevisionImportPrecheck({workspace,disabled,onSaving,onRestored,onBeforeRestore,onBeforeRead,onBlocked,onRecords}:{workspace:Workspace;disabled:boolean;onSaving:(saving:boolean)=>void;onRestored:(workspace:Workspace)=>void;onBeforeRestore:()=>boolean;onBeforeRead:()=>boolean;onBlocked:()=>void;onRecords:(data:RestoreWorkspace|null)=>void}){
   const [file,setFile]=useState<File|null>(null),[report,setReport]=useState<PrecheckReport|null>(null),[busy,setBusy]=useState(false),[error,setError]=useState(''),[preview,setPreview]=useState<PreparedBackup|null>(null),[operation,setOperation]=useState<'check'|'preview'|'save'|'read'>('check');
   const [ack,setAck]=useState(false),[halted,setHalted]=useState(false),[receipts,setReceipts]=useState<RestoreReceipt[]>([]),[recordError,setRecordError]=useState(''),[notice,setNotice]=useState(''),[recordsToken,setRecordsToken]=useState('');
   const recordsReady=recordsToken===workspace.token;
@@ -28,18 +29,18 @@ export default function RevisionImportPrecheck({workspace,disabled,onSaving,onRe
     catch(e){if(request===generation.current)setError(e instanceof Error?e.message:'恢复预览未完成，请保留文件并手动重试');}
     finally{if(request===generation.current){lock.current=false;setBusy(false);}}
   };
-  useEffect(()=>{let active=true;void readBackupRestores(workspace.project_id).then(x=>{if(active){setReceipts(x.restores);setRecordError('');setRecordsToken(x.workspace.token);}}).catch(()=>{if(active)setRecordError('恢复记录暂未读取，请手动读取核对后再恢复');});return()=>{active=false;};},[workspace]);
+  useEffect(()=>{let active=true;void readBackupRestores(workspace.project_id).then(x=>{if(active){setReceipts(x.restores);setRecordError('');setRecordsToken(x.workspace.token);onRecords(x);}}).catch(()=>{if(active){setRecordError('恢复记录暂未读取，请手动读取核对后再恢复');onRecords(null);}});return()=>{active=false;};},[workspace,onRecords]);
   const save=async()=>{
     if(disabled||halted||!recordsReady||recordError||lock.current||!file||!preview||!ack||!preview.preview.total_changes||!onBeforeRestore())return;
     lock.current=true;const request=++generation.current;controller.current=new AbortController();setBusy(true);setOperation('save');setError('');setNotice('');onSaving(true);const requestId=crypto.randomUUID().replaceAll('-','');pending.current=requestId;
-    try{const result=await restoreBackup(workspace,file,preview,requestId,true,undefined,controller.current.signal);if(request===generation.current){setReceipts(result.data.restores);setNotice(`已恢复并保存第 ${result.receipt.number} 次记录，原正文与历史已保留。`);setPreview(null);setAck(false);pending.current=null;onRestored(result.data.workspace);}}
-    catch(e){if(request===generation.current){setError(e instanceof Error?e.message:'恢复结果尚未确认，请读取恢复记录与版本');setPreview(null);setAck(false);setHalted(true);onBlocked();}}
+    try{const result=await restoreBackup(workspace,file,preview,requestId,true,undefined,controller.current.signal);if(request===generation.current){setReceipts(result.data.restores);setRecordsToken(result.data.workspace.token);onRecords(result.data);setNotice(`已恢复并保存第 ${result.receipt.number} 次记录，原正文与历史已保留。`);setPreview(null);setAck(false);pending.current=null;onRestored(result.data.workspace);}}
+    catch(e){if(request===generation.current){setError(e instanceof Error?e.message:'恢复结果尚未确认，请读取恢复记录与版本');setPreview(null);setAck(false);setHalted(true);onRecords(null);onBlocked();}}
     finally{if(request===generation.current){lock.current=false;setBusy(false);}onSaving(false);}
   };
   const read=async()=>{
     if(lock.current||!onBeforeRead())return;lock.current=true;const request=++generation.current;setBusy(true);setOperation('read');onSaving(true);setRecordError('');
-    try{const result=await readBackupRestores(workspace.project_id);if(request===generation.current){const found=result.restores.find(r=>r.request_id===pending.current);setReceipts(result.restores);setRecordsToken(result.workspace.token);setNotice(pending.current?(found?`已找到第 ${found.number} 次持久恢复记录，请核对新增版本。`:'未找到本次持久恢复记录；请重新检查、预览并确认后继续。'):'已读取持久恢复记录与版本。');setError('');setReport(null);setPreview(null);setAck(false);setHalted(false);pending.current=null;onRestored(result.workspace);}}
-    catch(e){if(request===generation.current){setRecordError(e instanceof Error?e.message:'读取未完成，请保留数据重试');setHalted(true);onBlocked();}}
+    try{const result=await readBackupRestores(workspace.project_id);if(request===generation.current){const found=result.restores.find(r=>r.request_id===pending.current);setReceipts(result.restores);setRecordsToken(result.workspace.token);onRecords(result);setNotice(pending.current?(found?`已找到第 ${found.number} 次持久恢复记录，请核对新增版本。`:'未找到本次持久恢复记录；请重新检查、预览并确认后继续。'):'已读取持久恢复记录与版本。');setError('');setReport(null);setPreview(null);setAck(false);setHalted(false);pending.current=null;onRestored(result.workspace);}}
+    catch(e){if(request===generation.current){setRecordError(e instanceof Error?e.message:'读取未完成，请保留数据重试');setHalted(true);onRecords(null);onBlocked();}}
     finally{if(request===generation.current){lock.current=false;setBusy(false);}onSaving(false);}
   };
   const visible=!disabled&&report?.project_id===workspace.project_id&&report.token===workspace.token?report:null;
@@ -65,6 +66,6 @@ export default function RevisionImportPrecheck({workspace,disabled,onSaving,onRe
     </div>}
     {notice&&<p className="revision-notice" role="status">{notice}</p>}
     {(halted||recordError)&&<p className="revision-alert" role="alert">{recordError||'恢复回复需要核对，已暂停写入。先读取恢复记录与版本，不会自动重发。'}</p>}
-    <section className="revision-precheck-stage revision-restore-records" aria-label="持久恢复记录"><h3>备份恢复记录</h3><p className="revision-muted">已保存的恢复与对应本地版本，刷新后仍可核对。历史记录不表示仍是当前文字。</p><button disabled={busy} onClick={()=>void read()}>读取恢复记录与版本</button>{!recordsReady&&!recordError?<p role="status">正在读取持久恢复记录…</p>:!receipts.length?<p>尚无已保存的备份恢复记录。</p>:<ol>{[...receipts].reverse().map(r=><li key={r.restore_id}>第 {r.number} 次 · {new Date(r.created_at).toLocaleString('zh-CN')} · {Object.entries(r.version_ids).map(([s,id])=>`${STAGES[s as Stage]} v${workspace.versions.find(v=>v.version_id===id)?.number??'待重新读取'}`).join('、')}<details><summary>恢复依据</summary><p>来源：本项目 · {r.file_bytes.toLocaleString('zh-CN')} 字节</p><p className="revision-muted">文件摘要：{r.file_sha256}</p><p className="revision-muted">恢复编号：{r.restore_id}</p></details></li>)}</ol>}</section>
+    <RestoreHistory workspace={workspace} receipts={receipts} ready={recordsReady} failed={!!recordError} disabled={busy} actionsDisabled={disabled||halted} onRead={()=>void read()} />
   </section>;
 }

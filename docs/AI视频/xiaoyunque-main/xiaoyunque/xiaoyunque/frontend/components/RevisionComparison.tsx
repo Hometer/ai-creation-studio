@@ -5,6 +5,8 @@ import { ArrowLeftRight, GitCompareArrows } from 'lucide-react';
 import { STAGES, pathKey, type Stage, type Workspace } from '@/lib/contentRevisions';
 import { comparisonInput, comparisonSelection, readComparison, type Comparison, type ValueType } from '@/lib/revisionComparison';
 
+import {LOCATION_EVENT} from '@/lib/restoreHistory';
+
 const sources={baseline:'首次归档',external:'原入口更新归档',edit:'手动修改',restore:'恢复旧版'};
 const kinds: Record<ValueType,string>={text:'文字',number:'数字',boolean:'是／否',object:'对象结构',array:'列表结构',null:'空值',missing:'无此字段'};
 
@@ -39,8 +41,8 @@ export default function RevisionComparison({workspace,disabled}:{workspace:Works
         }
       } catch(e) { setFrom('');setTo('');setError(e instanceof Error?e.message:'地址中的版本不可读取，请重新选择'); }
     };
-    const timer=window.setTimeout(readAddress,0);window.addEventListener('popstate',readAddress);
-    return()=>{cancelRequests();window.clearTimeout(timer);window.removeEventListener('popstate',readAddress);};
+    const timer=window.setTimeout(readAddress,0);window.addEventListener('popstate',readAddress);window.addEventListener(LOCATION_EVENT,readAddress);
+    return()=>{cancelRequests();window.clearTimeout(timer);window.removeEventListener('popstate',readAddress);window.removeEventListener(LOCATION_EVENT,readAddress);};
   },[workspace,compare,defaults,cancelRequests]);
   const address=(left:string,right:string)=>{
     const url=new URL(location.href);
@@ -60,7 +62,7 @@ export default function RevisionComparison({workspace,disabled}:{workspace:Works
   const left=workspace.versions.find(v=>v.version_id===result?.before_version_id);
   const right=workspace.versions.find(v=>v.version_id===result?.after_version_id);
   const label=(id:string)=>{const v=versions.find(v=>v.version_id===id);return v?'v'+v.number+' · '+sources[v.source]:'';};
-  return <section id="revision-comparison" className="revision-card revision-compare" aria-label="两版文字对比">
+  return <section id="revision-comparison" tabIndex={-1} className="revision-card revision-compare" aria-label="两版文字对比">
     <h2><GitCompareArrows size={20}/>两版文字对比</h2>
     <p className="revision-muted">任选同一阶段的两个归档版本，查看变化。对比只读，不修改当前文字或编辑草稿。</p>
     <div className="revision-tabs">{(Object.keys(STAGES) as Stage[]).map(s=><button key={s} aria-pressed={s===stage} disabled={disabled||busy} onClick={()=>{const pair=defaults(s);select(s,pair.from,pair.to);}}>{STAGES[s]}版本</button>)}</div>

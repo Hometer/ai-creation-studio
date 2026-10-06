@@ -5,22 +5,29 @@ import BrandHeader from './BrandHeader';
 import {RevisionError,STAGES} from '@/lib/contentRevisions';
 import {DECISIONS,REVIEW_STATUSES,readReviews,reviewInput,saveReview,type ReviewWorkspace} from '@/lib/impactReviews';
 
+import {addressId,reviewScope} from '@/lib/restoreHistory';
+
 export default function ProjectImpactReviews({projectId}:{projectId:string}) {
  const [data,setData]=useState<ReviewWorkspace|null>(null),[reading,setReading]=useState(true),[busy,setBusy]=useState(false),[blocked,setBlocked]=useState(false),[error,setError]=useState(''),[notice,setNotice]=useState('');
+ const [search,setSearch]=useState('');
  const [selected,setSelected]=useState(''),[filter,setFilter]=useState('open'),[decision,setDecision]=useState<keyof typeof DECISIONS>('follow_up'),[note,setNote]=useState(''),[confirming,setConfirming]=useState(false),[ack,setAck]=useState(false);
  const lock=useRef(false),mounted=useRef(true),draft=useRef(false),dialog=useRef<HTMLDialogElement>(null),openButton=useRef<HTMLButtonElement>(null);
  const errorPanel=useRef<HTMLDivElement>(null);
  useEffect(()=>{if(error){errorPanel.current?.focus({preventScroll:true});errorPanel.current?.scrollIntoView({block:'start'});}},[error]);
- const item=data?.items.find(i=>i.item_id===selected),dirty=!!note||confirming;
+ const dirty=!!note||confirming;
+ let scopeError='',version='',restore='',scoped=data?.items??[];
+ try{if(data){const scope=reviewScope(data,search);version=scope.version;scoped=scope.items;}restore=addressId(search,'restore');}catch(e){scopeError=e instanceof Error?e.message:'核对范围无法读取';scoped=[];}
+ const item=scoped.find(i=>i.item_id===selected);
+ const source=data?.sources.find(s=>s.version_id===version);
  useEffect(()=>{draft.current=dirty;},[dirty]);
  const reload=useCallback(async()=>{
   if(lock.current||draft.current&&!window.confirm('重新读取会放弃当前核对草稿，请先复制需要保留的说明。确定读取吗？'))return;
   lock.current=true;setReading(true);setError('');
-  try{const next=await readReviews(projectId);if(!mounted.current)return;setData(next);setBlocked(false);setNote('');setConfirming(false);setAck(false);setSelected(new URL(location.href).searchParams.get('item')??'');setNotice('已读取持久化核对记录，请按当前依据核对。');}
+  try{const next=await readReviews(projectId);if(!mounted.current)return;setData(next);setBlocked(false);setNote('');setConfirming(false);setAck(false);setSelected(new URL(location.href).searchParams.get('item')??'');setSearch(location.search);if(new URLSearchParams(location.search).has('version'))setFilter('all');setNotice('已读取持久化核对记录，请按当前依据核对。');}
   catch(e){if(mounted.current){setError(e instanceof RevisionError?e.message:'暂时无法读取核对记录');setBlocked(true);}}
   finally{lock.current=false;if(mounted.current)setReading(false);}
  },[projectId]);
- useEffect(()=>{mounted.current=true;const timer=setTimeout(()=>void reload(),0);const pop=()=>setSelected(new URL(location.href).searchParams.get('item')??'');window.addEventListener('popstate',pop);return()=>{mounted.current=false;clearTimeout(timer);window.removeEventListener('popstate',pop);};},[reload]);
+ useEffect(()=>{mounted.current=true;const timer=setTimeout(()=>void reload(),0);const pop=()=>{setSelected(new URL(location.href).searchParams.get('item')??'');setSearch(location.search);if(new URLSearchParams(location.search).has('version'))setFilter('all');};window.addEventListener('popstate',pop);return()=>{mounted.current=false;clearTimeout(timer);window.removeEventListener('popstate',pop);};},[reload]);
  useEffect(()=>{
   if(!dirty)return;
   const url=location.href,state=history.state,guard=crypto.randomUUID();let leaving=false,returning=false;
@@ -32,8 +39,8 @@ export default function ProjectImpactReviews({projectId}:{projectId:string}) {
   return()=>{window.removeEventListener('beforeunload',unload);window.removeEventListener('popstate',back,true);document.removeEventListener('click',leave,true);if(location.href===url&&history.state?.impactReviewGuard===guard){if(leaving)history.replaceState(state,'',url);else history.back();}};
  },[dirty]);
  useEffect(()=>{if(confirming){dialog.current?.showModal();dialog.current?.querySelector('h2')?.focus();}else{dialog.current?.close();openButton.current?.focus({preventScroll:true});}},[confirming]);
- const disabled=reading||busy||blocked||!!data?.running;
- function choose(id:string){if(lock.current||dirty&&!window.confirm('切换事项会丢弃核对草稿，确定切换吗？'))return;setSelected(id);setNote('');setDecision('follow_up');setAck(false);setConfirming(false);const url=new URL(location.href);url.searchParams.set('item',id);history.replaceState(history.state,'',url);}
+ const disabled=reading||busy||blocked||!!scopeError||!!data?.running;
+ function choose(id:string){if(scopeError||!scoped.some(i=>i.item_id===id)||lock.current||dirty&&!window.confirm('切换事项会丢弃核对草稿，确定切换吗？'))return;setSelected(id);setNote('');setDecision('follow_up');setAck(false);setConfirming(false);const url=new URL(location.href);url.searchParams.set('item',id);history.replaceState(history.state,'',url);}
  async function save(){
   if(lock.current||disabled||!ack||!item||!data)return;
   lock.current=true;setBusy(true);setError('');
@@ -42,17 +49,17 @@ export default function ProjectImpactReviews({projectId}:{projectId:string}) {
   finally{lock.current=false;if(mounted.current)setBusy(false);}
  }
  return <><BrandHeader/><main className="revision-shell impact-shell">
-  <nav className="revision-nav"><Link href={`/projects/${encodeURIComponent(projectId)}/revisions`}>文字版本与恢复</Link><Link href={`/?session=${encodeURIComponent(projectId)}`}>返回项目</Link><button disabled={reading||busy} onClick={reload}>重新读取核对记录</button></nav>
+  <nav className="revision-nav"><Link href={`/projects/${encodeURIComponent(projectId)}/revisions${restore?`?restore=${restore}#revision-restore-records`:version?`?version=${version}#revision-history`:""}`}>文字版本与恢复</Link><Link href={`/?session=${encodeURIComponent(projectId)}`}>返回项目</Link><button disabled={reading||busy} onClick={reload}>重新读取核对记录</button></nav>
   <div className="revision-heading"><div><span className="revision-eyebrow">创作工作室 · 修改影响</span><h1>修改之后，逐项核对</h1><p>确认哪些镜头继续使用，哪些内容还需要处理。</p></div><span className="revision-local">人工决定 · 本地保存</span></div>
   <p className="revision-boundary">结论只适用于核对时的文字、项目产物、素材引用与计划。依据变化后需要重新核对。记录不会重生成、替换素材或批准任务执行。</p>
   {error&&!item&&<div ref={errorPanel} tabIndex={-1} role="alert" className="revision-alert">{error}<p>当前说明与已读取清单保留；保存暂停时，请重新读取核对。</p></div>}{notice&&<p className="revision-notice" role="status">{notice}</p>}
   {reading&&<p role="status">正在读取修改影响与人工记录…</p>}
   {!reading&&!data&&<section className="revision-card"><h2>暂未读取到核对事项</h2><p>检查项目与本地服务，再重新读取。</p></section>}
-  {data&&<>{data.running&&<p className="revision-alert">项目正在执行，结束后才能保存核对决定。</p>}{!!data.untracked_stages.length&&<p className="revision-alert">{data.untracked_stages.map(s=>STAGES[s]).join('、')}有未归档更新，先从文字版本页归档，再决定继续使用。</p>}
-   <div className="impact-summary" aria-label="核对统计"><span>待处理 <strong>{data.items.filter(i=>i.status!=='retained').length}</strong></span><span>继续使用 <strong>{data.items.filter(i=>i.status==='retained').length}</strong></span><span>历史记录 <strong>{data.records.length}</strong></span></div>
-   {!data.items.length?<section className="revision-card revision-empty"><h2>没有已归档的修改影响</h2><p>保存文字修改后，会在这里按版本生成核对事项。未记录的旧修改无法补回。</p></section>:<div className="impact-grid"><aside className="revision-card"><h2>核对清单</h2><label className="revision-field">显示范围<select value={filter} disabled={reading||busy} onChange={e=>setFilter(e.target.value)}><option value="open">待处理</option><option value="all">全部事项</option><option value="retained">继续使用</option></select></label>
-   <div className="impact-list">{[...data.items].reverse().filter(i=>filter==='all'||(filter==='retained'?i.status==='retained':i.status!=='retained')).map(i=><button key={i.item_id} aria-pressed={selected===i.item_id} disabled={reading||busy} onClick={()=>choose(i.item_id)}><strong>v{i.version_number} · {STAGES[i.stage]}修改</strong><span>{i.segment_id}{i.shot_number===null?'':` · 镜头 ${i.shot_number}`}</span><small>{REVIEW_STATUSES[i.status]}</small></button>)}</div>
-   {!data.items.some(i=>filter==='all'||(filter==='retained'?i.status==='retained':i.status!=='retained'))&&<p className="revision-muted">此范围没有事项，可切换查看全部。</p>}</aside>
+  {data&&<>{(version||scopeError)&&<section className="revision-card" aria-label="核对版本范围"><h2>{scopeError?'核对查看位置不可用':`只查看 v${source?.version_number} · ${source?STAGES[source.stage]:''} 的修改影响`}</h2><p>{scopeError||'这里按当时的修改来源列出全部状态；当前目标与核对依据仍以本次后端读取为准。恢复记录不表示已审核。'}</p><button disabled={reading||busy} onClick={()=>{if(lock.current||dirty&&!window.confirm('切换范围会丢弃当前核对草稿，确认查看全部？'))return;const url=new URL(location.href);url.searchParams.delete('version');url.searchParams.delete('restore');url.searchParams.delete('item');history.pushState(history.state,'',url);setSearch(url.search);setSelected('');setNote('');setConfirming(false);setAck(false);setFilter('all');}}>查看项目全部核对事项</button></section>}{data.running&&<p className="revision-alert">项目正在执行，结束后才能保存核对决定。</p>}{!!data.untracked_stages.length&&<p className="revision-alert">{data.untracked_stages.map(s=>STAGES[s]).join('、')}有未归档更新，先从文字版本页归档，再决定继续使用。</p>}
+   <div className="impact-summary" aria-label="核对统计"><span>待处理 <strong>{scoped.filter(i=>i.status!=='retained').length}</strong></span><span>继续使用 <strong>{scoped.filter(i=>i.status==='retained').length}</strong></span><span>历史记录 <strong>{data.records.filter(r=>scoped.some(i=>i.item_id===r.item_id)).length}</strong></span></div>
+   {!scoped.length?<section className="revision-card revision-empty"><h2>{scopeError?'请先核对查看位置':version?'这个版本没有可关联的镜头事项':'没有已归档的修改影响'}</h2><p>没有事项不表示文字或媒体已审核。请回到文字版本检查差异；未记录的旧修改无法补回。</p></section>:<div className="impact-grid"><aside className="revision-card"><h2>核对清单</h2><label className="revision-field">显示范围<select value={filter} disabled={reading||busy} onChange={e=>setFilter(e.target.value)}><option value="open">待处理</option><option value="all">全部事项</option><option value="retained">继续使用</option></select></label>
+   <div className="impact-list">{[...scoped].reverse().filter(i=>filter==='all'||(filter==='retained'?i.status==='retained':i.status!=='retained')).map(i=><button key={i.item_id} aria-pressed={selected===i.item_id} disabled={reading||busy} onClick={()=>choose(i.item_id)}><strong>v{i.version_number} · {STAGES[i.stage]}修改</strong><span>{i.segment_id}{i.shot_number===null?'':` · 镜头 ${i.shot_number}`}</span><small>{REVIEW_STATUSES[i.status]}</small></button>)}</div>
+   {!scoped.some(i=>filter==='all'||(filter==='retained'?i.status==='retained':i.status!=='retained'))&&<p className="revision-muted">此范围没有事项，可切换查看全部。</p>}</aside>
    <section className="revision-card" aria-label="事项详情">{!item?<><h2>{selected?'所选事项不存在':'选择一项开始核对'}</h2><p>按修改来源逐项检查，记录决定和理由。</p></>:<><h2>v{item.version_number} · {item.segment_id}{item.shot_number===null?'':` · 镜头 ${item.shot_number}`}</h2><p className="impact-badge">{REVIEW_STATUSES[item.status]}</p><p className="revision-muted">{item.reason}</p>{!item.target_exists&&<p className="revision-alert">原目标已移除或无法唯一定位。只能记录仍需处理，请核对结构变化。</p>}
    <details className="impact-details"><summary>查看这次{STAGES[item.stage]}修改的全部差异</summary>{data.sources.find(s=>s.version_id===item.version_id)?.changes.map((c,n)=><div className="revision-change" key={n}><p>变化 {n+1}</p><div><section><h4>修改前</h4><pre>{c.before_present===false?'（无此字段）':c.before||'（空白）'}</pre></section><section><h4>修改后</h4><pre>{c.after_present===false?'（已移除字段）':c.after||'（空白）'}</pre></section></div></div>)}</details>
    <h3>当前目标文字</h3>{item.current_fields.map((f,n)=><div key={n}><p className="revision-muted">{f.label}</p><pre className="revision-text">{f.value||'（空白）'}</pre></div>)}{!item.current_fields.length&&<p className="revision-muted">没有可展示的目标文字，请从原入口核对。</p>}

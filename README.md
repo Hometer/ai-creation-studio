@@ -560,3 +560,15 @@ GET／POST `/api/project/{id}/content-revisions/reviews` 提供真实读取与�
 复验入口为根 `python3.12 scripts/project.py check`；定向后端在 backend 运行 `.venv/bin/python -m pytest tests/test_revision_import_restore.py -q`；frontend 运行 `npm test`、`npm run typecheck`、`npm run lint -- --max-warnings=0`、`npm run build`。本轮分别执行后端最终1072/1072（新增30）、前端最终542/542（新增33），类型／零警告Lint／主与独立生产构建通过；根 check 未另行运行。真实页面、回复丢失查回、断网／冲突、操作锁、六宽度和实际服务重启通过；17组响应／5份演练文件一致，两次原请求重发不追加，原221份保护文件保持，主库五项目只读核对通过。
 
 [先行开发文档](docs/阶段文档/阶段3-第19子阶段-文字备份逐次确认与原子恢复开发文档.md) 和 [证据／十项闸门](docs/evidence/阶段3/文字备份确认与原子恢复/验收报告.md) 已交付。本轮本地提交、不推送；真实模型／业务／手机真机及整体阶段待验，A07／既有依赖警告保留。下一轮优先恢复记录的历史定位与核对入口。
+
+## 恢复记录历史定位与核对入口（第20子阶段，本地人工验证）
+
+文字版本页 → “恢复历史” → 选择一次恢复 → 定位对应文字版本／对比恢复前后 → 核对该版本的修改影响。地址携带restore／version／compare参数，刷新与返回可找回只读位置；同页定位保留编辑输入、预览、勾选与文件，跳转另一页面沿用离开确认。历史记录不代表当前内容已审核，核对仍须逐项人工说明和确认。
+
+独立后端由根目录 `python3.12 scripts/project.py revision-restore-history-demo` 启动，默认8016；人工数据在忽略的 `data/revision-restore-history-demo/`。首次在空目录启动会创建15条人工版本、两次恢复（一次两阶段、一次仅剧本）及后续修改；重启不重复初始化。本机保留的上轮人工副本是17条版本，逻辑与入口相同，页面编号为准。没有模型或真实费用。
+
+前端在 `docs/AI视频/xiaoyunque-main/xiaoyunque/xiaoyunque/frontend/` 运行 `BACKEND_API_URL=http://127.0.0.1:8016 npm run dev -- --hostname 127.0.0.1 --port 3016`，打开 `http://127.0.0.1:3016/projects/comparison-demo/revisions#revision-restore-records`。本轮保留独立生产预览3016；对应源码副本在 `/tmp/restore-history-frontend`，已有构建时可用 `npm run start -- --hostname 127.0.0.1 --port 3016` 重启。生产代理地址在构建时指定；独立副本的外链node_modules使用 `npm run build -- --webpack`，主工程默认构建保持。
+
+验证方法：根目录 `python3.12 scripts/project.py check`；新样例回归在后端运行 `.venv/bin/python -m pytest -q tests/test_restore_history_demo.py`；定位／范围回归在前端运行 `node --test tests/restoreHistory.test.mjs`。本轮分别执行前后端全量、类型、零警告Lint和两份生产构建；根check是复验入口，未另行运行。实际服务退出重启与原数据摘要保护通过，六宽度三处界面已检查。
+
+[开发文档](docs/阶段文档/阶段3-第20子阶段-恢复记录历史定位与核对入口开发文档.md)和[证据包／照着点步骤／闸门](docs/evidence/阶段3/恢复记录历史定位与核对入口/验收报告.md)记录结果。模型、业务、手机真机、A07与整体阶段继续待验。完整项目备份、媒体关系恢复和自动制作未进入此步。

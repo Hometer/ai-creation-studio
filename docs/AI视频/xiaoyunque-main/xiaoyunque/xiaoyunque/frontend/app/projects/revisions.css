@@ -80,3 +80,12 @@
 .revision-compare-result>.revision-change{padding-top:12px;border-top:1px solid var(--lp-border-divider)}
 @media(max-width:700px){.revision-compare-controls,.revision-compare .revision-change>div{grid-template-columns:minmax(0,1fr)}}
 .revision-export { margin-top: 24px; scroll-margin-top: 84px; }
+
+.revision-restore-records .revision-actions a { display:inline-flex; align-items:center; min-height:44px; padding:10px 14px; border:1px solid var(--lp-border-subtle); border-radius:10px; color:inherit; }
+.revision-restore-records article { padding:12px 0; border-bottom:1px solid var(--lp-border-subtle); }
+.revision-restore-records button { white-space:normal; overflow-wrap:anywhere; text-align:left; }
+
+#revision-history,#revision-comparison,#revision-restore-records{scroll-margin-top:80px}
+.revision-restore-records ol{list-style:none;padding:0;margin:16px 0}
+.revision-restore-records li{margin:12px 0}
+.revision-restore-records button[aria-pressed=true]{border-color:var(--lp-accent);color:var(--lp-accent);background:var(--lp-accent-soft)}
