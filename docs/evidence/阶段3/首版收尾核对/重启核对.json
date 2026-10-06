@@ -1,0 +1,13 @@
+{
+  "real_process_restart": true,
+  "same_tasks_and_locations": true,
+  "count": 4,
+  "kinds": [
+    "composition",
+    "image",
+    "script",
+    "storyboard"
+  ],
+  "real_model_calls": 0,
+  "artificial_fixture_only": true
+}

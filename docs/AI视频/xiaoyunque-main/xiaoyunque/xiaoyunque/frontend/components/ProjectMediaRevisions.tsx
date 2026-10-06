@@ -1,4 +1,5 @@
 'use client';
+import {useSelectedJob} from '@/lib/useSelectedJob';
 import Link from 'next/link';
 import MediaImage from './MediaImage';
 import {useCallback,useEffect,useRef,useState} from 'react';
@@ -9,9 +10,11 @@ const uid=()=>crypto.randomUUID().replaceAll('-','');
 const money=(fen:number)=>(fen/100).toFixed(2)+' 元';
 const active=['queued','submitting','pending','querying','ready_download','downloading'];
 export default function ProjectMediaRevisions({projectId}:{projectId:string}){
-  const [data,setData]=useState<MediaWorkspace|null>(null),[plans,setPlans]=useState<Plan[]>([]),[kind,setKind]=useState<'image'|'video'>('image'),[source,setSource]=useState(''),[segment,setSegment]=useState(''),[prompt,setPrompt]=useState(''),[preserve,setPreserve]=useState(''),[selected,setSelected]=useState('');
+  const [selected,setSelected]=useSelectedJob();
+ const [data,setData]=useState<MediaWorkspace|null>(null),[plans,setPlans]=useState<Plan[]>([]),[kind,setKind]=useState<'image'|'video'>('image'),[source,setSource]=useState(''),[segment,setSegment]=useState(''),[prompt,setPrompt]=useState(''),[preserve,setPreserve]=useState('');
   const [busy,setBusy]=useState(false),[blocked,setBlocked]=useState(true),[error,setError]=useState(''),[ack,setAck]=useState(false),[material,setMaterial]=useState(false),[review,setReview]=useState(false),[now,setNow]=useState(0);
-  const alive=useRef(true),lock=useRef(false),serial=useRef(0),requestIds=useRef(new Map<string,string>());
+  useEffect(()=>{const clear=()=>{setAck(false);setMaterial(false);setReview(false);};window.addEventListener('popstate',clear);window.addEventListener('native-job-selection',clear);return()=>{window.removeEventListener('popstate',clear);window.removeEventListener('native-job-selection',clear);};},[]);
+ const alive=useRef(true),lock=useRef(false),serial=useRef(0),requestIds=useRef(new Map<string,string>());
   const job=data?.jobs.find(j=>j.job_id===selected),image=data?.images.find(i=>i.reference.reference_id===source),plan=plans.find(p=>p.plan_id===source);
   const dirty=Boolean(prompt||preserve),validPlans=plans.filter(p=>p.current&&p.confirmation);
   const reset=()=>{setAck(false);setMaterial(false);setReview(false);};
@@ -55,7 +58,7 @@ export default function ProjectMediaRevisions({projectId}:{projectId:string}){
     {data&&<section className="media-budget"><strong>单次最多 {money(data.single_limit_fen)} · 本轮最多 {money(data.round_limit_fen)}</strong><p>已占用 {money(data.occupied_fen)} · 剩余 {money(data.available_fen)}，与文字共创共用额度。占用不是实际账单，失败或未知提交也保守保留占用。</p></section>}
     {data&&(!data.credential_present||!data.endpoint_allowed)&&<p className="media-alert">后端模型配置尚不可用，可以准备计划；真实生成等待配置。</p>}
     {data&&!data.price_current&&<p className="media-alert">价格依据已过期，暂不能准备或提交新的收费任务。</p>}
-    {error&&<p className="media-alert" role="alert">{error} 输入保留，请先重新读取任务核对。</p>}{busy&&<p role="status">正在保存或读取原任务…</p>}
+    {data&&selected&&!job&&<p className="media-alert" role="alert">地址中的任务未在这个项目中找到，请重新读取并核对原任务。</p>}{error&&<p className="media-alert" role="alert">{error} 输入保留，请先重新读取任务核对。</p>}{busy&&<p role="status">正在保存或读取原任务…</p>}
     <div className="media-columns"><section className="asset-detail asset-editor"><h2>准备本次修改</h2><p className="media-muted">准备计划不调用模型。生成候选后仍须人工核对，确认选用才更新本项目的对应位置。</p>
       <label>修改对象<select value={kind} disabled={busy} onChange={e=>{setKind(e.target.value as 'image'|'video');setSource('');setSegment('');reset();}}><option value="image">图片引用</option><option value="video">视频片段</option></select></label>
       {kind==='image'?<><label>当前图片引用<select value={source} disabled={busy} onChange={e=>{setSource(e.target.value);reset();}}><option value="">请选择</option>{data?.images.map(i=><option key={i.reference.reference_id} value={i.reference.reference_id}>{i.version.name} · v{i.version.number} · {i.reference.segment_id??'整个项目'}</option>)}</select></label>{image&&<div className="asset-media-preview"><MediaImage width={image.version.media!.width} height={image.version.media!.height} src={mediaUrl(image.asset.asset_id,image.version.version_id)} alt="本次原图片版本"/></div>}<p className="media-muted">图片编辑输入宽高为 512—4096 像素；修改与保留要求合计最多 800 字。</p></>:<><label>已确认的生成计划<select value={source} disabled={busy} onChange={e=>{setSource(e.target.value);setSegment('');reset();}}><option value="">请选择</option>{validPlans.map(p=><option key={p.plan_id} value={p.plan_id}>{p.content.options.model} · {p.content.options.resolution} · {p.plan_id.slice(0,8)}</option>)}</select></label><label>计划中的片段<select value={segment} disabled={busy} onChange={e=>{setSegment(e.target.value);reset();}}><option value="">请选择</option>{plan?.content.targets.map(t=><option key={t.segment_id} value={t.segment_id}>{t.segment_id} · {t.duration} 秒</option>)}</select></label><p className="media-muted">需先在生成计划选定输入素材与规格。单次超过 5 元会阻止提交，请明确调整计划后再核对。</p></>}

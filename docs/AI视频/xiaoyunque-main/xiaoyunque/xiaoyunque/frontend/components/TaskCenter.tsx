@@ -25,19 +25,20 @@ export function TaskResult({ task }: { task: TaskRecord }) {
 }
 
 export function TaskDetail({ task, projectExists }: { task: TaskRecord; projectExists: boolean }) {
-  const projectLink = task.source !== 'generation' || projectExists;
+  const available=task.projectAvailable??projectExists;
+  const projectLink = !['generation','first_release'].includes(task.source) || available;
   return <>
     <div className="task-detail-top"><span className="task-eyebrow">TASK DETAILS</span><span className={`task-status ${task.status}`}>{statusIcon(task.status)}{STATUSES[task.status]}</span></div>
     <h2>{task.title}</h2>
-    <div className="task-tags"><span>{SOURCES[task.source]}</span>{task.simulation && <span className="simulation">人工演练 · SIM</span>}</div>
+    <div className="task-tags"><span>{SOURCES[task.source]}</span>{task.simulation && <span className="simulation">{task.source==='generation'?'人工演练 · SIM':'人工接口样例'}</span>}</div>
     <dl className="task-metadata"><div><dt>当前阶段</dt><dd>{task.phase}</dd></div><div><dt>最近记录</dt><dd>{dateLabel(task.date)}</dd></div><div><dt>任务编号</dt><dd className="task-id">{task.id}</dd></div>{task.projectId && <div><dt>所属项目</dt><dd className="task-id">{task.projectId}</dd></div>}{task.billing && <div><dt>费用记录</dt><dd>{task.billing}</dd></div>}</dl>
     {task.progress !== null && <div className="task-progress"><div><span>工作台上报进度</span><strong>{task.progress}%</strong></div><progress max={100} value={task.progress} /></div>}
     {task.reasons.length > 0 && <div className="task-reasons"><strong>需要留意</strong><ul>{[...new Set(task.reasons)].map(reason => <li key={reason}>{reason}</li>)}</ul></div>}
     <p className="task-note">{task.note}</p>
     {task.status === 'review' && <p className="task-note">先核对原记录，避免重复提交生成。</p>}
     <TaskResult key={task.key + task.resultUrl} task={task} />
-    <div className="task-detail-actions">{task.href && projectLink && <Link className="task-button primary" href={task.href}><ArrowUpRight size={16} />{task.projectId ? '打开项目' : '返回原工作台'}</Link>}{task.projectId && projectExists && <Link className="task-button" href={`/projects/${encodeURIComponent(task.projectId)}/assets`}><Layers size={16} />素材与版本</Link>}</div>
-    {task.source === 'generation' && !projectExists && <p className="task-note">所属项目暂未读到，保留任务与归档结果。</p>}
+    <div className="task-detail-actions">{task.href && projectLink && <Link className="task-button primary" href={task.href}><ArrowUpRight size={16} />{task.projectId ? '打开项目' : '返回原工作台'}</Link>}{task.projectId && available && <Link className="task-button" href={`/projects/${encodeURIComponent(task.projectId)}/assets`}><Layers size={16} />素材与版本</Link>}</div>
+    {['generation','first_release'].includes(task.source) && !available && <p className="task-note">所属项目暂未读到，保留任务与归档结果。</p>}
   </>;
 }
 

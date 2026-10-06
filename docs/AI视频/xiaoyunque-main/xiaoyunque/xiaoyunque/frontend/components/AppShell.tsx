@@ -1,5 +1,6 @@
 'use client';
 
+import {emptySnapshot,readTaskCenter,taskRecords,nextReadDelay,SOURCES,type TaskRecord} from '@/lib/taskCenter';
 import BrandMark from '@/components/BrandMark';
 
 import { errorMessage, type SessionSummary } from '@/lib/workflowTypes';
@@ -9,8 +10,8 @@ import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { CheckCircle2, ChevronLeft, ChevronRight, Clapperboard, Clock, Hexagon, Home, ListChecks, Loader2, Menu, Repeat2, Settings, Trash2, UserRound } from 'lucide-react';
 import clsx from 'clsx';
-import { useEffect, useState, useSyncExternalStore, type CSSProperties } from 'react';
-import { clearTempCache, fetchPipelineTasks, fetchSandboxTasks, fetchSessions, type PipelineTask, type SandboxTask } from '@/lib/workflowApi';
+import { useEffect, useRef, useState, useSyncExternalStore, type CSSProperties } from 'react';
+import { clearTempCache, type PipelineTask, type SandboxTask } from '@/lib/workflowApi';
 
 const NAV_ITEMS = [
   { href: '/', label: '创作首页', icon: Home },
@@ -35,6 +36,7 @@ const TASK_STATUS_STYLE: Record<string, string> = {
   waiting: 'bg-amber-50 text-amber-600',
   completed: 'bg-green-50 text-green-600',
   failed: 'bg-red-50 text-red-600',
+  review:'bg-amber-50 text-amber-600',unknown:'bg-gray-100 text-gray-500',cancelled:'bg-gray-100 text-gray-500',
 };
 
 function statusText(status?: string) {
@@ -43,6 +45,7 @@ function statusText(status?: string) {
   if (status === 'waiting') return '待确认';
   if (status === 'completed') return '已完成';
   if (status === 'failed') return '失败';
+  if(status==='review')return '需核对';if(status==='unknown')return '状态未知';if(status==='cancelled')return '已取消';
   return status || '未知';
 }
 
@@ -95,7 +98,7 @@ export function projectReviewTaskFromSession(session: SessionSummary): RunningTa
   };
 }
 
-function pipelineTaskItem(task: PipelineTask): RunningTaskItem | null {
+export function pipelineTaskItem(task: PipelineTask): RunningTaskItem | null {
   const route = PIPELINE_ROUTES[task.pipeline];
   if (!route || !['pending', 'running'].includes(task.status)) return null;
   return {
@@ -108,7 +111,7 @@ function pipelineTaskItem(task: PipelineTask): RunningTaskItem | null {
   };
 }
 
-function pipelineCompletedTaskItem(task: PipelineTask): RunningTaskItem | null {
+export function pipelineCompletedTaskItem(task: PipelineTask): RunningTaskItem | null {
   const route = PIPELINE_ROUTES[task.pipeline];
   if (!route || task.status !== 'completed') return null;
   return {
@@ -129,7 +132,7 @@ const SANDBOX_TOOL_LABELS: Record<string, string> = {
   video: '视频生成',
 };
 
-function sandboxTaskItem(task: SandboxTask): RunningTaskItem {
+export function sandboxTaskItem(task: SandboxTask): RunningTaskItem {
   const input = task.input || {};
   return {
     id: `sandbox-${task.id}`,
@@ -139,6 +142,15 @@ function sandboxTaskItem(task: SandboxTask): RunningTaskItem {
     status: task.status || 'running',
     progress: task.progress || 1,
   };
+}
+
+export function sidebarTask(record:TaskRecord):RunningTaskItem|null {
+  if(!record.href||record.projectAvailable===false)return null;
+  const active=['queued','running'].includes(record.status);
+  const workflowStage=new URL(record.href,'http://local.invalid').searchParams.get('stage')||'completed';
+  const workflowId=active?`project-${record.id}`:record.status==='completed'?`project-review-${record.id}-completed`:record.status==='waiting'?`project-review-${record.id}-${workflowStage}`:`project-${record.status}-${record.id}`;
+  const id=record.source==='workflow'?workflowId:record.source==='pipeline'?`pipeline-${active?'':'completed-'}${record.id}`:record.source==='sandbox'?`sandbox-${record.id}`:record.key;
+  return {id,href:record.href,title:record.title,scope:SOURCES[record.source]+' · '+record.phase,status:record.status==='queued'?'pending':record.status,progress:record.progress??0};
 }
 
 function loadDismissedCompletedTasks(): Set<string> {
@@ -212,12 +224,12 @@ function TaskPanel({
             {tasks.map(task => {
               const active = currentPath === task.href.split('?')[0];
               return (
-                <button
+                <a
                   key={task.id}
-                  type="button"
+                  href={task.href}
                   onClick={() => onTaskClick(task)}
                   className={clsx(
-                    'xyq-task-item w-full rounded-lg border px-2.5 py-2 text-left transition-colors',
+                    'xyq-task-item block w-full rounded-lg border px-2.5 py-2 text-left transition-colors',
                     active ? 'border-blue-100 bg-blue-50/60' : 'border-gray-100 bg-white hover:border-blue-200 hover:bg-blue-50/40'
                   )}
                 >
@@ -235,7 +247,7 @@ function TaskPanel({
                       <div className="h-full rounded-full bg-blue-500" style={{ width: `${task.progress || 0}%` }} />
                     </div>
                   </div>
-                </button>
+                </a>
               );
             })}
           </div>
@@ -250,59 +262,52 @@ function TaskPanel({
 }
 
 function SidebarTaskPanels({ currentPath }: { currentPath: string }) {
-  const router = useRouter();
   const [runningTasks, setRunningTasks] = useState<RunningTaskItem[]>([]);
   const [completedTasks, setCompletedTasks] = useState<RunningTaskItem[]>([]);
   const [dismissedCompleted, setDismissedCompleted] = useState<Set<string>>(() => loadDismissedCompletedTasks());
   const [loading, setLoading] = useState(true);
 
+  const snapshot=useRef(emptySnapshot());
+  const [sourceFailure,setSourceFailure]=useState(false);
   useEffect(() => {
-    let cancelled = false;
-    const load = async () => {
-      const [pipelineRecords, sessions, sandboxRecords] = await Promise.all([
-        fetchPipelineTasks(100).catch(() => []),
-        fetchSessions().catch(() => []),
-        fetchSandboxTasks().catch(() => []),
-      ]);
-      if (cancelled) return;
-      setRunningTasks([
-        ...sandboxRecords.map(sandboxTaskItem),
-        ...pipelineRecords.map(pipelineTaskItem).filter((task): task is RunningTaskItem => Boolean(task)),
-        ...sessions.map(projectTaskFromSession).filter((task): task is RunningTaskItem => Boolean(task)),
-      ]);
-      setCompletedTasks([
-        ...pipelineRecords.map(pipelineCompletedTaskItem).filter((task): task is RunningTaskItem => Boolean(task)),
-        ...sessions.map(projectReviewTaskFromSession).filter((task): task is RunningTaskItem => Boolean(task)),
-      ].filter(task => !dismissedCompleted.has(task.id)));
-      setLoading(false);
+    let cancelled=false,running=false,failures=0,wakePending=false;
+    let timer:ReturnType<typeof setTimeout>|undefined,controller:AbortController|undefined;
+    const load=async()=>{
+      if(cancelled||document.hidden)return;
+      if(running){wakePending=true;return;}running=true;controller=new AbortController();
+      const next=await readTaskCenter(snapshot.current,controller.signal);running=false;if(cancelled)return;
+      snapshot.current=next;const failed=Object.values(next).some(source=>source.failed);failures=failed?failures+1:0;setSourceFailure(failed);
+      const records=taskRecords(next);
+      setRunningTasks(records.filter(r=>['queued','running'].includes(r.status)).map(sidebarTask).filter((t):t is RunningTaskItem=>!!t));
+      setCompletedTasks(records.filter(r=>['waiting','completed','failed','review','unknown','cancelled'].includes(r.status)).map(sidebarTask).filter((t):t is RunningTaskItem=>!!t).filter(t=>!dismissedCompleted.has(t.id)));
+      setLoading(false);timer=setTimeout(()=>void load(),wakePending?0:nextReadDelay(next,failures));wakePending=false;
     };
-    load().catch(() => {});
-    const timer = window.setInterval(() => load().catch(() => {}), 3000);
-    return () => { cancelled = true; window.clearInterval(timer); };
-  }, [dismissedCompleted]);
+    const wake=()=>{if(timer)clearTimeout(timer);void load();};
+    void load();window.addEventListener('native-job-selection',wake);window.addEventListener('focus',wake);document.addEventListener('visibilitychange',wake);
+    return()=>{cancelled=true;controller?.abort();if(timer)clearTimeout(timer);window.removeEventListener('native-job-selection',wake);window.removeEventListener('focus',wake);document.removeEventListener('visibilitychange',wake);};
+  },[dismissedCompleted]);
 
-  const handleRunningClick = (task: RunningTaskItem) => {
-    router.push(task.href);
-  };
+  const handleRunningClick = () => { /* Native navigation preserves page leave guards. */ };
 
   const handleCompletedClick = (task: RunningTaskItem) => {
+    if(task.status!=='completed')return;
     const next = new Set(dismissedCompleted);
     next.add(task.id);
     saveDismissedCompletedTasks(next);
     setDismissedCompleted(next);
     setCompletedTasks(current => current.filter(item => item.id !== task.id));
-    router.push(task.href);
   };
 
   return (
     <>
+      {sourceFailure&&<Link className="px-4 py-2 text-xs text-amber-700" href="/tasks">部分来源未读到，已保留上次任务；打开任务中心核对</Link>}
       <TaskPanel
         title="进行中任务"
         icon={<Clock className="h-3.5 w-3.5 text-gray-400" />}
         loading={loading}
         tasks={runningTasks}
         currentPath={currentPath}
-        emptyText="还没有进行中的任务"
+        emptyText={sourceFailure?"部分任务读取失败，请到任务中心核对":"还没有进行中的任务"}
         onTaskClick={handleRunningClick}
       />
       <TaskPanel
@@ -310,7 +315,7 @@ function SidebarTaskPanels({ currentPath }: { currentPath: string }) {
         icon={<CheckCircle2 className="h-3.5 w-3.5 text-gray-400" />}
         tasks={completedTasks}
         currentPath={currentPath}
-        emptyText="还没有已完成或待确认的任务"
+        emptyText={sourceFailure?"部分任务读取失败，请到任务中心核对":"还没有已完成或待确认的任务"}
         onTaskClick={handleCompletedClick}
       />
     </>

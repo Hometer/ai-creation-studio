@@ -4,6 +4,7 @@ from pathlib import Path
 from uuid import uuid4
 import uvicorn
 from api.co_creation_demo import create_co_creation_demo
+from api.routers.release_tasks import router as release_tasks_router
 from api.dependencies import get_workflow_engine
 from api.routers.creation_candidates import router,service
 from api.schemas.co_creation import RequestInput,DecisionInput
@@ -37,6 +38,7 @@ def create_candidate_demo(directory:Path):
             stage='script_generation',path=f.path,message='把标题改得更温暖，保留灯塔与渡船。',preserve='保留灯塔与渡船，其他字段不改。'))
         creation.save('comparison-demo',DecisionInput(expected_token=result.workspace.token,intent_id=result.intent_id,
             request_id=uuid4().hex,decision='confirm',acknowledged=True))
+    app.include_router(release_tasks_router)
     return app
 
 

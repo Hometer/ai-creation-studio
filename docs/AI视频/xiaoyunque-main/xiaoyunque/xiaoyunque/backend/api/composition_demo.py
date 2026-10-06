@@ -6,6 +6,7 @@ import subprocess
 from uuid import uuid4
 import uvicorn
 from api.media_demo import create_demo
+from api.routers.release_tasks import router as release_tasks_router
 from api.dependencies import get_workflow_engine
 from api.routers.assets import get_asset_library,get_media_archive
 from api.routers.compositions import router,service
@@ -34,7 +35,7 @@ def create_composition_demo(directory):
         if not any(v.name==name for a in library.read().assets.values() for v in a.versions):
             with archive.prepare(path,'video') as (temporary,details):
                 library.upload_media(UploadSource(project_id='composition-demo',upload_id=uuid4().hex),'video',VersionInput(name=name,definition='人工色块，本机程序制作，非模型生成。'),archive,temporary,details)
-    app.include_router(router);app.include_router(goals_router);app.title='合成与导出 · 人工样例，无模型生成'
+    app.include_router(router);app.include_router(goals_router);app.include_router(release_tasks_router);app.title='合成与导出 · 人工样例，无模型生成'
     films=Compositions(engine,library,archive);app.dependency_overrides[service]=lambda:films
     @asynccontextmanager
     async def lifespan(_):

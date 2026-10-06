@@ -1,18 +1,19 @@
 import { isRecord, parseSessions } from './workflowTypes';
+import {parseReleaseTasks} from './releaseTasks';
 import { normalizeStageStatus } from './projectStatus';
 
-export const SOURCES = { workflow: '项目流程', pipeline: '专项创作', generation: '本地生成任务', sandbox: '临时工作台' } as const;
-export const STATUSES = { draft: '待开始', queued: '排队中', running: '进行中', waiting: '待确认', completed: '已完成', failed: '失败', review: '需核对', unknown: '状态未知' } as const;
+export const SOURCES = { workflow: '项目流程', pipeline: '专项创作', generation: '本地生成任务', sandbox: '临时工作台', first_release:'首版候选与成片' } as const;
+export const STATUSES = { draft: '待开始', queued: '排队中', running: '进行中', waiting: '待确认', completed: '已完成', failed: '失败', review: '需核对', unknown: '状态未知', cancelled:'已取消' } as const;
 export type TaskSource = keyof typeof SOURCES;
 export type TaskStatus = keyof typeof STATUSES;
 export interface TaskRecord {
   key: string; id: string; title: string; source: TaskSource; status: TaskStatus; date: string | null;
   href: string | null; projectId: string | null; phase: string; progress: number | null; note: string;
-  simulation: boolean; resultUrl: string | null; billing: string | null; reasons: string[];
+  projectAvailable?:boolean; simulation: boolean; resultUrl: string | null; billing: string | null; reasons: string[];
 }
 export interface SourceSnapshot { records: TaskRecord[]; failed: boolean; updatedAt: string | null }
 export type CenterSnapshot = Record<TaskSource, SourceSnapshot>;
-export const emptySnapshot = (): CenterSnapshot => ({ workflow: { records: [], failed: false, updatedAt: null }, pipeline: { records: [], failed: false, updatedAt: null }, generation: { records: [], failed: false, updatedAt: null }, sandbox: { records: [], failed: false, updatedAt: null } });
+export const emptySnapshot = (): CenterSnapshot => ({ workflow: { records: [], failed: false, updatedAt: null }, pipeline: { records: [], failed: false, updatedAt: null }, generation: { records: [], failed: false, updatedAt: null }, sandbox: { records: [], failed: false, updatedAt: null }, first_release: { records: [], failed: false, updatedAt: null } });
 const stageNames: Record<string, string> = { script_generation: '剧本', character_design: '角色', storyboard: '分镜', reference_generation: '参考图', video_generation: '视频', post_production: '后期' };
 const pipelineRoutes: Record<string, string> = { standard: 'standard', quick_create: 'standard', action_transfer: 'action-transfer', digital_human: 'digital-human' };
 const pipelineLabels: Record<string, string> = { standard: '文艺短视频', quick_create: '文艺短视频', action_transfer: '动作迁移', digital_human: '数字人口播' };
@@ -33,6 +34,7 @@ function base(source: TaskSource, id: string, status: TaskStatus, date: string |
   return { key: `${source}:${id}`, id, source, status, date, title: SOURCES[source], href: null, projectId: null, phase: STATUSES[status], progress: null, note: '', simulation: false, resultUrl: null, billing: null, reasons: [] };
 }
 export function parseTaskSource(source: TaskSource, value: unknown): TaskRecord[] {
+  if(source==='first_release')return parseReleaseTasks(value);
   let rows: TaskRecord[];
   if (source === 'workflow') {
     rows = parseSessions(value).map(session => {
@@ -112,7 +114,7 @@ export function nextReadDelay(snapshot: CenterSnapshot, failureCount: number): n
   if (Object.values(snapshot).some(s => s.failed)) return Math.min(60000, 5000 * 2 ** Math.min(failureCount, 4));
   return taskRecords(snapshot).some(t => ['queued', 'running'].includes(t.status)) ? 5000 : 30000;
 }
-const endpoints: Record<TaskSource, string> = { workflow: '/api/sessions', pipeline: '/api/tasks?limit=500', sandbox: '/api/sandbox/tasks', generation: '/api/generation-tasks' };
+const endpoints: Record<TaskSource, string> = { workflow: '/api/sessions', pipeline: '/api/tasks?limit=500', sandbox: '/api/sandbox/tasks', generation: '/api/generation-tasks', first_release:'/api/first-release-tasks' };
 export async function readTaskCenter(previous: CenterSnapshot, signal?: AbortSignal): Promise<CenterSnapshot> {
   const entries = await Promise.all((Object.keys(SOURCES) as TaskSource[]).map(async source => {
     const controller = new AbortController();

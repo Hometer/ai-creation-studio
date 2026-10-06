@@ -1,12 +1,15 @@
 'use client';
+import {useSelectedJob} from '@/lib/useSelectedJob';
 import {useCallback,useEffect,useRef,useState} from 'react';
 import {readCandidates,prepareCandidate,confirmCandidate,advanceCandidate,type CandidateWorkspace,type CandidateJob} from '@/lib/creationCandidates';
 const states={awaiting_confirmation:'等待本次确认',queued:'已确认，等待执行',submitting:'模型正在生成',succeeded:'候选已保存',failed:'尚未执行成功',manual_review:'需要人工核对原任务'};
 const money=(fen:number)=>(fen/100).toFixed(2)+' 元';
 export default function CreationCandidates({projectId,intentId,expectedToken,disabled,onLoad,onBusy,readOnly=false}:{projectId:string;intentId:string;expectedToken:string;disabled:boolean;onLoad:(value:string)=>void;onBusy:(busy:boolean)=>void;readOnly?:boolean}){
-  const [data,setData]=useState<CandidateWorkspace|null>(null),[selected,setSelected]=useState(''),[ack,setAck]=useState(false),[material,setMaterial]=useState(false);
+ const [selected,setSelected]=useSelectedJob('candidate');
+  const [data,setData]=useState<CandidateWorkspace|null>(null),[ack,setAck]=useState(false),[material,setMaterial]=useState(false);
   const [busy,setBusy]=useState(false),[blocked,setBlocked]=useState(false),[error,setError]=useState('');
   const [now,setNow]=useState(0);
+  useEffect(()=>{const clear=()=>{setAck(false);setMaterial(false);};window.addEventListener('popstate',clear);window.addEventListener('native-job-selection',clear);return()=>{window.removeEventListener('popstate',clear);window.removeEventListener('native-job-selection',clear);};},[]);
   const alive=useRef(true),lock=useRef(false),serial=useRef(0);
   const invalidate=useCallback(()=>{alive.current=false;++serial.current;},[]);
   const jobs=data?.jobs.filter(j=>j.plan.intent_id===intentId)??[],job=jobs.find(j=>j.job_id===selected);
@@ -36,6 +39,7 @@ export default function CreationCandidates({projectId,intentId,expectedToken,dis
     {data?<><p>单次上限 {money(data.single_limit_fen)} · 本轮总上限 {money(data.round_limit_fen)} · 已占用 {money(data.occupied_fen)} · 剩余 {money(data.available_fen)}</p>{(!data.credential_present||!data.endpoint_allowed)&&<p className="revision-alert">后端模型配置尚不可用，可准备计划；真实生成待配置后核对。</p>}{!data.price_current&&<p className="revision-alert">价格依据已过期，暂不能生成。</p>}</>:<p>正在读取模型配置与本轮额度…</p>}
     <div className="revision-actions"><button disabled={disabled||busy||blocked||readOnly||!data||data.expected_token!==expectedToken||!data.price_current} onClick={()=>void run('prepare')}>准备 AI 候选计划</button><button disabled={busy||disabled} onClick={()=>void reload()}>重新读取候选任务</button></div>
     {jobs.length>0&&<label className="revision-field">已保存的候选任务<select value={selected} disabled={busy||disabled} onChange={e=>{setSelected(e.target.value);setAck(false);setMaterial(false);}}><option value="">请选择一份计划或候选</option>{jobs.map(j=><option key={j.job_id} value={j.job_id}>第 {j.number} 份 · {states[j.status]}</option>)}</select></label>}
+    {data&&selected&&!job&&<p className="revision-alert">本请求中暂未找到地址指定的候选；请核对所属项目和请求后重新读取。不会选入另一份任务。</p>}
     {job&&<><h4>{states[job.status]}{job.simulation_only?' · 人工接口样例，不代表模型结果':''}</h4><p>{job.plan.scope}</p><p>模型：{job.plan.model} · 保守估算不超过 {money(job.plan.estimate_fen)} · 最多 {job.plan.max_output_tokens} 个输出 Token</p><p className="revision-muted">价格依据：{job.plan.price_version}。实际账单金额尚未知；已发送但结果未知时保留占用。</p>
       {(!basis||readOnly)&&<p className="revision-alert">当前正文或请求依据与计划不同，或请求已应用；可以查看历史，不能确认或载入。</p>}
       {job.status==='awaiting_confirmation'&&<><label className="revision-check"><input type="checkbox" checked={material} disabled={busy||disabled||blocked||!basis} onChange={e=>setMaterial(e.target.checked)}/>我确认本次文字有权使用、不含敏感信息，可在境内处理</label><label className="revision-check"><input type="checkbox" checked={ack} disabled={busy||disabled||blocked||!basis} onChange={e=>setAck(e.target.checked)}/>我已核对输入范围与估算，确认本次生成费用</label><button className="revision-primary" disabled={busy||disabled||blocked||!basis||!ack||!material||!data?.credential_present||!data.endpoint_allowed||!data.price_current||job.plan.expires_at<=now||job.plan.estimate_fen>data.available_fen} onClick={()=>void run('confirm')}>确认费用并生成候选</button></>}

@@ -1,0 +1,85 @@
+{
+  "任务中心": [
+    {
+      "width": 1440,
+      "document_width": 1434,
+      "records": 7,
+      "selected_record_retained": true
+    },
+    {
+      "width": 1280,
+      "document_width": 1274,
+      "records": 7,
+      "selected_record_retained": true
+    },
+    {
+      "width": 1024,
+      "document_width": 1018,
+      "records": 7,
+      "selected_record_retained": true
+    },
+    {
+      "width": 768,
+      "document_width": 762,
+      "records": 7,
+      "selected_record_retained": true
+    },
+    {
+      "width": 390,
+      "document_width": 390,
+      "records": 7,
+      "selected_record_retained": true
+    },
+    {
+      "width": 360,
+      "document_width": 360,
+      "records": 7,
+      "selected_record_retained": true
+    }
+  ],
+  "候选定位": [
+    {
+      "width": 1440,
+      "document_width": 1434,
+      "selected_job": "e71836da73e5453ea9340c8118530eef",
+      "checked": 0,
+      "sidebar_tasks": 4
+    },
+    {
+      "width": 1280,
+      "document_width": 1274,
+      "selected_job": "e71836da73e5453ea9340c8118530eef",
+      "checked": 0,
+      "sidebar_tasks": 4
+    },
+    {
+      "width": 1024,
+      "document_width": 1018,
+      "selected_job": "e71836da73e5453ea9340c8118530eef",
+      "checked": 0,
+      "sidebar_tasks": 4
+    },
+    {
+      "width": 768,
+      "document_width": 762,
+      "selected_job": "e71836da73e5453ea9340c8118530eef",
+      "checked": 0,
+      "sidebar_tasks": 4
+    },
+    {
+      "width": 390,
+      "document_width": 390,
+      "selected_job": "e71836da73e5453ea9340c8118530eef",
+      "checked": 0,
+      "sidebar_tasks": 4
+    },
+    {
+      "width": 360,
+      "document_width": 360,
+      "selected_job": "e71836da73e5453ea9340c8118530eef",
+      "checked": 0,
+      "sidebar_tasks": 4
+    }
+  ],
+  "说明": "浏览器实际读取；桌面滚动条占6像素，均无水平溢出。人工合同样例，不是模型效果。"
+}

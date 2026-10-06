@@ -107,6 +107,8 @@ register_error_handlers(app)
 from api.services.legacy_cost_gate import LegacyCostGate,router as cost_policy_router
 app.add_middleware(LegacyCostGate)
 app.include_router(cost_policy_router)
+from api.routers.release_tasks import router as release_tasks_router
+app.include_router(release_tasks_router)
 
 cors_origins = _cors_origins()
 app.add_middleware(

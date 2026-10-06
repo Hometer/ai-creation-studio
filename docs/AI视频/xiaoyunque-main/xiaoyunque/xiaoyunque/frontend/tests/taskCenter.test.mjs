@@ -89,20 +89,20 @@ test('read-only source isolation retains prior failed records and recovers witho
   assert.equal(result.generation.failed, true); assert.equal(result.generation.records[0].id, a); assert.equal(result.generation.updatedAt, time);
   assert.equal(result.workflow.failed, false); assert.ok(!JSON.stringify(result).includes('private-secret'));
   fail = false; const recovered = await client.readTaskCenter(result); assert.equal(recovered.generation.failed, false); assert.equal(recovered.generation.records.length, 0);
-  assert.equal(requests.length, 8); assert.ok(requests.every(r => !r.options.method && r.options.cache === 'no-store'));
+  assert.equal(requests.length, 10); assert.ok(requests.every(r => !r.options.method && r.options.cache === 'no-store'));
 });
 test('request cancellation propagates to every source', async () => {
   const signals = [], controller = new AbortController();
   const client = loadTypeScript('lib/taskCenter.ts', { setTimeout, clearTimeout, fetch: (_url, options) => new Promise((_resolve, reject) => { signals.push(options.signal); options.signal.addEventListener('abort', () => reject(new Error('cancelled')), { once: true }); }) });
   const request = client.readTaskCenter(api.emptySnapshot(), controller.signal); controller.abort();
   const result = await request;
-  assert.equal(signals.length, 4); assert.ok(signals.every(s => s.aborted)); assert.ok(Object.values(result).every(s => s.failed));
+  assert.equal(signals.length, 5); assert.ok(signals.every(s => s.aborted)); assert.ok(Object.values(result).every(s => s.failed));
 });
 test('every source enforces the documented timeout instead of waiting forever', async () => {
   const delays = [];
   const client = loadTypeScript('lib/taskCenter.ts', { setTimeout: (callback, delay) => { delays.push(delay); queueMicrotask(callback); return 1; }, clearTimeout: () => {}, fetch: (_url, options) => new Promise((_resolve, reject) => { options.signal.addEventListener('abort', () => reject(new Error('timeout')), { once: true }); }) });
   const result = await client.readTaskCenter(api.emptySnapshot());
-  assert.deepEqual(delays, [10000, 10000, 10000, 10000]);
+  assert.deepEqual(delays, [10000, 10000, 10000, 10000, 10000]);
   assert.ok(Object.values(result).every(s => s.failed));
 });
 test('history polling slows on terminal states and uses bounded failure backoff', () => {

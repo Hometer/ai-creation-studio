@@ -4,6 +4,7 @@ from pathlib import Path
 from contextlib import asynccontextmanager
 import uvicorn
 from api.media_demo import create_demo
+from api.routers.release_tasks import router as release_tasks_router
 from api.dependencies import get_workflow_engine
 from api.routers.initial_drafts import router,service
 from api.routers.project_goals import router as goals_router
@@ -35,6 +36,7 @@ def create_initial_demo(directory):
     if engine.get_status_snapshot('initial-demo') is None:
         engine.create_session('initial-demo',{'idea':'人工样例：两位朋友在灯塔重逢。','project_name':'人工从零剧本核对','episodes':1,'style':'realistic','video_ratio':'16:9','target_duration':6})
     drafts=InitialDrafts(engine,ArtificialProvider());app.include_router(router);app.include_router(goals_router);app.include_router(revisions_router);app.dependency_overrides[service]=lambda:drafts
+    app.include_router(release_tasks_router)
     app.title='剧本与分镜 · 人工合同样例，无模型调用'
     @asynccontextmanager
     async def lifespan(_):

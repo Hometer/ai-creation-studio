@@ -1,4 +1,5 @@
 'use client';
+import {useSelectedJob} from '@/lib/useSelectedJob';
 import Link from 'next/link';
 import {useCallback,useEffect,useRef,useState} from 'react';
 import {readFilms,prepareFilm,filmOperation,filmUrl,FILM_STATES,type FilmWorkspace,type ClipSelection} from '@/lib/compositions';
@@ -6,8 +7,10 @@ import {mediaUrl} from '@/lib/assets';
 const uid=()=>crypto.randomUUID().replaceAll('-','');
 const secs=(v:number)=>Number(v.toFixed(2))+' 秒';
 export default function ProjectCompositions({projectId}:{projectId:string}){
- const [data,setData]=useState<FilmWorkspace|null>(null),[clips,setClips]=useState<ClipSelection[]>([]),[keep,setKeep]=useState<string[]>([]),[selected,setSelected]=useState('');
+ const [selected,setSelected]=useSelectedJob();
+ const [data,setData]=useState<FilmWorkspace|null>(null),[clips,setClips]=useState<ClipSelection[]>([]),[keep,setKeep]=useState<string[]>([]);
  const [busy,setBusy]=useState(false),[blocked,setBlocked]=useState(true),[error,setError]=useState(''),[ack,setAck]=useState(false),[dirty,setDirty]=useState(false);
+ useEffect(()=>{const clear=()=>{setAck(false);};window.addEventListener('popstate',clear);window.addEventListener('native-job-selection',clear);return()=>{window.removeEventListener('popstate',clear);window.removeEventListener('native-job-selection',clear);};},[]);
  const alive=useRef(true),lock=useRef(false),serial=useRef(0),ids=useRef(new Map<string,string>());
  const job=data?.jobs.find(j=>j.job_id===selected);
  const reload=useCallback(async()=>{
@@ -44,7 +47,7 @@ export default function ProjectCompositions({projectId}:{projectId:string}){
  return <main className="asset-workspace media-workspace composition-workspace">
  <nav className="asset-breadcrumb"><Link onClick={leave} href={`/?session=${encodeURIComponent(projectId)}`}>返回项目</Link><Link onClick={leave} href={`/projects/${encodeURIComponent(projectId)}/assets`}>素材与版本</Link><Link onClick={leave} href={`/projects/${encodeURIComponent(projectId)}/media`}>媒体修改与选用</Link><button className="asset-button asset-refresh" disabled={busy} onClick={()=>void reload()}>重新读取成片</button></nav>
  <header className="asset-heading"><div><span className="studio-eyebrow">PROJECT · {projectId}</span><h1>合成与<span>成片导出</span></h1><p>确认每段视频、版本与顺序，把这次选择另存为一版成片。</p></div></header>
- {error&&<p className="media-alert" role="alert">{error} 请重新读取并核对，当前片段输入保留。</p>}{busy&&<p role="status">正在保存或读取计划…</p>}
+ {data&&selected&&!job&&<p className="media-alert" role="alert">地址中的任务未在这个项目中找到，请重新读取并核对原任务。</p>}{error&&<p className="media-alert" role="alert">{error} 请重新读取并核对，当前片段输入保留。</p>}{busy&&<p role="status">正在保存或读取计划…</p>}
  {data&&!data.tools_available&&<p className="media-alert">本机合成工具尚不可用。计划可以保留，合成等待工具恢复。</p>}
  <p className="media-muted">本机合成 · 不调用模型 · 模型费用0元。输出720P、30帧，按项目比例补边；保留所选视频原声音，无声音的片段补静音。旧成片继续保留。</p>
  <div className="media-columns"><section className="asset-detail"><h2>本次选用片段与顺序</h2><p>整片目标：{data?.target_duration?secs(data.target_duration):'尚未设置'} · 比例：{data?.video_ratio??'读取中'} · 当前所选总时长：{secs(total)}</p>

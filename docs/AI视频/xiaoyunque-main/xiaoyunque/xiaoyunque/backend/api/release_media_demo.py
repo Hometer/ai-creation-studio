@@ -10,6 +10,7 @@ from uuid import uuid4
 import uvicorn
 from PIL import Image
 from api.media_demo import create_demo
+from api.routers.release_tasks import router as release_tasks_router
 from api.dependencies import get_workflow_engine
 from api.routers.assets import get_asset_library,get_media_archive
 from api.routers.release_media import router,service
@@ -91,6 +92,7 @@ def create_release_demo(directory):
         try:yield
         finally:worker.stop()
     app.router.lifespan_context=lifespan
+    app.include_router(release_tasks_router)
     return app,media
 
 def main():
