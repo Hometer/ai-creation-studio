@@ -75,6 +75,9 @@ def read_session(path: Path, session_id: str) -> dict[str, Any]:
     if 'co_creation' in data:
         from core.co_creation import validate_ledger
         validate_ledger(data['co_creation'])
+    if 'backup_restores' in data:
+        from core.revision_import_restore import validate_restores
+        validate_restores(data['backup_restores'], data.get('content_history'))
     return data
 
 

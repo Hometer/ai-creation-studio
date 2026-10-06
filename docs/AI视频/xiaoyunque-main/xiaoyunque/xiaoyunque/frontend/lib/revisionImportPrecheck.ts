@@ -29,7 +29,7 @@ export function parsePrecheckReport(x:unknown,workspace:Workspace,size:number,ch
   }
   return x as unknown as PrecheckReport;
 }
-export async function requestBackup<T>(workspace:Workspace,file:File,suffix:string,parse:(value:unknown,size:number,checksum:string)=>T,fetcher:typeof fetch=fetch,signal?:AbortSignal):Promise<T>{
+export async function requestBackup<T>(workspace:Workspace,file:File,suffix:string,parse:(value:unknown,size:number,checksum:string)=>T,fetcher:typeof fetch=fetch,signal?:AbortSignal,extra?:Record<string,string>,write=false):Promise<T>{
   validateBackupFile(file);
   const controller=new AbortController(),abort=()=>controller.abort();
   if(signal?.aborted)abort();signal?.addEventListener('abort',abort,{once:true});
@@ -40,11 +40,11 @@ export async function requestBackup<T>(workspace:Workspace,file:File,suffix:stri
     if(bytes.byteLength!==file.size) return invalid();
     const checksum=[...new Uint8Array(await crypto.subtle.digest('SHA-256',bytes))].map(b=>b.toString(16).padStart(2,'0')).join('');
     if(controller.signal.aborted)throw new Error('Read deadline');
-    const query=new URLSearchParams({expected_token:workspace.token,filename:file.name});
+    const query=new URLSearchParams({expected_token:workspace.token,filename:file.name,...extra});
     const response=await fetcher(`/api/project/${encodeURIComponent(workspace.project_id)}/content-revisions/${suffix}?${query}`,{method:'POST',headers:{'Content-Type':'application/json'},body:bytes,cache:'no-store',signal:controller.signal});
     if(!response.ok){
       const messages:Record<number,string>={404:'项目不存在，请返回项目核对',409:'当前文字或历史已变化，请重新读取版本后再检查备份',413:'备份超过 64 MiB，请保留文件',415:'只支持文件名安全的 JSON 文字备份',422:'备份格式、摘要或版本关系无法校验，请保留文件并重新导出 JSON',503:'当前项目版本暂不可读，请检查本地服务后重试'};
-      throw new RevisionError(messages[response.status]??'检查暂未完成，请保留文件并手动重试',response.status);
+      throw new RevisionError(messages[response.status]??'检查暂未完成，请保留文件并手动重试',response.status,write&&response.status>=500);
     }
     if(response.headers.get('Content-Type')?.split(';')[0]!=='application/json'||!response.body)return invalid();
     reader=response.body.getReader();const chunks:Uint8Array[]=[];let size=0;
@@ -53,7 +53,7 @@ export async function requestBackup<T>(workspace:Workspace,file:File,suffix:stri
     const result=parse(JSON.parse(new TextDecoder('utf-8',{fatal:true}).decode(reportBytes)),file.size,checksum);
     if(controller.signal.aborted)throw new Error('Read deadline');
     return result;
-  }catch(e){if(e instanceof RevisionError)throw e;throw new RevisionError('检查未完成，请保留文件并检查本地服务后手动重试；不会自动提交',0);}
+  }catch(e){if(write){if(e instanceof RevisionError&&e.status>=400&&e.status<500)throw e;throw new RevisionError('恢复结果尚未确认，请读取恢复记录与版本；不会自动重发',e instanceof RevisionError?e.status:0,true);}if(e instanceof RevisionError)throw e;throw new RevisionError('检查未完成，请保留文件并检查本地服务后手动重试；不会自动提交',0);}
   finally{clearTimeout(timer);signal?.removeEventListener('abort',abort);try{await reader?.cancel();}catch{/* Report only; never a business write. */}reader?.releaseLock();}
 }
 

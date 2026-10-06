@@ -540,3 +540,23 @@ GET／POST `/api/project/{id}/content-revisions/reviews` 提供真实读取与�
 复验入口为根 `python3.12 scripts/project.py check`；定向后端在 backend 运行 `.venv/bin/python -m pytest tests/test_revision_import_precheck.py tests/test_revision_import_preview.py -q`；frontend 运行 `npm test`、`npm run typecheck`、`npm run lint -- --max-warnings=0`、`npm run build`。本轮分别运行后端全量 1042/1042（新增 22）、前端 509/509（新增 45）、类型／零警告 Lint／主与独立生产构建，全部通过；根 check 未另行执行。真实浏览器及六宽度通过；实际 HTTP 退出重启十二组响应一致（含运行中预期 409）、五个演练文件一致，原 216 个保护文件保持；主库五项目自己的实际导出／预检／恢复预览均零差异。
 
 [先行开发文档](docs/阶段文档/阶段3-第18子阶段-同项目文字备份恢复预览开发文档.md) 和 [证据／闸门及真实下载人工样例](docs/evidence/阶段3/同项目文字备份恢复预览/验收报告.md) 已交付。本轮本地提交、不推送；真实模型、业务、手机真机及整个阶段继续待验，A07／依赖告警保留。下一轮优先同项目文字备份逐次确认与原子恢复。
+
+## 同项目文字备份逐次确认与原子恢复（阶段 3 第 19 子阶段）
+
+文字版本页 → 选择 JSON → “检查这份备份” → “预览恢复当前文字” → 核对两阶段完整差异 → 本次勾选 → “确认恢复并保存新版本”。准备仍只读；默认不勾选。有本页未保存编辑或普通预览时，会先确认恢复成功后草稿失效；取消保留原输入与预览，请先复制需要保留的文字。实际确认才发送一次写入；保存中全页写入／导航锁定。
+
+只恢复同项目 current 剧本／分镜，正文、变化阶段的新本地版本和恢复记录同次原子保存；旧历史和恢复前未归档／空正文保留，备份历史不导入。旧 source 枚举保持，备份恢复出处由持久记录关联本地版本。媒体、共创、核对、计划和任务保留，但依据变化需人工重新核对，不自动生成。异项目／执行中／旧依据／零差异拒绝保存；损坏记录与超限拒绝，不删除旧数据。
+
+保存回复不确定时，保留文件／输入／旧记录并暂停全页写入，必须点“读取恢复记录与版本”核对；普通重读也不能绕过。查到本次请求则显示已保存及关联版本；未查到必须重新检查／预览／勾选后才能发新请求。20 秒超时，不自动重发恢复。文件与报告只在本页，刷新需重选；持久恢复记录刷新和后端重启保留。历史记录不代表仍是当前文字；文字下载不包含恢复账本，完整项目备份仍须保留会话与资产库。
+
+沿用原 import-precheck／import-preview，新增三个接口：POST `/api/project/{id}/content-revisions/import-prepare` 原始 JSON、query expected_token／filename，返回 `{preview, confirmation_token}`；POST `/import-restore` 同一路径前缀及原字节，额外 query confirmation_token／request_id／acknowledged=字面 true，返回 201 `{receipt,data:{workspace,restores}}`；GET `/import-restores` 返回工作区和全部持久记录。同请求同内容幂等，返回已有记录和最新工作区，不追加版本；同编号不同内容／用途 409。严格重新检查文件、来源、当前依据与全部差异，不能只凭客户端勾选绕过。统一 error.code/message：404 不存在、409 冲突／运行中、413 文件过大、415 类型／文件名、422 内容／容量／来源／未确认／零差异、503 存储或回复不确定。
+
+现有文件 64 MiB、每阶段快照 2 MiB／500 字段、历史 32 MiB、两阶段差异 2000／完整预览与保存响应 8 MiB；实际保存差异路径最多十层以兼容原工作区；持久记录最多 100 条／256 KiB。不保存文件名或上传副本。摘要不是来源认证，当前本机单用户原子边界不代替正式上线账号隔离。
+
+打开 [独立人工版本页](http://127.0.0.1:3015/projects/comparison-demo/revisions#revision-import-precheck)，选择 [人工恢复前十版本备份](docs/evidence/阶段3/文字备份确认与原子恢复/人工恢复前备份.json)。保留状态为17版本／两条恢复记录，预览剧本一处差异、分镜零差异、默认不勾选；若明确试恢复，将追加剧本v18／第三条记录，旧历史保留。空项目 `/projects/revision-empty/revisions`；人工运行状态 `/projects/backup-restore-running/revisions` 仅验证限制，无真实任务／模型。
+
+后端停止后，从根运行 `python3.12 scripts/project.py revision-import-restore-demo`（默认8015），数据独立在忽略的 `data/revision-import-restore-demo/`；工厂只初次创建八版本等四份基础样例，本轮后续保存及第五份人工运行状态由实际演练形成，全新目录不自动重演。独立生产副本 `/tmp/import-restore-frontend` 已保留，在该目录运行 `BACKEND_API_URL=http://127.0.0.1:8015 npm run start -- --hostname 127.0.0.1 --port 3015`。副本清理后，开发者复制主 frontend 到仓库外，排除 `.env*`／`.next`／`node_modules`，安装或复用依赖，再以 `BACKEND_API_URL=http://127.0.0.1:8015 npm run build -- --webpack` 构建后启动；构建时必须指定独立后端，保持独立 `.next`／数据。主服务沿用根 backend／frontend 命令。
+
+复验入口为根 `python3.12 scripts/project.py check`；定向后端在 backend 运行 `.venv/bin/python -m pytest tests/test_revision_import_restore.py -q`；frontend 运行 `npm test`、`npm run typecheck`、`npm run lint -- --max-warnings=0`、`npm run build`。本轮分别执行后端最终1072/1072（新增30）、前端最终542/542（新增33），类型／零警告Lint／主与独立生产构建通过；根 check 未另行运行。真实页面、回复丢失查回、断网／冲突、操作锁、六宽度和实际服务重启通过；17组响应／5份演练文件一致，两次原请求重发不追加，原221份保护文件保持，主库五项目只读核对通过。
+
+[先行开发文档](docs/阶段文档/阶段3-第19子阶段-文字备份逐次确认与原子恢复开发文档.md) 和 [证据／十项闸门](docs/evidence/阶段3/文字备份确认与原子恢复/验收报告.md) 已交付。本轮本地提交、不推送；真实模型／业务／手机真机及整体阶段待验，A07／既有依赖警告保留。下一轮优先恢复记录的历史定位与核对入口。

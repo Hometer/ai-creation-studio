@@ -100,3 +100,24 @@ async def import_preview(project_id:ProjectId, request:Request,
     from core.revision_import_preview import RevisionImportPreview
     body = await read_backup_body(request, filename)
     return await run_in_threadpool(RevisionImportPreview(revisions.engine).inspect,project_id,expected_token,filename,body)
+
+from typing import Literal
+from api.schemas.revision_import_restore import PreparedBackup, RestoreWorkspace, RestoredBackup
+_RESTORE_ERRORS={404:{'description':'Project missing'},409:{'description':'Stale confirmation, running or reused request'},413:{'description':'File limit'},415:{'description':'Unsupported type'},422:{'description':'Invalid backup, confirmation or capacity'},503:{'description':'Storage or uncertain receipt'}}
+
+@router.get('/api/project/{project_id}/content-revisions/import-restores',response_model=RestoreWorkspace,responses=_RESTORE_ERRORS)
+def import_restores(project_id:ProjectId,revisions=Depends(service)):
+    from core.revision_import_restore import RevisionImportRestore
+    return RevisionImportRestore(revisions.engine).read(project_id)
+
+@router.post('/api/project/{project_id}/content-revisions/import-prepare',response_model=PreparedBackup,responses=_RESTORE_ERRORS)
+async def import_prepare(project_id:ProjectId,request:Request,expected_token:str=Query(pattern=r'^[a-f0-9]{64}$'),filename:str=Query(min_length=1,max_length=128),revisions=Depends(service)):
+    from core.revision_import_restore import RevisionImportRestore
+    body=await read_backup_body(request,filename)
+    return await run_in_threadpool(RevisionImportRestore(revisions.engine).prepare,project_id,expected_token,filename,body)
+
+@router.post('/api/project/{project_id}/content-revisions/import-restore',response_model=RestoredBackup,status_code=201,responses=_RESTORE_ERRORS)
+async def import_restore(project_id:ProjectId,request:Request,expected_token:str=Query(pattern=r'^[a-f0-9]{64}$'),filename:str=Query(min_length=1,max_length=128),confirmation_token:str=Query(pattern=r'^[a-f0-9]{64}$'),request_id:str=Query(pattern=r'^[a-f0-9]{32}$'),acknowledged:Literal['true']=Query(),revisions=Depends(service)):
+    from core.revision_import_restore import RevisionImportRestore
+    body=await read_backup_body(request,filename)
+    return await run_in_threadpool(RevisionImportRestore(revisions.engine).save,project_id,expected_token,filename,body,confirmation_token,request_id)
