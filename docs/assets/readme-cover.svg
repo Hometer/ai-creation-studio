@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="360" viewBox="0 0 1280 360" role="img" aria-label="AI 创作工作室">
+<rect width="1280" height="360" rx="20" fill="#101313"/>
+<path d="M60 55H1220M60 307H1220" stroke="#ccef83" opacity=".22"/>
+<text x="60" y="93" font-family="Arial,sans-serif" font-size="15" letter-spacing="4" fill="#ccef83">CREATIVE STUDIO</text>
+<text x="56" y="177" font-family="-apple-system,BlinkMacSystemFont,Segoe UI,Microsoft YaHei,sans-serif" font-size="54" font-weight="650" fill="#f7f8f2">AI 创作工作室</text>
+<text x="60" y="230" font-family="-apple-system,BlinkMacSystemFont,Segoe UI,Microsoft YaHei,sans-serif" font-size="23" fill="#d9e2da">让故事、镜头与素材，有迹可循。</text>
+<text x="60" y="284" font-family="Arial,sans-serif" font-size="12" letter-spacing="2" fill="#ccef83">HOMETER / LOCAL WORKSPACE / SOURCE + DOCUMENTATION</text>
+<g transform="translate(1055 177)" fill="none" stroke="#ccef83"><circle r="89" opacity=".17"/><circle r="60" opacity=".4"/><path d="M-112 0H112M0-112V112" opacity=".25"/><rect x="-28" y="-28" width="56" height="56" rx="14" stroke-width="2" transform="rotate(18)"/><path d="M-13 1l10 10 20-24" stroke-width="3"/><circle cx="89" cy="0" r="5" fill="#ccef83"/></g></svg>

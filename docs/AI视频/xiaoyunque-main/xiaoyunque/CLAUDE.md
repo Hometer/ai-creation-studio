@@ -94,4 +94,4 @@ The `references/` folder contains detailed API documentation:
 
 Important files:
 - [SKILL.md](SKILL.md) - Contains the complete workflow rules for OpenClaw agent execution
-- [README.md](README.md) - Full project documentation including model configuration
+- [README.md](../../../../README.md) - Full project documentation including model configuration
