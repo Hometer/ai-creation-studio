@@ -45,7 +45,7 @@ def readable(document):
         else:
             add(comparison_label(path, {}) + '\n' + (value if isinstance(value, str) else encoded(value).decode('utf-8')))
 
-    add('创作工作室 · 文字版本导出')
+    add('映序 · 文字版本导出')
     add('项目：' + document.project_id)
     add('导出依据：' + document.token)
     add(f'范围：当前剧本、当前分镜与全部 {len(document.versions)} 条已归档文字版本')

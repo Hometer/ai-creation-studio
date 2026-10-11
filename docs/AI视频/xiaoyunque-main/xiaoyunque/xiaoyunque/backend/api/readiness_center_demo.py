@@ -16,7 +16,7 @@ from core.persistence import atomic_write_session
 
 def create_readiness_center_demo(directory: Path):
     app = create_plan_center_demo(directory)
-    app.title = '创作工作室执行前准备 · 人工样例，不联网、不收费'
+    app.title = '映序执行前准备 · 人工样例，不联网、不收费'
     app.include_router(readiness_router)
     app.include_router(checks_router)
     app.dependency_overrides[get_preflight_connection] = lambda: check_connection('', 'https://dashscope.aliyuncs.com/api/v1')

@@ -90,3 +90,11 @@ test('download anchor and object URL are cleaned on success and click failure',(
   assert.equal(anchor.download,'test.json');assert.equal(anchor.href,'blob:local');assert.deepEqual(events,['create','append','click','remove']);assert.equal(timers.length,1);timers[0]();assert.equal(events.at(-1),'revoke blob:local');
  }
 });
+
+test('new 映序 text export validates while old recorded export remains accepted',async()=>{
+ const f=fixture();f.text.body=f.text.body.replace('创作工作室 · 文字版本导出','映序 · 文字版本导出');
+ const bytes=new TextEncoder().encode(f.text.body);f.text.headers['x-export-bytes']=String(bytes.length);f.text.headers['content-length']=String(bytes.length);
+ f.text.headers['x-export-sha256']=Buffer.from(await webcrypto.subtle.digest('SHA-256',bytes)).toString('hex');
+ const r=await api.readExport(workspace(),'text',async()=>response(f,'text'));
+ assert.ok((await r.blob.text()).startsWith('映序 · 文字版本导出'));
+});

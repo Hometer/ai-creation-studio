@@ -79,7 +79,7 @@ def test_text_has_every_snapshot_readable_values_and_complete_json(setup):
     c, _, _ = setup
     structured = download(c).json()
     text = download(c, fmt='text').content.decode('utf-8')
-    assert text.startswith(f'创作工作室 · 文字版本导出\n项目：{P}\n导出依据：{structured["token"]}\n')
+    assert text.startswith(f'映序 · 文字版本导出\n项目：{P}\n导出依据：{structured["token"]}\n')
     assert text.count('===== 归档 v') == 8 and text.count('===== 当前') == 2
     assert '原入口更新归档' in text and '完整结构（保留附加字段与类型）' in text
     from core.content_revisions import encoded

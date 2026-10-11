@@ -18,7 +18,7 @@ from core.persistence import atomic_write_session
 def create_plan_center_demo(directory: Path):
     base = create_demo(directory)
     # Reuse real stores, explicitly mount only the two offline routers.
-    app = FastAPI(title='创作工作室生成计划 · 人工样例，无模型调用',
+    app = FastAPI(title='映序生成计划 · 人工样例，无模型调用',
                   responses={status: {'model': ErrorResponse} for status in HTTP_ERRORS})
     register_error_handlers(app)
     app.include_router(assets_router)

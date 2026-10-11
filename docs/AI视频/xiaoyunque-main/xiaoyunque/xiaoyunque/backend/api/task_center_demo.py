@@ -15,7 +15,7 @@ from pipelines import storage
 
 def create_task_center_demo(directory: Path):
     app = create_demo(directory, task_simulation=True)
-    app.title = '创作工作室任务中心 · 人工验收，无模型调用'
+    app.title = '映序任务中心 · 人工验收，无模型调用'
     engine = app.dependency_overrides[get_workflow_engine]()
     storage.TASK_DATA_DIR = str(directory / 'pipeline-tasks')
     storage.TASK_RESULT_DIR = str(directory / 'pipeline-results')

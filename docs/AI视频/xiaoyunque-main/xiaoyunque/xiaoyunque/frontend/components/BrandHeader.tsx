@@ -11,7 +11,7 @@ export default function BrandHeader() {
         <Link href="/" className="flex items-center gap-2 hover:opacity-80 transition-opacity flex-shrink-0">
           <BrandMark />
           <span className="font-bold text-sm text-gray-800 tracking-tight">
-            创作工作室
+            映序
           </span>
         </Link>
       </header>

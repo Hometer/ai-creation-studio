@@ -97,7 +97,7 @@ export default function ProjectRevisions({ projectId }: { projectId: string }) {
   };
   return <div><BrandHeader /><div className="revision-shell">
     <nav className="revision-nav"><Link href={`/projects/${encodeURIComponent(projectId)}/assets`}><ArrowLeft size={16} />素材与版本</Link><Link href={`/projects/${encodeURIComponent(projectId)}/reviews`}>修改影响与人工核对</Link><Link href={`/projects/${encodeURIComponent(projectId)}/co-creation`}>对话共创</Link><a href="#revision-comparison">两版对比</a><a href="#revision-export">导出与备份</a><a href="#revision-import-precheck">检查文字备份</a><a href="#revision-restore-records">恢复历史</a><Link href={`/?session=${encodeURIComponent(projectId)}`}>返回项目</Link><button onClick={reload} disabled={reading || busy || backupSaving}><RefreshCw size={16} />重新读取版本</button></nav>
-    <div className="revision-heading"><div><span className="revision-eyebrow">创作工作室 · 文字版本</span><h1>每次修改，都有来处</h1><p>选一处文字，核对影响再保存。需要时，恢复旧版继续创作。</p></div><span className="revision-local"><ShieldCheck size={18} />本地修改 · 不生成、不收费</span></div>
+    <div className="revision-heading"><div><span className="revision-eyebrow">映序 · 文字版本</span><h1>每次修改，都有来处</h1><p>选一处文字，核对影响再保存。需要时，恢复旧版继续创作。</p></div><span className="revision-local"><ShieldCheck size={18} />本地修改 · 不生成、不收费</span></div>
     <p className="revision-boundary">版本从首次接线保存开始记录。原剧本、分镜手动保存、旧补丁与工作流结果保存都会归档；接线前的中间修改无法补回。素材、视频和已有计划保留；修改后需重新核对相关内容。</p>
     {error && <div className="revision-alert" role="alert">{error}{data && <p>已显示的数据保留，暂停保存；重新读取后核对。</p>}</div>}
     {notice && <p className="revision-notice" role="status">{notice}</p>}

@@ -390,7 +390,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
           <div className="xyq-sidebar-brand flex h-16 items-center px-4 border-b border-gray-100">
             <div className="flex items-center gap-2 min-w-0">
               <BrandMark className="h-9 w-9" />
-              <div className="studio-brand-copy"><span className="text-base font-semibold text-gray-900 truncate">创作工作室</span><small>CREATIVE STUDIO</small></div>
+              <div className="studio-brand-copy"><span className="text-base font-semibold text-gray-900 truncate">映序</span><small>CREATIVE STUDIO</small></div>
             </div>
           </div>
           <nav className="xyq-sidebar-nav min-h-0 flex-1 overflow-y-auto p-3 space-y-1">

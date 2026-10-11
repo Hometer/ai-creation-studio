@@ -86,7 +86,7 @@ export async function readExport(workspace: Workspace, format: ExportFormat, fet
     if (actual !== checksum) return invalid();
     const text = new TextDecoder('utf-8',{fatal:true}).decode(bytes);
     if (format === 'json') parseExportDocument(JSON.parse(text),workspace);
-    else if (!text.startsWith(`创作工作室 · 文字版本导出\n项目：${workspace.project_id}\n导出依据：${workspace.token}\n范围：当前剧本、当前分镜与全部 ${workspace.versions.length} 条已归档文字版本\n`)) return invalid();
+    else if (!["映序", "创作工作室"].some(brand => text.startsWith(`${brand} · 文字版本导出\n项目：${workspace.project_id}\n导出依据：${workspace.token}\n范围：当前剧本、当前分镜与全部 ${workspace.versions.length} 条已归档文字版本\n`))) return invalid();
     if (controller.signal.aborted) throw new Error('Read deadline');
     return {filename,blob:new Blob([bytes],{type:type+';charset=utf-8'}),bytes:size,versions:workspace.versions.length};
   } catch(e) {

@@ -337,7 +337,7 @@ export default function HomePage({ onStartProject, onResumeProject, onDeleteSess
   return (
     <div className="xyq-home h-full flex flex-col items-center overflow-y-auto bg-gray-50/50">
       <header className="studio-header">
-        <div className="studio-breadcrumb"><Sparkles size={16} /><span>创作工作室</span><span className="studio-header-caption">让故事从这里开始</span></div>
+        <div className="studio-breadcrumb"><Sparkles size={16} /><span>映序</span><span className="studio-header-caption">让故事从这里开始</span></div>
         <nav aria-label="工作室分区"><a href="#create">创作</a><a href="#inspiration">探索灵感</a><a href="#projects">我的项目</a></nav>
       </header>
       <div className="xyq-home-main w-full max-w-6xl px-6 pt-16 pb-8 flex-shrink-0">
@@ -765,7 +765,7 @@ export default function HomePage({ onStartProject, onResumeProject, onDeleteSess
               </article>;
             })}</div>}
         </section>
-        <footer className="studio-footer"><span>给每个故事一个开始</span><span>本地创作工作室</span></footer>
+        <footer className="studio-footer"><span>给每个故事一个开始</span><span>本地映序</span></footer>
       </div>
 
       {/* 删除确认弹窗 */}

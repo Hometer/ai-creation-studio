@@ -25,7 +25,7 @@ TEMPLATE_FIELD_DEFAULTS = {
     "text": "心之所向，素履而往",
     "author": "创作者",
     "describe": "AI 视频创作",
-    "brand": "创作工作室",
+    "brand": "映序",
     "signature": "原创故事",
     "subtitle": "这是一个副标题",
 }

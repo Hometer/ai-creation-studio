@@ -50,7 +50,7 @@ export default function ProjectImpactReviews({projectId}:{projectId:string}) {
  }
  return <><BrandHeader/><main className="revision-shell impact-shell">
   <nav className="revision-nav"><Link href={`/projects/${encodeURIComponent(projectId)}/revisions${restore?`?restore=${restore}#revision-restore-records`:version?`?version=${version}#revision-history`:""}`}>文字版本与恢复</Link><Link href={`/?session=${encodeURIComponent(projectId)}`}>返回项目</Link><button disabled={reading||busy} onClick={reload}>重新读取核对记录</button></nav>
-  <div className="revision-heading"><div><span className="revision-eyebrow">创作工作室 · 修改影响</span><h1>修改之后，逐项核对</h1><p>确认哪些镜头继续使用，哪些内容还需要处理。</p></div><span className="revision-local">人工决定 · 本地保存</span></div>
+  <div className="revision-heading"><div><span className="revision-eyebrow">映序 · 修改影响</span><h1>修改之后，逐项核对</h1><p>确认哪些镜头继续使用，哪些内容还需要处理。</p></div><span className="revision-local">人工决定 · 本地保存</span></div>
   <p className="revision-boundary">结论只适用于核对时的文字、项目产物、素材引用与计划。依据变化后需要重新核对。记录不会重生成、替换素材或批准任务执行。</p>
   {error&&!item&&<div ref={errorPanel} tabIndex={-1} role="alert" className="revision-alert">{error}<p>当前说明与已读取清单保留；保存暂停时，请重新读取核对。</p></div>}{notice&&<p className="revision-notice" role="status">{notice}</p>}
   {reading&&<p role="status">正在读取修改影响与人工记录…</p>}

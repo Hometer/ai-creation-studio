@@ -365,7 +365,7 @@ export default function TopBar({
           <BrandMark />
           <div className="xyq-topbar-brand-text flex flex-col leading-tight">
             <span className="font-bold text-sm text-gray-800 tracking-tight">
-              创作工作室
+              映序
             </span>
           </div>
         </button>
